@@ -2,9 +2,11 @@
 //
 // Vegetables are scattered naturally over a rectangular bed (not in a grid).
 // Each plant takes up a circle; neighbours may overlap by at most 10% of a
-// plant's width. The number of plants is patchSize x patchSize (9 to 100).
-// The bed has about 25% more spots than plants; when a vegetable is picked,
-// the new one sprouts in a random empty spot somewhere else.
+// plant's width. The patch has room for patchSize x patchSize plants, but
+// only Stats::maxCrops of them grow at once (4 at the start; techs raise it).
+// The bed has about 25% more spots than it has room for, so there are always
+// gaps; when a vegetable is picked, the new one sprouts in a random empty
+// spot somewhere else.
 #pragma once
 
 #include "TechTree.h"
@@ -30,6 +32,9 @@ class Farm {
 public:
     void startDay(const Stats& stats, std::mt19937& rng);
 
+    // How many vegetables grow at once: maxCrops, but never more than the patch has room for.
+    static int plantCount(const Stats& stats);
+
     // Saving a day in progress: serialize() writes "farm ..." and "tile ..."
     // lines; restore() reads them back. restore() returns false (and leaves
     // the farm untouched) if the lines don't match the current patch size.
@@ -37,7 +42,8 @@ public:
     bool restore(const std::vector<std::string>& lines, const Stats& stats);
 
     // ---- Debug tools ----
-    // Switches to new stats mid-day. If the patch size changed, the patch is replanted.
+    // Switches to new stats mid-day. If the patch size changed, the patch is
+    // replanted; if only the number of crops changed, plants are added or removed.
     void applyStats(const Stats& stats, std::mt19937& rng);
     void ripenAll();
     void setTimeLeft(float seconds);
@@ -108,7 +114,7 @@ private:
     std::vector<Particle> particles_;
     std::vector<FloatText> floatTexts_;
     std::vector<Crop> harvests_;
-    int n_ = 3;
+    int n_ = 3;                            // patch size: room for n_ x n_ plants
     float plantSize_ = 70.f;               // diameter of one plant
     float bedX_ = 640.f, bedY_ = 398.f;    // centre of the bed
     float bedRX_ = 100.f, bedRY_ = 60.f;   // half-width / half-height of the bed

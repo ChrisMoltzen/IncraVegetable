@@ -52,7 +52,8 @@ const char* kDelimClose = ")TECHTREE\"";
 
 const std::vector<StatInfo>& stats() {
     static const std::vector<StatInfo> list = {
-        {"patchSize", "Patch size", "Vegetables in the bed = size x size. Starts at 3 (9 vegetables).", true},
+        {"patchSize", "Patch size", "Room in the bed = size x size plants. Starts at 3 (room for 9).", true},
+        {"maxCrops", "Crops at once", "Vegetables growing at the same time (up to the patch's room). Starts at 4.", true},
         {"dayLength", "Day length", "Seconds of picking per day. Starts at 20.", false},
         {"pickTime", "Pick time", "Seconds of hovering needed to pick a vegetable. Starts at 1.", false},
         {"growTime", "Grow time", "Seconds for a lettuce to grow (other crops take longer). Starts at 3.", false},
@@ -74,13 +75,14 @@ int statIndex(const std::string& key) {
 float getStat(const Stats& s, int index) {
     switch (index) {
     case 0: return static_cast<float>(s.patchSize);
-    case 1: return s.dayLength;
-    case 2: return s.pickTime;
-    case 3: return s.growTime;
-    case 4: return s.valueMult;
-    case 5: return static_cast<float>(s.reach);
-    case 6: return static_cast<float>(s.cropTier);
-    case 7: return s.headStart;
+    case 1: return static_cast<float>(s.maxCrops);
+    case 2: return s.dayLength;
+    case 3: return s.pickTime;
+    case 4: return s.growTime;
+    case 5: return s.valueMult;
+    case 6: return static_cast<float>(s.reach);
+    case 7: return static_cast<float>(s.cropTier);
+    case 8: return s.headStart;
     }
     return 0.f;
 }
@@ -88,29 +90,31 @@ float getStat(const Stats& s, int index) {
 void setStat(Stats& s, int index, float v) {
     switch (index) {
     case 0: s.patchSize = static_cast<int>(std::lround(v)); break;
-    case 1: s.dayLength = v; break;
-    case 2: s.pickTime = v; break;
-    case 3: s.growTime = v; break;
-    case 4: s.valueMult = v; break;
-    case 5: s.reach = static_cast<int>(std::lround(v)); break;
-    case 6: s.cropTier = static_cast<int>(std::lround(v)); break;
-    case 7: s.headStart = v; break;
+    case 1: s.maxCrops = static_cast<int>(std::lround(v)); break;
+    case 2: s.dayLength = v; break;
+    case 3: s.pickTime = v; break;
+    case 4: s.growTime = v; break;
+    case 5: s.valueMult = v; break;
+    case 6: s.reach = static_cast<int>(std::lround(v)); break;
+    case 7: s.cropTier = static_cast<int>(std::lround(v)); break;
+    case 8: s.headStart = v; break;
     }
 }
 
 std::string formatStat(int index, const Stats& s) {
     float v = getStat(s, index);
     switch (index) {
-    case 0: return fmt("%.0f plants", static_cast<double>(s.patchSize) * s.patchSize);
-    case 1: return fmt(std::fabs(v - std::round(v)) < 0.01f ? "%.0f second days" : "%.1f second days", v);
-    case 2: return fmt("%.2fs to pick", v);
-    case 3: return fmt("%.2fs to grow", v);
-    case 4: return fmt("x%.2f coins", v);
-    case 5: return s.reach <= 0 ? std::string("1 plant at a time") : fmt("reach radius %.0f", v);
-    case 6: return s.cropTier <= 0 ? std::string("lettuce only")
+    case 0: return fmt("room for %.0f plants", static_cast<double>(s.patchSize) * s.patchSize);
+    case 1: return fmt(s.maxCrops == 1 ? "%.0f crop at once" : "%.0f crops at once", v);
+    case 2: return fmt(std::fabs(v - std::round(v)) < 0.01f ? "%.0f second days" : "%.1f second days", v);
+    case 3: return fmt("%.2fs to pick", v);
+    case 4: return fmt("%.2fs to grow", v);
+    case 5: return fmt("x%.2f coins", v);
+    case 6: return s.reach <= 0 ? std::string("1 plant at a time") : fmt("reach radius %.0f", v);
+    case 7: return s.cropTier <= 0 ? std::string("lettuce only")
                    : s.cropTier == 1 ? std::string("+ carrots")
                                      : std::string("+ carrots & pumpkins");
-    case 7: return fmt("%.0f%% ripe at dawn", std::clamp(v, 0.f, 1.f) * 100.0);
+    case 8: return fmt("%.0f%% ripe at dawn", std::clamp(v, 0.f, 1.f) * 100.0);
     }
     return "";
 }

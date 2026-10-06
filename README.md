@@ -145,6 +145,7 @@ Save and settings files live in your user data folder:
 | Upgrade | Effect | Requires |
 |---|---|---|
 | Bigger Patch | Room for more vegetables (9 up to 100) | — |
+| More Seeds | About 25% more crops growing at once per level (4 up to 114, capped by the patch's room) | — |
 | Longer Days | +5 seconds per day | — |
 | Quick Hands | Pick 18% faster per level | — |
 | Head Start | 20% of the patch is ripe at dawn per level | Longer Days 2 |
@@ -198,7 +199,8 @@ The stats a tech can change:
 
 | Stat | What it is |
 |---|---|
-| Patch size | Vegetables in the bed (size × size) |
+| Patch size | Room in the bed (size × size plants) |
+| Crops at once | Vegetables growing at the same time (starts at 4, never more than the patch's room) |
 | Day length | Seconds per day |
 | Pick time | Seconds to pick |
 | Grow time | Seconds to grow |

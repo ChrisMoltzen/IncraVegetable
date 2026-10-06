@@ -317,7 +317,7 @@ void DebugMenu::buildFarm() {
     Stats st = hooks_.stats();
     text(kLeft, kTop + 320, "Current farm stats", 2.f, kAccent);
     text(kLeft, kTop + 352,
-         draw::strf("Plants %d   Grow %.2fs   Pick %.2fs   Value x%.2f", st.patchSize * st.patchSize, st.growTime,
+         draw::strf("Crops %d (room %d)   Grow %.2fs   Pick %.2fs   Value x%.2f", Farm::plantCount(st), st.patchSize * st.patchSize, st.growTime,
                     st.pickTime, st.valueMult),
          1.5f);
     text(kLeft, kTop + 374,

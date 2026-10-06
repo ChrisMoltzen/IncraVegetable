@@ -21,6 +21,16 @@ tech patch
   effect patchSize add 1
 end
 
+tech seeds
+  name More Seeds
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
+  max 15
+  cost 6
+  growth 1.5
+  pos 2 0
+  effect maxCrops multiply 1.25
+end
+
 tech daylength
   name Longer Days
   desc Wake up earlier. Each level adds 5 seconds to every day.
