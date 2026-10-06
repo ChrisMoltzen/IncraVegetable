@@ -156,13 +156,64 @@ Save and settings files live in your user data folder:
 
 Nodes stay hidden until one of their prerequisites has been bought, so the tree reveals itself as you play.
 
-### Adding a new upgrade
+### Designing the tech tree: TechTreeEditor
 
-1. **`include/TechTree.h`** – if the upgrade changes a new number, add a field for it to `Stats` with its starting value.
-2. **`src/TechTree.cpp`** – add one `addNode({...})` block in the `TechTree` constructor.
-3. Use the new `Stats` field where it matters, usually in `src/Farm.cpp`.
+The tech tree is data, not code. It lives in **`include/TechTreeData.h`**, which is compiled into the game, so everything is inside the executable and there's no file to ship. You edit it with the **Tech Tree Editor**:
 
-The tech tree screen and saving pick up new nodes automatically, and old saves keep working.
+```
+make editor
+build/TechTreeEditor
+```
+
+Run it from the project folder (or pass the path to `TechTreeData.h`). It opens the current tree.
+
+- **Canvas (left):** the tree as it looks in the game.
+  - Double-click empty space to add a tech.
+  - Drag a tech to move it; positions snap to half steps.
+  - Shift+click another tech to add or remove a requirement. The arrow points at the tech that needs it.
+  - Right-drag (or drag empty space) to pan, mouse wheel to zoom, F to fit everything in view.
+- **Panel (right):** everything about the selected tech.
+  - **ID:** letters, numbers and `_` only. Don't rename a tech after players have saves, because saves store levels by id. If you rename one anyway, the techs that require it are updated for you.
+  - **Name** and **Description:** shown in the game's tooltip.
+  - **Max level**, **Cost** of level 1, and **Cost growth** (each level costs this many times the last).
+  - **Position** in columns and rows.
+  - **Requirements:** which techs, at which level. A tech's box stays hidden in the game until one of these has been bought.
+  - **Effects:** click the first button to choose a stat, the second to choose how it changes (Shift+click goes backwards), then type the amount. Each effect shows in words what it does at level 1 and at max level.
+  - **Preview:** the cost of every level and what the tech gives at each level.
+  - **Problems:** missing requirements, loops that make techs impossible to buy, duplicate ids, techs on the same spot, techs with no effects.
+- **Keys:** Ctrl+S save, Ctrl+Z / Ctrl+Y undo / redo, Ctrl+D duplicate, Delete removes the selected tech, arrow keys nudge it. On a Mac, Cmd works too.
+
+After saving, run `make` again to rebuild the game with the new tree.
+
+**Effects.** Each effect changes one stat. For a tech at level L:
+
+| Operation | What it does | Example |
+|---|---|---|
+| `+ per level` | stat + amount × L | Day length + 5 → 25, 30, 35 s... |
+| `+% per level` | stat × (1 + amount% × L) | Coin value + 25 → ×1.25, ×1.5... |
+| `x per level` | stat × amount^L | Pick time × 0.82 → 18% faster each level |
+| `set at least` | stat = at least amount | Crops at least 1 → unlocks carrots |
+
+The stats a tech can change:
+
+| Stat | What it is |
+|---|---|
+| Patch size | Vegetables in the bed (size × size) |
+| Day length | Seconds per day |
+| Pick time | Seconds to pick |
+| Grow time | Seconds to grow |
+| Coin value | Coin multiplier |
+| Reach | Picking radius |
+| Crops | 0 lettuce, 1 + carrots, 2 + pumpkins |
+| Head start | Fraction ripe at dawn |
+
+**A brand-new kind of effect** (one that isn't a stat above) still needs a little code:
+
+1. Add a field to `Stats` in `include/TechTree.h`.
+2. Add it to the list in `src/TechData.cpp` (`stats()`, `getStat`, `setStat`, `formatStat`). After that, the editor offers it too.
+3. Use it in the game, usually in `src/Farm.cpp`.
+
+`TechTreeData.h` is readable text inside a C++ header, so you can also hand-edit it. The format is described at the top of `include/TechData.h`.
 
 ## Code layout
 
@@ -188,7 +239,10 @@ Each `Name.*` below is `src/Name.cpp` plus `include/Name.h`.
 | `SaveSystem.*` | Save slots, crash-safe writes, backups, settings file |
 | `Audio.*` | Synthesised music and sound effects, volume control |
 | `Farm.*` | The patch: growing, picking, crops, particles, mid-day save state |
-| `TechTree.*` | Upgrade definitions, costs, prerequisites, `Stats` |
+| `TechTree.*` | Tech tree rules: costs, prerequisites, buying, `Stats` |
+| `TechData.*` | The tech tree file format, effects and checks (shared with the editor) |
+| `TechTreeData.h` | (header only) The tech tree itself, written by the editor |
+| `tools/TechTreeEditor/` | The Tech Tree Editor app (`make editor`) |
 | `TechTreeScreen.*` | Tech tree UI: nodes, lines, tooltips, panning, buying |
 | `Draw.*` | Shape and text helpers (and the custom font) |
 | `Art.*` | Loads your images from `assets/`, falls back to built-in art, F5 reload, template export |
