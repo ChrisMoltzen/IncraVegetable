@@ -52,7 +52,10 @@ public:
     bool editing() const { return focus_ != 0; }
     void commitFocus();
     void cancelFocus();
-    bool hovered(const SDL_FRect& rc) const { return gfx::inside(in_.mx, in_.my, rc) && clipOk(); }
+    bool hovered(const SDL_FRect& rc) const { return !blocked_ && gfx::inside(in_.mx, in_.my, rc) && clipOk(); }
+
+    // While blocked, nothing can be hovered or clicked (used under a pop-up box).
+    void setBlocked(bool b) { blocked_ = b; }
 
     // Widgets outside the clip rect can't be hovered or clicked (used for the scrolling panel).
     void setClip(const SDL_FRect* rc);
@@ -87,6 +90,7 @@ private:
     uint64_t tabTo_ = 0;
     float blink_ = 0.f;
 
+    bool blocked_ = false;
     bool clipOn_ = false;
     SDL_FRect clip_{};
 };

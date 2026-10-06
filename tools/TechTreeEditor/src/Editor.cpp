@@ -486,11 +486,11 @@ void Editor::frame() {
 
     SDL_SetRenderDrawColor(r_, col::bg.r, col::bg.g, col::bg.b, 255);
     SDL_RenderClear(r_);
+    ui_.setBlocked(modal_ != Modal::None); // a pop-up box takes all the clicks
     drawCanvas();
     drawPanel();
     drawTopBar();
-    if (modal_ != Modal::None) drawModal();
-
+    ui_.setBlocked(false);
     if (!ui_.lastError.empty()) toast(ui_.lastError, true);
     if (toastTime_ > 0.f) {
         SDL_FRect c = canvasRect();
@@ -500,6 +500,8 @@ void Editor::frame() {
         fillRound(r_, box, 8, toastError_ ? SDL_Color{110, 40, 36, static_cast<Uint8>(a * 0.95f)} : SDL_Color{20, 60, 40, static_cast<Uint8>(a * 0.95f)});
         text(r_, box.x + w / 2, box.y + 11, fit(toast_, 1.75f, w - 20), 1.75f, alpha(col::text, a), Align::Center);
     }
+
+    if (modal_ != Modal::None) drawModal();
 
     ui_.endFrame();
     in_.clearFrame();
@@ -802,21 +804,25 @@ void Editor::drawTechPanel(float x, float& y, float w) {
         const Effect& e = t.effects[k];
         int si = techdata::statIndex(e.stat);
         std::string statName = si >= 0 ? stats[si].label : e.stat + "?";
-        // Click to cycle through stats / operations (Shift+click goes backwards).
-        if (ui_.button("fx_stat" + std::to_string(k), {x, y, 170, fh}, statName, true, false, 1.75f)) {
-            pushUndo();
-            int n = static_cast<int>(stats.size());
-            int next = ((si < 0 ? 0 : si) + (in_.shift() ? n - 1 : 1)) % n;
-            T().effects[k].stat = stats[next].key;
+        // Click the stat to pick from a list; click the operation to cycle (Shift+click goes backwards).
+        const float sw = 196.f; // stat button width
+        bool openPicker = ui_.button("fx_stat" + std::to_string(k), {x, y, sw - 18, fh}, statName, true, false, 1.5f);
+        openPicker |= ui_.button("fx_statv" + std::to_string(k), {x + sw - 22, y, 22, fh}, "", true, false, 1.5f);
+        triangle(r_, {x + sw - 17, y + fh / 2 - 3}, {x + sw - 5, y + fh / 2 - 3}, {x + sw - 11, y + fh / 2 + 4}, col::dim);
+        if (openPicker) {
+            ui_.commitFocus();
+            pickTech_ = i;
+            pickEffect_ = k;
+            modal_ = Modal::StatPicker;
             return;
         }
-        if (ui_.button("fx_op" + std::to_string(k), {x + 178, y, 160, fh}, techdata::opLabel(e.op), true, false, 1.5f)) {
+        if (ui_.button("fx_op" + std::to_string(k), {x + sw + 6, y, 160, fh}, techdata::opLabel(e.op), true, false, 1.5f)) {
             pushUndo();
             int n = static_cast<int>(Op::Count);
             T().effects[k].op = static_cast<Op>((static_cast<int>(e.op) + (in_.shift() ? n - 1 : 1)) % n);
             return;
         }
-        ui_.numberField("fx_amt" + std::to_string(k), {x + 346, y, w - 346 - 52, fh}, e.amount, [this, T, k](double v) {
+        ui_.numberField("fx_amt" + std::to_string(k), {x + sw + 174, y, w - (sw + 174) - 52, fh}, e.amount, [this, T, k](double v) {
             if (k >= static_cast<int>(T().effects.size())) return;
             pushUndo();
             T().effects[k].amount = static_cast<float>(v);
@@ -899,6 +905,8 @@ void Editor::drawTreePanel(float x, float& y, float w) {
     text(r_, x, y, "Click a tech to edit it.", 1.75f, col::dim);
     y += 34;
 
+    drawTreeTotals(x, y, w);
+
     auto problems = techdata::validate(techs_);
     heading(r_, x, y, w, problems.empty() && fileErrors_.empty() ? "Problems: none" : "Problems");
     for (const auto& fe : fileErrors_) {
@@ -954,8 +962,84 @@ void Editor::drawTreePanel(float x, float& y, float w) {
 // Drawing: "are you sure?" boxes
 // ===========================================================================
 
+// Each stat at the start of the game and with every tech fully bought, so you
+// can see where the tree ends up. Crops at once can never be more than the
+// patch has room for, so a mismatch between the two is pointed out.
+void Editor::drawTreeTotals(float x, float& y, float w) {
+    Stats start, full;
+    for (const auto& t : techs_) techdata::applyEffects(t, full, t.maxLevel); // same order as the game
+    const auto& list = techdata::stats();
+    heading(r_, x, y, w, "With everything bought");
+    for (int s = 0; s < static_cast<int>(list.size()); ++s) {
+        std::string a = techdata::formatStat(s, start), b = techdata::formatStat(s, full);
+        bool changed = a != b;
+        text(r_, x, y, list[s].label, 1.5f, changed ? col::dim : col::faint);
+        y += 17;
+        text(r_, x + 16, y, fit(changed ? a + " -> " + b : a + "  (no tech changes this)", 1.25f, w - 16), 1.25f,
+             changed ? col::text : col::faint);
+        y += 21;
+    }
+    const int room = full.patchSize * full.patchSize;
+    std::string note;
+    if (full.maxCrops > room)
+        note = strf("Crops reach %d but the patch only has room for %d, so %d of them never get planted.", full.maxCrops,
+                    room, full.maxCrops - room);
+    else if (full.maxCrops < room)
+        note = strf("The patch has room for %d but only %d crops grow at once, so %d spaces always stay empty.", room,
+                    full.maxCrops, room - full.maxCrops);
+    if (!note.empty()) {
+        y += 4;
+        for (const auto& ln : wrap(note, static_cast<size_t>(w / 12))) {
+            text(r_, x, y, ln, 1.5f, col::accent);
+            y += 20;
+        }
+    }
+    y += 6;
+}
+
+// The list that opens when you click an effect's stat.
+void Editor::drawStatPicker() {
+    const auto& list = techdata::stats();
+    bool valid = pickTech_ >= 0 && pickTech_ < static_cast<int>(techs_.size()) && pickEffect_ >= 0 &&
+                 pickEffect_ < static_cast<int>(techs_[pickTech_].effects.size());
+    if (!valid) {
+        modal_ = Modal::None;
+        return;
+    }
+    const std::string current = techs_[pickTech_].effects[pickEffect_].stat;
+    const float rowH = 52.f;
+    float w = std::min(720.f, winW_ - 40.f);
+    float h = std::min(80.f + rowH * list.size() + 70.f, winH_ - 40.f);
+    float x = (winW_ - w) / 2, y = (winH_ - h) / 2;
+    fillRound(r_, {x - 2, y - 2, w + 4, h + 4}, 14, col::accent);
+    fillRound(r_, {x, y, w, h}, 12, col::panel);
+    text(r_, x + 24, y + 22, "Which stat does this effect change?", 2.f, col::text);
+
+    float ry = y + 64;
+    for (int s = 0; s < static_cast<int>(list.size()); ++s) {
+        SDL_FRect row{x + 16, ry, w - 32, rowH - 6};
+        bool isCurrent = current == list[s].key;
+        bool over = ui_.hovered(row);
+        if (isCurrent || over) fillRound(r_, row, 8, isCurrent ? SDL_Color{70, 56, 30, 255} : SDL_Color{48, 54, 60, 255});
+        text(r_, row.x + 12, row.y + 7, list[s].label, 1.75f, isCurrent ? col::accent : col::text);
+        text(r_, row.x + 12, row.y + 28, fit(list[s].help, 1.25f, row.w - 24), 1.25f, col::dim);
+        if (over && in_.released) {
+            if (!isCurrent) {
+                pushUndo();
+                techs_[pickTech_].effects[pickEffect_].stat = list[s].key;
+            }
+            modal_ = Modal::None;
+            return;
+        }
+        ry += rowH;
+    }
+    if (ui_.button("m_cancel", {x + w - 176, y + h - 60, 160, 44}, "Cancel")) modal_ = Modal::None;
+    if (in_.key(SDLK_ESCAPE)) modal_ = Modal::None;
+}
+
 void Editor::drawModal() {
     fillRect(r_, {0, 0, static_cast<float>(winW_), static_cast<float>(winH_)}, SDL_Color{0, 0, 0, 160});
+    if (modal_ == Modal::StatPicker) return drawStatPicker();
     float w = 560, h = 190, x = (winW_ - w) / 2, y = (winH_ - h) / 2;
     fillRound(r_, {x - 2, y - 2, w + 4, h + 4}, 14, col::accent);
     fillRound(r_, {x, y, w, h}, 12, col::panel);

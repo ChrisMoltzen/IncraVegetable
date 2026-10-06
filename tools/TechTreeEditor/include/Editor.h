@@ -61,6 +61,8 @@ private:
     void drawTechPanel(float x, float& y, float w);
     void drawTreePanel(float x, float& y, float w);
     void drawModal();
+    void drawStatPicker();
+    void drawTreeTotals(float x, float& y, float w);
     void toast(const std::string& msg, bool error = false);
 
     SDL_Window* win_ = nullptr;
@@ -94,6 +96,7 @@ private:
     bool toastError_ = false;
     float toastTime_ = 0.f;
 
-    enum class Modal { None, Quit, Reload };
+    enum class Modal { None, Quit, Reload, StatPicker };
     Modal modal_ = Modal::None;
+    int pickTech_ = -1, pickEffect_ = -1; // the effect whose stat is being chosen
 };
