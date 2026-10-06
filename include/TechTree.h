@@ -1,11 +1,13 @@
-// TechTree.h - the data and rules of the tech tree.
+// TechTree.h - the rules of the tech tree (costs, requirements, buying).
 //
-// Every upgrade is one TechNode. A node changes the game by modifying a
-// Stats struct in its `apply` function. To add a new upgrade:
-//   1. If it needs a new number, add a field to Stats (with its default value).
-//   2. Add one addNode(...) entry in TechTree::TechTree() in TechTree.cpp.
+// The techs themselves are data in include/TechTreeData.h, which you edit with
+// the TechTreeEditor tool (`make editor`, see README). It's compiled into the
+// game, so there are no files to ship. Each tech's effects change the Stats
+// below; to make a brand-new KIND of effect:
+//   1. Add a field to Stats (with its starting value).
+//   2. Add it to the list in TechData.cpp (stats(), getStat, setStat, formatStat)
+//      so the editor and the game know about it.
 //   3. Use the new Stats field wherever the game needs it (usually Farm.cpp).
-// The tech tree screen picks the new node up automatically.
 #pragma once
 
 #include <functional>
