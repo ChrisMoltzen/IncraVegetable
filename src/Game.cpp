@@ -726,7 +726,10 @@ Stats Game::currentStats() const {
     Stats s = tree_.computeStats();
     if (debug_.dayLengthOverride > 0.f) s.dayLength = debug_.dayLengthOverride;
     if (debug_.instantGrow) s.growTime = 0.001f;
-    if (debug_.instantPick) s.pickTime = 0.001f;
+    if (debug_.instantPick) {
+        s.pickTime = 0.001f;
+        s.farmerPickTime = 0.001f;
+    }
     return s;
 }
 
@@ -765,6 +768,8 @@ std::vector<std::string> Game::debugInfo() const {
                                    st.cropTier, st.headStart * 100.f));
         lines.push_back(draw::strf("Auto-pick %.0f%% chance, up to %d crops within %.1f plants", st.autoPickChance,
                                    st.autoPickCount, st.autoPickRadius));
+        lines.push_back(draw::strf("Farmers %d   walk %.2f plants/s   pick %.2fs", st.farmers, st.farmerSpeed,
+                                   st.farmerPickTime));
         if (dayRunning())
             lines.push_back(draw::strf("Today: %.1fs left, %d picked, %.2f coins earned", farm_.timeLeft(),
                                        farm_.pickedToday(), farm_.earnedToday()));

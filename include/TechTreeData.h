@@ -124,7 +124,7 @@ tech autopick
   max 1
   cost 200
   growth 1
-  pos 2 2
+  pos 2.16 2
   requires reach 1
   effect autoPickChance add 10
   effect autoPickCount add 1
@@ -137,7 +137,7 @@ tech autopickchance
   max 10
   cost 150
   growth 1.7
-  pos 1 2
+  pos 1.3 2
   requires autopick 1
   effect autoPickChance add 5
 end
@@ -162,6 +162,50 @@ tech autopickradius
   pos 2.24 3
   requires autopick 1
   effect autoPickRadius add 0.5
+end
+
+tech farmhand
+  name Farmhand
+  desc Hire a farmer who walks the patch picking ripe crops for you. Farmers pick the nearest ripe crop no one else is going for.
+  max 1
+  cost 400
+  growth 1
+  pos -1 2
+  requires growspeed 1
+  effect farmers add 1
+end
+
+tech farmcrew
+  name Farm Crew
+  desc Hire another farmer per level.
+  max 4
+  cost 1200
+  growth 2.4
+  pos -1.5 3
+  requires farmhand 1
+  effect farmers add 1
+end
+
+tech farmerspeed
+  name Comfy Boots
+  desc Farmers walk 20% faster per level.
+  max 8
+  cost 300
+  growth 1.8
+  pos -0.5 3
+  requires farmhand 1
+  effect farmerSpeed percent 20
+end
+
+tech farmerpick
+  name Sharp Shears
+  desc Farmers pick 15% faster per level.
+  max 8
+  cost 350
+  growth 1.85
+  pos -1 4
+  requires farmhand 1
+  effect farmerPickTime multiply 0.85
 end
 
 )TECHTREE",

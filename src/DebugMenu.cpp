@@ -328,6 +328,8 @@ void DebugMenu::buildFarm() {
          draw::strf("Auto-pick %.0f%% chance, up to %d crops within %.1f plants", st.autoPickChance, st.autoPickCount,
                     st.autoPickRadius),
          1.5f);
+    text(kLeft, kTop + 418,
+         draw::strf("Farmers %d   walk %.2f plants/s   pick %.2fs", st.farmers, st.farmerSpeed, st.farmerPickTime), 1.5f);
 }
 
 void DebugMenu::buildTech() {

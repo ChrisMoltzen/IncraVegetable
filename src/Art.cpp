@@ -252,6 +252,13 @@ void draw(SDL_Renderer* r, const std::string& name, const SDL_FRect& dst, Uint8 
     }
 }
 
+void drawFlipped(SDL_Renderer* r, const std::string& name, const SDL_FRect& dst, bool flipX) {
+    SDL_Texture* tex = texture(name);
+    if (!tex) return drawFallback(r, name, dst);
+    if (!flipX) return renderTexture(r, name, tex, dst);
+    SDL_RenderTextureRotated(r, tex, nullptr, &dst, 0.0, nullptr, SDL_FLIP_HORIZONTAL);
+}
+
 void drawFirst(SDL_Renderer* r, std::initializer_list<std::string> names, const SDL_FRect& dst) {
     for (const auto& n : names) {
         if (SDL_Texture* tex = texture(n)) {

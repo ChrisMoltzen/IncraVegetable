@@ -64,6 +64,10 @@ public:
     static void drawBedBuiltin(SDL_Renderer* r, const SDL_FRect& rc, Uint32 seed);
     static void drawPickBarBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool fill);
     static void drawReachBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
+    // pose: 0 standing, 1 and 2 walking steps, 3 picking. Feet at the bottom middle of rc.
+    static void drawFarmerBuiltin(SDL_Renderer* r, const SDL_FRect& rc, int pose);
+
+    int farmerCount() const { return static_cast<int>(farmers_.size()); }
 
     // mouseX/mouseY are in game coordinates (1280x720); mouseInside is false
     // when the mouse has left the window.
@@ -87,6 +91,19 @@ private:
         float wobble = 0.f; // random phase so ripe vegetables don't bob in sync
         float pop = 0.f;    // >0 for a moment after being replanted (sprout pop-in)
     };
+    // A hired farmer walking the patch. Picks the nearest ripe crop nobody
+    // else is going for, walks to it, picks it, and looks for the next one.
+    struct Farmer {
+        float x = 0.f, y = 0.f;  // feet position on screen
+        int target = -1;         // plant it's going for (-1 = none)
+        int targetSpot = -1;     // that plant's spot when chosen (it moves when it regrows)
+        float work = 0.f;        // 0..1 picking progress
+        bool picking = false;    // standing at the plant, picking
+        float wanderX = 0.f, wanderY = 0.f, wait = 0.f; // strolling about when nothing is ripe
+        float step = 0.f;        // walk animation clock
+        bool facingLeft = false;
+        bool walking = false;
+    };
     struct Particle {
         float x, y, vx, vy, life, size;
         SDL_Color color;
@@ -106,13 +123,20 @@ private:
     int plantAt(float x, float y) const;  // nearest plant under the pointer, or -1
     float pickRadius() const;
     bool tileInReach(int index, float mx, float my) const;
-    // autoPicked = picked by the auto-pick ability (these never set off another auto-pick).
-    void harvest(int index, double& coins, std::mt19937& rng, bool autoPicked = false);
+    // Who picked a crop. Only crops you pick yourself can set off an auto-pick.
+    enum class PickedBy { Player, AutoPick, Farmer };
+    void harvest(int index, double& coins, std::mt19937& rng, PickedBy by = PickedBy::Player);
+    void syncFarmers(std::mt19937& rng);  // adds / removes farmers to match stats_.farmers
+    void updateFarmers(float dt, double& coins, std::mt19937& rng);
+    SDL_FPoint farmerStand(int plant) const; // where a farmer stands to pick a plant
+    SDL_FRect farmerRect(const Farmer& f) const;
+    void drawFarmer(SDL_Renderer* r, const Farmer& f) const;
     float autoPickRange() const; // in pixels, centre to centre; 0 = ability not unlocked
     void drawVegetable(SDL_Renderer* r, const Tile& t, float cx, float cy, float size) const;
 
     Stats stats_;
     std::vector<Tile> tiles_;
+    std::vector<Farmer> farmers_;
     std::vector<Particle> particles_;
     std::vector<FloatText> floatTexts_;
     std::vector<Crop> harvests_;

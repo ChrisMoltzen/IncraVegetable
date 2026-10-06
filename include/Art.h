@@ -50,6 +50,10 @@ bool has(const std::string& name);
 // Draws the image, or the built-in fallback if there is no image.
 void draw(SDL_Renderer* r, const std::string& name, const SDL_FRect& dst, Uint8 alpha = 255);
 
+// Like draw(), but mirrored left-to-right when flipX is true (for characters
+// that face the way they walk). The built-in fallback is never mirrored.
+void drawFlipped(SDL_Renderer* r, const std::string& name, const SDL_FRect& dst, bool flipX);
+
 // Draws the first of `names` that has an image; if none do, the fallback of the last.
 void drawFirst(SDL_Renderer* r, std::initializer_list<std::string> names, const SDL_FRect& dst);
 
