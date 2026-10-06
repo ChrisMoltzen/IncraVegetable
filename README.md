@@ -8,27 +8,27 @@ The game ships with built-in art drawn in code, and every picture can be swapped
 
 ## Building on desktop
 
-You need CMake 3.21+ and a C++20 compiler. If SDL3 is installed CMake uses it; if not, CMake downloads and builds SDL3 for you the first time (this takes a few minutes).
+The game builds with the `Makefile` and needs a C++20 compiler and SDL3. Everything goes into `build/`.
 
-**Windows (Visual Studio 2022)**
-
-```
-cmake -S . -B build
-cmake --build build --config Release
-build\Release\IncraVegetable.exe
-```
-
-Or open the folder in Visual Studio ("Open a local folder") and it picks up `CMakeLists.txt` on its own. `SDL3.dll` is copied next to the .exe after each build.
-
-**macOS / Linux**
+**macOS** (clang, with SDL3.framework in `/Library/Frameworks`)
 
 ```
-cmake -S . -B build
-cmake --build build -j
-./build/IncraVegetable
+make                # the game: build/game
+make editor         # the Tech Tree Editor: build/TechTreeEditor
 ```
 
-On Linux, if SDL3 has to be built from source you'll need the usual X11/Wayland and audio (ALSA/PulseAudio/PipeWire) development packages for your distro.
+**Windows** (64-bit MinGW g++ from MSYS2 UCRT64, with the SDL3 *VC* download unzipped to `C:\SDL`, so `C:\SDL\include` and `C:\SDL\lib\x64` exist)
+
+```
+make win            # the game: build\game.exe
+make editor-win     # the Tech Tree Editor: build\TechTreeEditor.exe
+```
+
+- Both copy the 64-bit `SDL3.dll` into `build\` for you, so the .exe runs straight away.
+- The C++ runtime is built into the .exe, so it doesn't need MSYS2's DLLs: you can run it from any Command Prompt, by double-clicking, or on another PC (with `SDL3.dll` next to it).
+- SDL somewhere else? `make win SDL_DIR=D:/libs/SDL3`.
+- `g++ --version` must be 10 or newer (for C++20).
+- Error **0xc000007b** when starting means a 32-bit DLL got loaded. Make sure `build\SDL3.dll` is the one from `lib\x64`, not `lib\x86` (`make win` copies the right one).
 
 ## Building for iPhone and iPad
 
@@ -179,6 +179,8 @@ The tech tree is data, not code. It lives in **`include/TechTreeData.h`**, which
 make editor
 build/TechTreeEditor
 ```
+
+On Windows: `make editor-win`, then `build\TechTreeEditor.exe`.
 
 Run it from the project folder (or pass the path to `TechTreeData.h`). It opens the current tree.
 
