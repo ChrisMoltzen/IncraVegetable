@@ -154,8 +154,14 @@ Save and settings files live in your user data folder:
 | Wide Reach | Pick everything in a circle around the pointer | Quick Hands 3 |
 | Carrots | Plant carrots (4 coins) | Fertile Soil 2 |
 | Pumpkins | Plant pumpkins (15 coins) | Carrots, Prize Produce 3 |
+| Helping Hand | Unlocks auto-pick: picking a crop has a 10% chance to also pick 1 ripe crop within 1.5 plant widths | Wide Reach 1 |
+| Lucky Streak | +5% auto-pick chance per level (up to 60%) | Helping Hand |
+| Bumper Bunch | Auto-pick picks 1 more crop per level (up to 6) | Helping Hand |
+| Spreading Roots | Auto-pick reaches +0.5 plant widths per level (up to 4.5) | Helping Hand |
 
 Nodes stay hidden until one of their prerequisites has been bought, so the tree reveals itself as you play.
+
+**Auto-pick** (Helping Hand and its upgrades): every time you pick a crop yourself, the chance is rolled once. If it succeeds, the nearest ripe crops within the radius are picked too, up to the crop count, with a green sparkle trail and an "Auto-pick!" pop-up. Crops picked this way never set off another auto-pick. The debug screen's *Show plant info* draws the auto-pick range around the plant under the pointer.
 
 ### Designing the tech tree: TechTreeEditor
 
@@ -209,6 +215,9 @@ The stats a tech can change:
 | Reach | Picking radius |
 | Crops | 0 lettuce, 1 + carrots, 2 + pumpkins |
 | Head start | Fraction ripe at dawn |
+| Auto-pick chance | % chance that picking a crop sets off an auto-pick (0 at the start) |
+| Auto-pick crops | How many of the nearest ripe crops an auto-pick picks (0 = off) |
+| Auto-pick radius | How far away counts as nearby, in plant widths, centre to centre (0 = off) |
 
 **A brand-new kind of effect** (one that isn't a stat above) still needs a little code:
 

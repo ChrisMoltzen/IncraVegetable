@@ -41,6 +41,17 @@ std::string num(double v) {
     return buf;
 }
 
+// Floats are written with the fewest digits that read back as the same
+// float, so 0.82 is saved as "0.82" rather than "0.8199999928".
+std::string num(float v) {
+    char buf[64];
+    for (int digits = 6; digits <= 9; ++digits) {
+        std::snprintf(buf, sizeof(buf), "%.*g", digits, static_cast<double>(v));
+        if (std::strtof(buf, nullptr) == v) break;
+    }
+    return buf;
+}
+
 const char* kDelimOpen = "R\"TECHTREE(";
 const char* kDelimClose = ")TECHTREE\"";
 
@@ -61,6 +72,9 @@ const std::vector<StatInfo>& stats() {
         {"reach", "Reach", "Picks everything within this radius of the pointer. Starts at 0 (one plant).", true},
         {"cropTier", "Crops", "Which crops get planted: 0 lettuce, 1 + carrots, 2 + pumpkins.", true},
         {"headStart", "Head start", "Fraction of the bed already ripe when a day starts (0 to 1). Starts at 0.", false},
+        {"autoPickChance", "Auto-pick chance", "% chance that picking a crop also picks ripe crops near it. Starts at 0.", false},
+        {"autoPickCount", "Auto-pick crops", "How many nearby ripe crops an auto-pick picks. Starts at 0 (off).", true},
+        {"autoPickRadius", "Auto-pick radius", "How near counts as nearby for auto-pick, in plant widths. Starts at 0.", false},
     };
     return list;
 }
@@ -83,6 +97,9 @@ float getStat(const Stats& s, int index) {
     case 6: return static_cast<float>(s.reach);
     case 7: return static_cast<float>(s.cropTier);
     case 8: return s.headStart;
+    case 9: return s.autoPickChance;
+    case 10: return static_cast<float>(s.autoPickCount);
+    case 11: return s.autoPickRadius;
     }
     return 0.f;
 }
@@ -98,6 +115,9 @@ void setStat(Stats& s, int index, float v) {
     case 6: s.reach = static_cast<int>(std::lround(v)); break;
     case 7: s.cropTier = static_cast<int>(std::lround(v)); break;
     case 8: s.headStart = v; break;
+    case 9: s.autoPickChance = std::clamp(v, 0.f, 100.f); break;
+    case 10: s.autoPickCount = std::max(0, static_cast<int>(std::lround(v))); break;
+    case 11: s.autoPickRadius = std::max(0.f, v); break;
     }
 }
 
@@ -115,6 +135,10 @@ std::string formatStat(int index, const Stats& s) {
                    : s.cropTier == 1 ? std::string("+ carrots")
                                      : std::string("+ carrots & pumpkins");
     case 8: return fmt("%.0f%% ripe at dawn", std::clamp(v, 0.f, 1.f) * 100.0);
+    case 9: return fmt(std::fabs(v - std::round(v)) < 0.01f ? "%.0f%% auto-pick chance" : "%.1f%% auto-pick chance", v);
+    case 10: return s.autoPickCount <= 0 ? std::string("no auto-pick")
+                   : fmt(s.autoPickCount == 1 ? "auto-picks %.0f crop" : "auto-picks up to %.0f crops", v);
+    case 11: return v <= 0.f ? std::string("auto-pick off") : fmt("auto-pick within %.1f plants", v);
     }
     return "";
 }

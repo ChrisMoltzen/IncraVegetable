@@ -106,7 +106,9 @@ private:
     int plantAt(float x, float y) const;  // nearest plant under the pointer, or -1
     float pickRadius() const;
     bool tileInReach(int index, float mx, float my) const;
-    void harvest(int index, double& coins, std::mt19937& rng);
+    // autoPicked = picked by the auto-pick ability (these never set off another auto-pick).
+    void harvest(int index, double& coins, std::mt19937& rng, bool autoPicked = false);
+    float autoPickRange() const; // in pixels, centre to centre; 0 = ability not unlocked
     void drawVegetable(SDL_Renderer* r, const Tile& t, float cx, float cy, float size) const;
 
     Stats stats_;

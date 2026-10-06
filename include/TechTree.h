@@ -27,6 +27,10 @@ struct Stats {
     int reach = 0;            // 0 = pick only the tile under the mouse; higher = bigger picking circle
     int cropTier = 0;         // 0 = lettuce, 1 = + carrots, 2 = + pumpkins
     float headStart = 0.f;    // fraction of the patch that is already ripe when a day starts
+    // Auto-pick: picking a crop has a chance to also pick ripe crops near it.
+    float autoPickChance = 0.f; // percent chance (0-100) each time you pick a crop
+    int autoPickCount = 0;      // how many nearby ripe crops it picks
+    float autoPickRadius = 0.f; // how far counts as "nearby", in plant widths (centre to centre)
 };
 
 struct Prereq {

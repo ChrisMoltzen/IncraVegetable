@@ -324,6 +324,10 @@ void DebugMenu::buildFarm() {
          draw::strf("Reach %d   Crops tier %d   Head start %d%%   Day %.1fs", st.reach, st.cropTier,
                     static_cast<int>(st.headStart * 100), st.dayLength),
          1.5f);
+    text(kLeft, kTop + 396,
+         draw::strf("Auto-pick %.0f%% chance, up to %d crops within %.1f plants", st.autoPickChance, st.autoPickCount,
+                    st.autoPickRadius),
+         1.5f);
 }
 
 void DebugMenu::buildTech() {
