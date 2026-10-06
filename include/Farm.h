@@ -1,6 +1,6 @@
 // Farm.h - the garden bed and one day of picking.
 //
-// Vegetables are scattered naturally over an oval bed rather than in a grid.
+// Vegetables are scattered naturally over a rectangular bed (not in a grid).
 // Each plant takes up a circle; neighbours may overlap by at most 10% of a
 // plant's width. The number of plants is patchSize x patchSize (9 to 100).
 // The bed has about 25% more spots than plants; when a vegetable is picked,

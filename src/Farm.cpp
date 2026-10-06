@@ -14,21 +14,23 @@ constexpr float kBedCenterY = 398.f;
 constexpr float kMaxBedRX = 590.f;     // the bed never gets wider than 2 x this...
 constexpr float kMaxBedRY = 296.f;     // ...or taller than 2 x this
 constexpr float kMaxPlantPx = 72.f;    // plants never get bigger than this
-constexpr float kBedAspect = 1.6f;     // the bed is an oval 1.6 times wider than tall
+constexpr float kBedAspect = 1.6f;     // the bed is a rectangle 1.6 times wider than tall
 constexpr float kSpreadGap = 1.0f;     // normally plants don't overlap at all...
 constexpr float kMinGap = 0.9f;        // ...and never by more than 10% (centres 0.9 plant-widths apart)
 constexpr float kBedMargin = 0.2f;    // soil around the outermost plants, in plant-widths
 
-// Scatters points inside an ellipse so no two are closer than minDist
-// (Bridson's Poisson-disc sampling). Looks natural, never clumps.
-std::vector<SDL_FPoint> scatterInEllipse(float rx, float ry, float minDist, std::mt19937& g) {
+// Scatters points inside a rectangle (half-width hw, half-height hh) so no
+// two are closer than minDist (Bridson's Poisson-disc sampling). Looks
+// natural rather than grid-like, and never clumps.
+std::vector<SDL_FPoint> scatterInRect(float hw, float hh, float minDist, std::mt19937& g) {
+    const float rx = hw, ry = hh;
     std::uniform_real_distribution<float> u(0.f, 1.f);
     const float cell = minDist / std::sqrt(2.f);
     const int gw = static_cast<int>(std::ceil(2.f * rx / cell)) + 1;
     const int gh = static_cast<int>(std::ceil(2.f * ry / cell)) + 1;
     std::vector<int> grid(static_cast<size_t>(gw) * gh, -1);
     std::vector<SDL_FPoint> pts, active;
-    auto inside = [&](float x, float y) { return (x * x) / (rx * rx) + (y * y) / (ry * ry) <= 1.f; };
+    auto inside = [&](float x, float y) { return std::fabs(x) <= rx && std::fabs(y) <= ry; };
     auto cellOf = [&](float x, float y) {
         return std::pair<int, int>{static_cast<int>((x + rx) / cell), static_cast<int>((y + ry) / cell)};
     };
@@ -88,19 +90,6 @@ const SDL_Color kOrange{240, 130, 30, 255};
 const SDL_Color kOrangeDark{200, 95, 20, 255};
 const SDL_Color kPumpkin{235, 120, 25, 255};
 const SDL_Color kPumpkinDark{190, 85, 15, 255};
-// Outline of the garden bed: an oval with a gently wobbly edge, inside rc.
-std::vector<SDL_FPoint> bedOutline(const SDL_FRect& rc, Uint32 seed, float shrink, float dx = 0.f, float dy = 0.f) {
-    float cx = rc.x + rc.w * 0.5f + dx, cy = rc.y + rc.h * 0.5f + dy;
-    float a = static_cast<float>(seed % 628) / 100.f, b = static_cast<float>((seed / 628) % 628) / 100.f;
-    std::vector<SDL_FPoint> pts;
-    const int n = 96;
-    for (int i = 0; i < n; ++i) {
-        float t = 2.f * kPi * i / n;
-        float k = 0.97f + 0.015f * std::sin(3.f * t + a) + 0.01f * std::sin(5.f * t + b) + 0.004f * std::sin(11.f * t);
-        pts.push_back({cx + std::cos(t) * (rc.w * 0.5f * k - shrink), cy + std::sin(t) * (rc.h * 0.5f * k - shrink)});
-    }
-    return pts;
-}
 } // namespace
 
 const CropInfo& cropInfo(Crop c) { return kCrops[static_cast<int>(c)]; }
@@ -151,17 +140,17 @@ void Farm::plant(Uint32 seed) {
         float area = capacity * 1.1f * L.d * L.d * gap * gap;
         // Scatter a few times and keep the most compact layout.
         for (int tries = 0, found = 0; tries < 80 && found < 6; ++tries) {
-            float ry = std::sqrt(area / (kPi * kBedAspect)), rx = ry * kBedAspect;
-            std::vector<SDL_FPoint> cand = scatterInEllipse(rx, ry, L.d * gap, g);
+            float hh = std::sqrt(area / (4.f * kBedAspect)), hw = hh * kBedAspect;
+            std::vector<SDL_FPoint> cand = scatterInRect(hw, hh, L.d * gap, g);
             if (static_cast<int>(cand.size()) < capacity) {
                 area *= 1.06f; // not enough room yet - grow the bed a little
                 continue;
             }
             ++found;
-            // Keep the ones nearest the middle so the bed stays a tidy oval.
-            std::sort(cand.begin(), cand.end(), [rx, ry](const SDL_FPoint& a, const SDL_FPoint& b) {
-                return a.x * a.x / (rx * rx) + a.y * a.y / (ry * ry) < b.x * b.x / (rx * rx) + b.y * b.y / (ry * ry);
-            });
+            // Keep the ones nearest the middle so the planted area stays a tidy rectangle.
+            auto rectDist = [hw, hh](const SDL_FPoint& p) { return std::max(std::fabs(p.x) / hw, std::fabs(p.y) / hh); };
+            std::sort(cand.begin(), cand.end(),
+                      [&rectDist](const SDL_FPoint& a, const SDL_FPoint& b) { return rectDist(a) < rectDist(b); });
             cand.resize(capacity);
             // Centre the group, then size the bed around it.
             float minX = 1e9f, maxX = -1e9f, minY = 1e9f, maxY = -1e9f;
@@ -172,13 +161,12 @@ void Farm::plant(Uint32 seed) {
             float ox = (minX + maxX) * 0.5f, oy = (minY + maxY) * 0.5f;
             for (auto& p : cand) { p.x -= ox; p.y -= oy; }
             float edge = L.d * (0.5f + kBedMargin);
-            // Smallest oval of the right shape that holds every plant with some soil around it.
-            float need = 0.f;
+            // Smallest rectangle of the right shape that holds every plant with some soil around it.
+            float need = 0.f; // half-width
             for (const auto& p : cand) {
-                float ex = std::fabs(p.x) + edge, ey = std::fabs(p.y) + edge;
-                need = std::max(need, std::sqrt(ex * ex + ey * ey * kBedAspect * kBedAspect));
+                need = std::max({need, std::fabs(p.x) + edge, (std::fabs(p.y) + edge) * kBedAspect});
             }
-            need /= 0.91f; // room for the bed's wobbly edge and rim
+            need /= 0.93f; // room for the bed's rim
             if (need < bedRX) {
                 bedRX = need;
                 L.pts = cand;
@@ -514,24 +502,38 @@ void Farm::drawSoilBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool hovered) {
     draw::fillEllipse(r, cx, cy, rc.w * 0.40f, rc.h * 0.14f, hovered ? kSoilHover : kSoil);
 }
 
-// The garden bed: a lumpy oval of dark soil with a lighter rim.
+// The garden bed: a rectangular raised bed - a wooden frame filled with soil.
 void Farm::drawBedBuiltin(SDL_Renderer* r, const SDL_FRect& rc, Uint32 seed) {
-    float cx = rc.x + rc.w * 0.5f, cy = rc.y + rc.h * 0.5f;
-    auto outline = [&](float shrink) { return bedOutline(rc, seed, shrink); };
+    const SDL_Color wood{150, 105, 60, 255}, woodDark{118, 80, 44, 255}, soil{104, 70, 42, 255};
     float rim = std::max(6.f, std::min(rc.w, rc.h) * 0.045f);
-    draw::fillPolygon(r, cx, cy, outline(0.f), SDL_Color{150, 105, 60, 255});
-    draw::fillPolygon(r, cx, cy, outline(rim), SDL_Color{104, 70, 42, 255});
+    // Frame, with plank seams and corner posts.
+    draw::fillRoundRect(r, rc.x, rc.y, rc.w, rc.h, rim * 0.6f, wood);
+    float plank = std::max(rim * 5.f, 60.f);
+    for (float x = rc.x + plank; x < rc.x + rc.w - rim; x += plank) {
+        draw::fillRect(r, x, rc.y, 2.f, rim, woodDark);
+        draw::fillRect(r, x, rc.y + rc.h - rim, 2.f, rim, woodDark);
+    }
+    for (float y = rc.y + plank; y < rc.y + rc.h - rim; y += plank) {
+        draw::fillRect(r, rc.x, y, rim, 2.f, woodDark);
+        draw::fillRect(r, rc.x + rc.w - rim, y, rim, 2.f, woodDark);
+    }
+    for (float cx : {rc.x, rc.x + rc.w - rim * 1.3f})
+        for (float cy : {rc.y, rc.y + rc.h - rim * 1.3f})
+            draw::fillRoundRect(r, cx, cy, rim * 1.3f, rim * 1.3f, rim * 0.3f, woodDark);
+    // Soil.
+    SDL_FRect in{rc.x + rim, rc.y + rim, rc.w - rim * 2.f, rc.h - rim * 2.f};
+    draw::fillRect(r, in.x, in.y, in.w, in.h, soil);
+    draw::fillRect(r, in.x, in.y, in.w, std::max(2.f, rim * 0.35f), SDL_Color{80, 52, 30, 255}); // shadow under the top plank
     // A scattering of darker clods for texture.
     Uint32 g = seed * 2654435761u + 1u;
     auto rnd = [&g] {
         g = g * 1664525u + 1013904223u;
         return static_cast<float>(g >> 8) / static_cast<float>(1u << 24);
     };
-    int clods = static_cast<int>(rc.w * rc.h / 900.f);
+    int clods = static_cast<int>(in.w * in.h / 900.f);
     for (int i = 0; i < clods; ++i) {
-        float t = rnd() * 2.f * kPi, d = std::sqrt(rnd()) * 0.85f;
-        float x = cx + std::cos(t) * d * (rc.w * 0.5f - rim * 2), y = cy + std::sin(t) * d * (rc.h * 0.5f - rim * 2);
         float s = 1.5f + rnd() * 2.5f;
+        float x = in.x + s * 2.f + rnd() * (in.w - s * 4.f), y = in.y + s * 2.f + rnd() * (in.h - s * 4.f);
         draw::fillEllipse(r, x, y, s * 1.6f, s, i % 3 ? kSoilDark : SDL_Color{126, 86, 54, 255}, 10);
     }
 }
@@ -587,7 +589,7 @@ void Farm::render(SDL_Renderer* r) const {
     if (art::has("farm/bed")) {
         art::draw(r, "farm/bed", bed);
     } else {
-        draw::fillPolygon(r, bedX_ + 4.f, bedY_ + 8.f, bedOutline(bed, seed_, 0.f, 4.f, 8.f), SDL_Color{0, 0, 0, 55});
+        draw::fillRoundRect(r, bed.x + 4.f, bed.y + 8.f, bed.w, bed.h, 8.f, SDL_Color{0, 0, 0, 55}); // shadow
         drawBedBuiltin(r, bed, seed_);
     }
 

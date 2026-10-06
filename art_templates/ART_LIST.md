@@ -11,7 +11,7 @@ is brightened or darkened automatically.
 |---|---|---|---|
 | `farm/background.png` | 1280 x 720 |  | Everything behind the vegetable patch while farming |
 | `farm/hud_bar.png` | 1280 x 72 |  | Strip along the top of the farm screen (title, timer, coins sit on it) |
-| `farm/bed.png` | 640 x 400 |  | The garden bed the vegetables grow in. Stretched to fit, always 1.6x wider than tall. Plants sit inside the middle ~85%, so leave a border of soil or edging around them |
+| `farm/bed.png` | 640 x 400 |  | The rectangular garden bed the vegetables grow in. Stretched to fit, always 1.6x wider than tall. Plants sit inside the middle ~90%, so leave a border of soil or edging around them |
 | `farm/soil.png` | 128 x 128 |  | Mound of soil under each vegetable (sits in the lower part of the plant's square) |
 | `farm/soil_hover.png` | 128 x 128 |  | Mound under the plant the pointer is on (optional) |
 | `crops/lettuce.png` | 128 x 128 |  | Ripe Lettuce, filling the square one plant takes up (neighbours may overlap it by up to 10%) |

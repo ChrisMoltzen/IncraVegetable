@@ -117,8 +117,8 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
     add({"farm/hud_bar", 1280, 72, "Strip along the top of the farm screen (title, timer, coins sit on it)", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { draw::fillRect(r, rc.x, rc.y, rc.w, rc.h, SDL_Color{20, 28, 18, 210}); }});
     add({"farm/bed", 640, 400,
-         "The garden bed the vegetables grow in. Stretched to fit, always 1.6x wider than tall. Plants sit inside the "
-         "middle ~85%, so leave a border of soil or edging around them",
+         "The rectangular garden bed the vegetables grow in. Stretched to fit, always 1.6x wider than tall. Plants "
+         "sit inside the middle ~90%, so leave a border of soil or edging around them",
          false, [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawBedBuiltin(r, rc, 1234u); }});
     add({"farm/soil", 128, 128, "Mound of soil under each vegetable (sits in the lower part of the plant's square)", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawSoilBuiltin(r, rc, false); }});
