@@ -759,7 +759,7 @@ std::vector<std::string> Game::debugInfo() const {
         lines.push_back(draw::strf("Slot %d   Day %d   Coins %.2f   Lifetime %.2f", currentSlot_ + 1, day_, coins_,
                                    lifetimeCoins_));
         Stats st = currentStats();
-        lines.push_back(draw::strf("Plants %d   Day %.1fs   Grow %.3fs   Pick %.3fs", st.patchSize * st.patchSize,
+        lines.push_back(draw::strf("Crops %d of %d (patch room %d)   Day %.1fs   Grow %.3fs   Pick %.3fs", Farm::plantCount(st), st.maxCrops, st.patchSize * st.patchSize,
                                    st.dayLength, st.growTime, st.pickTime));
         lines.push_back(draw::strf("Value x%.2f   Reach %d   Crop tier %d   Head start %.0f%%", st.valueMult, st.reach,
                                    st.cropTier, st.headStart * 100.f));

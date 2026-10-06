@@ -94,10 +94,15 @@ const SDL_Color kPumpkinDark{190, 85, 15, 255};
 
 const CropInfo& cropInfo(Crop c) { return kCrops[static_cast<int>(c)]; }
 
+int Farm::plantCount(const Stats& stats) {
+    int room = std::max(1, stats.patchSize) * std::max(1, stats.patchSize);
+    return std::clamp(stats.maxCrops, 1, room);
+}
+
 void Farm::startDay(const Stats& stats, std::mt19937& rng) {
     stats_ = stats;
     n_ = std::max(1, stats.patchSize);
-    tiles_.assign(n_ * n_, Tile{});
+    tiles_.assign(plantCount(stats), Tile{});
     plant(static_cast<Uint32>(rng()));
 
     std::uniform_real_distribution<float> unit(0.f, 1.f);
@@ -121,9 +126,12 @@ void Farm::startDay(const Stats& stats, std::mt19937& rng) {
 void Farm::plant(Uint32 seed) {
     seed_ = seed;
     const int count = static_cast<int>(tiles_.size());
-    // Lay out ~25% more spots than plants. The spare ones are the gaps a
+    // The bed's size comes from the patch size, not from how many crops are
+    // growing, so buying more crops fills the same bed up. Lay out ~25% more
+    // spots than the patch has room for: the spare ones are the gaps a
     // vegetable can move to when it regrows.
-    const int capacity = count + std::max(2, (count + 3) / 4);
+    const int room = n_ * n_;
+    const int capacity = room + std::max(2, (room + 3) / 4);
 
     struct Layout {
         std::vector<SDL_FPoint> pts;
@@ -255,11 +263,14 @@ bool Farm::restore(const std::vector<std::string>& lines, const Stats& stats) {
     if (!head || key != "farm" || n != stats.patchSize) return false;
     Uint32 seed = 1;
     if (!(head >> seed)) seed = 1; // saves from before the garden layout have no seed
-    if (static_cast<int>(lines.size()) != 1 + n * n) return false;
+    // One tile line per growing vegetable. If the number of crops changed
+    // since the save (e.g. the tech tree was rebalanced), start a fresh day.
+    const int count = static_cast<int>(lines.size()) - 1;
+    if (count != plantCount(stats)) return false;
 
-    std::vector<Tile> tiles(n * n);
-    std::vector<int> savedSpots(n * n, -1);
-    for (int i = 0; i < n * n; ++i) {
+    std::vector<Tile> tiles(count);
+    std::vector<int> savedSpots(count, -1);
+    for (int i = 0; i < count; ++i) {
         std::istringstream ss(lines[1 + i]);
         int crop = 0;
         ss >> key >> crop >> tiles[i].growth >> tiles[i].pick;
@@ -286,7 +297,7 @@ bool Farm::restore(const std::vector<std::string>& lines, const Stats& stats) {
         taken[s] = 1;
     }
     if (valid) {
-        for (int i = 0; i < n * n; ++i) placeOn(i, savedSpots[i]);
+        for (int i = 0; i < count; ++i) placeOn(i, savedSpots[i]);
         sortDrawOrder();
     }
     particles_.clear();
@@ -315,6 +326,20 @@ void Farm::applyStats(const Stats& stats, std::mt19937& rng) {
         for (int i = 0; i < 3; ++i) pickedByCrop_[i] = byCrop[i];
     } else {
         stats_ = stats;
+        // More (or fewer) crops at once: sprout new ones in empty spots, or pull some up.
+        const int want = plantCount(stats);
+        std::uniform_real_distribution<float> unit(0.f, 1.f);
+        while (static_cast<int>(tiles_.size()) > want) tiles_.pop_back();
+        while (static_cast<int>(tiles_.size()) < want) {
+            Tile t;
+            t.crop = randomCrop(rng);
+            t.wobble = unit(rng) * 6.28f;
+            t.pop = 1.f;
+            tiles_.push_back(t);
+            moveToFreeSpot(static_cast<int>(tiles_.size()) - 1, rng);
+        }
+        if (hovered_ >= static_cast<int>(tiles_.size())) hovered_ = -1;
+        sortDrawOrder();
         // Crops that are no longer unlocked get replanted.
         for (auto& t : tiles_) {
             if (static_cast<int>(t.crop) > stats.cropTier) {
