@@ -113,6 +113,8 @@ void Farm::startDay(const Stats& stats, std::mt19937& rng) {
         if (unit(rng) < stats.headStart) t.growth = 1.f;
         t.wobble = unit(rng) * 6.28f;
     }
+    farmers_.clear();
+    syncFarmers(rng);
     particles_.clear();
     floatTexts_.clear();
     harvests_.clear();
@@ -300,6 +302,9 @@ bool Farm::restore(const std::vector<std::string>& lines, const Stats& stats) {
         for (int i = 0; i < count; ++i) placeOn(i, savedSpots[i]);
         sortDrawOrder();
     }
+    farmers_.clear(); // farmers aren't saved: they start again from the edge of the bed
+    std::mt19937 frng(seed);
+    syncFarmers(frng);
     particles_.clear();
     floatTexts_.clear();
     harvests_.clear();
@@ -340,6 +345,9 @@ void Farm::applyStats(const Stats& stats, std::mt19937& rng) {
         }
         if (hovered_ >= static_cast<int>(tiles_.size())) hovered_ = -1;
         sortDrawOrder();
+        for (auto& f : farmers_)
+            if (f.target >= static_cast<int>(tiles_.size())) f.target = -1;
+        syncFarmers(rng);
         // Crops that are no longer unlocked get replanted.
         for (auto& t : tiles_) {
             if (static_cast<int>(t.crop) > stats.cropTier) {
@@ -430,6 +438,9 @@ void Farm::update(float dt, float mouseX, float mouseY, bool mouseInside, double
                 t.pick = std::max(0.f, t.pick - dt * 1.5f);
             }
         }
+        updateFarmers(dt, coins, rng);
+    } else {
+        for (auto& f : farmers_) f.walking = f.picking = false; // day over: everyone stops
     }
 
     for (auto& p : particles_) {
@@ -447,12 +458,140 @@ void Farm::update(float dt, float mouseX, float mouseY, bool mouseInside, double
     std::erase_if(floatTexts_, [](const FloatText& f) { return f.life <= 0.f; });
 }
 
+// ---------------------------------------------------------------------------
+// Farmers
+// ---------------------------------------------------------------------------
+
+void Farm::syncFarmers(std::mt19937& rng) {
+    const int want = std::clamp(stats_.farmers, 0, 50);
+    std::uniform_real_distribution<float> unit(0.f, 1.f);
+    while (static_cast<int>(farmers_.size()) > want) farmers_.pop_back();
+    while (static_cast<int>(farmers_.size()) < want) {
+        // New farmers walk in from the front edge of the bed.
+        Farmer f;
+        f.x = bedX_ + (unit(rng) * 1.6f - 0.8f) * bedRX_;
+        f.y = bedY_ + bedRY_ * 0.82f;
+        f.facingLeft = unit(rng) < 0.5f;
+        f.wait = unit(rng) * 0.5f;
+        farmers_.push_back(f);
+    }
+}
+
+SDL_FPoint Farm::farmerStand(int plant) const {
+    // Just in front of the plant, so the farmer is drawn over it while picking.
+    return {tiles_[plant].x, tiles_[plant].y + plantSize_ * 0.3f};
+}
+
+void Farm::updateFarmers(float dt, double& coins, std::mt19937& rng) {
+    if (farmers_.empty()) return;
+    std::uniform_real_distribution<float> unit(0.f, 1.f);
+    const float speed = std::max(0.1f, stats_.farmerSpeed) * plantSize_; // pixels per second
+    const float minX = bedX_ - bedRX_ * 0.9f, maxX = bedX_ + bedRX_ * 0.9f;
+    const float minY = bedY_ - bedRY_ * 0.8f, maxY = bedY_ + bedRY_ * 0.9f;
+
+    // Walks f towards (tx, ty) at `pace`. Returns true once it's there.
+    auto walkTo = [&](Farmer& f, float tx, float ty, float pace) {
+        float dx = tx - f.x, dy = ty - f.y, dist = std::sqrt(dx * dx + dy * dy);
+        float move = pace * dt;
+        if (std::fabs(dx) > 0.5f) f.facingLeft = dx < 0.f;
+        if (dist <= move || dist < 0.5f) {
+            f.x = tx;
+            f.y = ty;
+            f.walking = false;
+            return true;
+        }
+        f.x += dx / dist * move;
+        f.y += dy / dist * move;
+        f.step += move / (plantSize_ * 0.45f); // one stride per ~half a plant
+        f.walking = true;
+        return false;
+    };
+
+    for (size_t k = 0; k < farmers_.size(); ++k) {
+        Farmer& f = farmers_[k];
+        // Drop the target if it was picked (by you or anyone) or isn't ripe any more.
+        if (f.target >= 0 && (f.target >= static_cast<int>(tiles_.size()) || tiles_[f.target].spot != f.targetSpot ||
+                              tiles_[f.target].growth < 1.f)) {
+            f.target = -1;
+            f.picking = false;
+            f.work = 0.f;
+        }
+        // Look for the nearest ripe plant no other farmer is going for.
+        if (f.target < 0) {
+            float best = 1e30f;
+            for (int i = 0; i < static_cast<int>(tiles_.size()); ++i) {
+                if (tiles_[i].growth < 1.f) continue;
+                bool taken = false;
+                for (size_t o = 0; o < farmers_.size() && !taken; ++o) taken = o != k && farmers_[o].target == i;
+                if (taken) continue;
+                SDL_FPoint p = farmerStand(i);
+                float d = (p.x - f.x) * (p.x - f.x) + (p.y - f.y) * (p.y - f.y);
+                if (d < best) {
+                    best = d;
+                    f.target = i;
+                }
+            }
+            if (f.target >= 0) f.targetSpot = tiles_[f.target].spot;
+        }
+
+        if (f.target >= 0) {
+            SDL_FPoint p = farmerStand(f.target);
+            if (!f.picking && walkTo(f, p.x, p.y, speed)) {
+                f.picking = true;
+                f.work = 0.f;
+            }
+            if (f.picking) {
+                f.walking = false;
+                const CropInfo& info = cropInfo(tiles_[f.target].crop);
+                f.work += dt / (std::max(0.001f, stats_.farmerPickTime) * info.pickMult);
+                if (f.work >= 1.f) {
+                    int t = f.target;
+                    f.target = -1;
+                    f.picking = false;
+                    f.work = 0.f;
+                    harvest(t, coins, rng, PickedBy::Farmer);
+                }
+            }
+        } else {
+            // Nothing ripe: stroll about the bed, pausing now and then.
+            f.picking = false;
+            if (f.wait > 0.f) {
+                f.wait -= dt;
+                f.walking = false;
+            } else if (walkTo(f, f.wanderX, f.wanderY, speed * 0.4f)) {
+                f.wanderX = minX + unit(rng) * (maxX - minX);
+                f.wanderY = minY + unit(rng) * (maxY - minY);
+                f.wait = 0.6f + unit(rng) * 1.4f;
+            }
+        }
+        f.x = std::clamp(f.x, bedX_ - bedRX_, bedX_ + bedRX_);
+        f.y = std::clamp(f.y, bedY_ - bedRY_, bedY_ + bedRY_);
+    }
+}
+
+SDL_FRect Farm::farmerRect(const Farmer& f) const {
+    float size = plantSize_ * 1.35f;
+    float bob = f.walking ? std::fabs(std::sin(f.step * kPi)) * size * 0.04f : 0.f;
+    return {f.x - size * 0.5f, f.y - size * 0.92f - bob, size, size}; // feet a little above the bottom edge
+}
+
+void Farm::drawFarmer(SDL_Renderer* r, const Farmer& f) const {
+    // Pose: picking, a walking step, or standing. Images fall back to farm/farmer,
+    // then to the built-in drawing.
+    int pose = f.picking ? 3 : (f.walking ? (std::fmod(f.step, 2.f) < 1.f ? 1 : 2) : 0);
+    static const char* kNames[4] = {"farm/farmer", "farm/farmer_walk1", "farm/farmer_walk2", "farm/farmer_pick"};
+    SDL_FRect rc = farmerRect(f);
+    if (art::has(kNames[pose])) art::drawFlipped(r, kNames[pose], rc, f.facingLeft);
+    else if (art::has("farm/farmer")) art::drawFlipped(r, "farm/farmer", rc, f.facingLeft);
+    else drawFarmerBuiltin(r, rc, pose);
+}
+
 float Farm::autoPickRange() const {
     if (stats_.autoPickChance <= 0.f || stats_.autoPickCount <= 0 || stats_.autoPickRadius <= 0.f) return 0.f;
     return stats_.autoPickRadius * plantSize_;
 }
 
-void Farm::harvest(int index, double& coins, std::mt19937& rng, bool autoPicked) {
+void Farm::harvest(int index, double& coins, std::mt19937& rng, PickedBy by) {
     Tile& t = tiles_[index];
     const CropInfo& info = cropInfo(t.crop);
     double gain = info.value * stats_.valueMult;
@@ -474,12 +613,14 @@ void Farm::harvest(int index, double& coins, std::mt19937& rng, bool autoPicked)
                               k % 3 == 0 ? SDL_Color{255, 225, 90, 255} : burst});
     }
     floatTexts_.push_back({cx, cy - plantSize_ * 0.3f, 1.0f, "+" + draw::number(gain),
-                           autoPicked ? SDL_Color{150, 240, 140, 255} : SDL_Color{255, 230, 90, 255}});
+                           by == PickedBy::AutoPick ? SDL_Color{150, 240, 140, 255}
+                           : by == PickedBy::Farmer ? SDL_Color{190, 220, 255, 255}
+                                                    : SDL_Color{255, 230, 90, 255}});
 
     // Auto-pick: a chance to also pick the nearest ripe crops within range.
     std::vector<int> extra;
     const float range = autoPickRange();
-    if (!autoPicked && range > 0.f && unit(rng) * 100.f < stats_.autoPickChance) {
+    if (by == PickedBy::Player && range > 0.f && unit(rng) * 100.f < stats_.autoPickChance) {
         std::vector<std::pair<float, int>> near;
         for (int j = 0; j < static_cast<int>(tiles_.size()); ++j) {
             if (j == index || tiles_[j].growth < 1.f) continue;
@@ -506,7 +647,7 @@ void Farm::harvest(int index, double& coins, std::mt19937& rng, bool autoPicked)
             particles_.push_back({cx + (tx - cx) * f, cy + (ty - cy) * f, (unit(rng) - 0.5f) * 30.f, -40.f - unit(rng) * 40.f,
                                   0.35f + 0.04f * k, 2.5f, SDL_Color{170, 255, 150, 255}});
         }
-        harvest(j, coins, rng, true);
+        harvest(j, coins, rng, PickedBy::AutoPick);
     }
 }
 
@@ -652,20 +793,33 @@ void Farm::render(SDL_Renderer* r) const {
 
     // Plants, back to front so nearer ones overlap the ones behind.
     bool active = mouseInside_ && timeLeft_ > 0.f;
+    // Farmers are drawn in between, by how far down the screen their feet
+    // are, so they walk behind plants further down and in front of the rest.
+    std::vector<int> farmerOrder(farmers_.size());
+    for (size_t k = 0; k < farmers_.size(); ++k) farmerOrder[k] = static_cast<int>(k);
+    std::sort(farmerOrder.begin(), farmerOrder.end(), [this](int a, int b) { return farmers_[a].y < farmers_[b].y; });
+    size_t nextFarmer = 0;
     for (int i : drawOrder_) {
         const Tile& t = tiles_[i];
+        while (nextFarmer < farmerOrder.size() && farmers_[farmerOrder[nextFarmer]].y < t.y + plantSize_ * 0.25f)
+            drawFarmer(r, farmers_[farmerOrder[nextFarmer++]]);
         art::drawVariant(r, "farm/soil", active && i == hovered_ ? "_hover" : "", plantRect(i));
         drawVegetable(r, t, t.x, t.y, plantSize_);
     }
+    while (nextFarmer < farmerOrder.size()) drawFarmer(r, farmers_[farmerOrder[nextFarmer++]]);
 
     // Picking bars on top of everything else in the bed.
+    std::vector<float> farmerWork(tiles_.size(), 0.f);
+    for (const auto& f : farmers_)
+        if (f.picking && f.target >= 0 && f.target < static_cast<int>(tiles_.size())) farmerWork[f.target] = f.work;
     for (int i : drawOrder_) {
         const Tile& t = tiles_[i];
-        if (t.growth < 1.f || t.pick <= 0.01f) continue;
+        const float progress = std::max(t.pick, farmerWork[i]);
+        if (t.growth < 1.f || progress <= 0.01f) continue;
         float bw = plantSize_ * 0.7f, bh = std::max(4.f, plantSize_ * 0.08f);
         float bx = t.x - bw * 0.5f, by = t.y + plantSize_ * 0.36f;
         art::draw(r, "ui/pick_bar_back", SDL_FRect{bx - 1, by - 1, bw + 2, bh + 2});
-        float f = std::min(1.f, t.pick);
+        float f = std::min(1.f, progress);
         if (!art::drawFill(r, "ui/pick_bar_fill", SDL_FRect{bx, by, bw, bh}, f))
             drawPickBarBuiltin(r, SDL_FRect{bx, by, bw * f, bh}, true);
     }
@@ -710,4 +864,61 @@ void Farm::render(SDL_Renderer* r) const {
         Uint8 a = static_cast<Uint8>(255.f * std::clamp(f.life, 0.f, 1.f));
         draw::textShadow(r, f.x, f.y, f.text, 2.f, draw::withAlpha(f.color, a), draw::Align::Center);
     }
+}
+
+// A farmer in a straw hat, red shirt and blue overalls, drawn in a 128x128
+// box scaled to rc. pose: 0 standing, 1 / 2 walking steps, 3 bending to pick.
+void Farm::drawFarmerBuiltin(SDL_Renderer* r, const SDL_FRect& rc, int pose) {
+    const float u = rc.w / 128.f;
+    auto X = [&](float v) { return rc.x + v * u; };
+    auto Y = [&](float v) { return rc.y + v * (rc.h / 128.f); };
+    const SDL_Color skin{240, 198, 156, 255}, shirt{200, 70, 58, 255}, shirtDark{165, 52, 44, 255};
+    const SDL_Color denim{62, 102, 170, 255}, denimDark{46, 78, 135, 255}, boot{92, 60, 36, 255};
+    const SDL_Color straw{236, 200, 112, 255}, strawDark{205, 165, 80, 255}, band{180, 60, 50, 255};
+    const float c = pose == 3 ? 10.f : 0.f;                        // crouch
+    const float lift1 = pose == 1 ? 5.f : 0.f, lift2 = pose == 2 ? 5.f : 0.f; // which foot is up
+    const float swing = pose == 1 ? 5.f : (pose == 2 ? -5.f : 0.f); // arm swing
+
+    draw::fillEllipse(r, X(64), Y(118), 28 * u, 6 * u, SDL_Color{0, 0, 0, 70});
+    // Legs and boots.
+    draw::fillRect(r, X(49), Y(96 + c * 0.5f - lift1), 12 * u, (18 - c * 0.5f) * u, denimDark);
+    draw::fillRect(r, X(67), Y(96 + c * 0.5f - lift2), 12 * u, (18 - c * 0.5f) * u, denimDark);
+    draw::fillRoundRect(r, X(46), Y(110 - lift1), 17 * u, 9 * u, 3 * u, boot);
+    draw::fillRoundRect(r, X(65), Y(110 - lift2), 17 * u, 9 * u, 3 * u, boot);
+    // Shirt, arms and hands.
+    draw::fillRoundRect(r, X(40), Y(58 + c), 48 * u, 30 * u, 10 * u, shirt);
+    if (pose == 3) {
+        // Reaching down in front.
+        draw::fillRoundRect(r, X(40), Y(70 + c), 12 * u, 26 * u, 5 * u, shirtDark);
+        draw::fillRoundRect(r, X(76), Y(70 + c), 12 * u, 26 * u, 5 * u, shirtDark);
+        draw::fillCircle(r, X(48), Y(100 + c), 6 * u, skin);
+        draw::fillCircle(r, X(80), Y(100 + c), 6 * u, skin);
+    } else {
+        draw::fillRoundRect(r, X(31), Y(62 + swing), 11 * u, 26 * u, 5 * u, shirtDark);
+        draw::fillRoundRect(r, X(86), Y(62 - swing), 11 * u, 26 * u, 5 * u, shirtDark);
+        draw::fillCircle(r, X(36.5f), Y(91 + swing), 6 * u, skin);
+        draw::fillCircle(r, X(91.5f), Y(91 - swing), 6 * u, skin);
+    }
+    // Overalls: trousers, bib and straps.
+    draw::fillRoundRect(r, X(44), Y(80 + c), 40 * u, (20 - c * 0.5f) * u, 6 * u, denim);
+    draw::fillRoundRect(r, X(50), Y(66 + c), 28 * u, 20 * u, 4 * u, denim);
+    draw::fillRect(r, X(50), Y(58 + c), 5 * u, 10 * u, denim);
+    draw::fillRect(r, X(73), Y(58 + c), 5 * u, 10 * u, denim);
+    draw::fillCircle(r, X(55), Y(70 + c), 2 * u, straw);
+    draw::fillCircle(r, X(73), Y(70 + c), 2 * u, straw);
+    // Head.
+    draw::fillCircle(r, X(64), Y(45 + c), 15 * u, skin);
+    if (pose == 3) {
+        draw::fillRect(r, X(57), Y(50 + c), 4 * u, 2 * u, SDL_Color{60, 40, 30, 255}); // looking down
+        draw::fillRect(r, X(67), Y(50 + c), 4 * u, 2 * u, SDL_Color{60, 40, 30, 255});
+    } else {
+        draw::fillCircle(r, X(58), Y(46 + c), 2 * u, SDL_Color{50, 35, 25, 255});
+        draw::fillCircle(r, X(70), Y(46 + c), 2 * u, SDL_Color{50, 35, 25, 255});
+        draw::fillRect(r, X(60), Y(53 + c), 8 * u, 2 * u, SDL_Color{170, 90, 70, 255});
+    }
+    // Straw hat.
+    draw::fillEllipse(r, X(64), Y(35 + c), 30 * u, 7 * u, strawDark);
+    draw::fillEllipse(r, X(64), Y(33 + c), 29 * u, 6 * u, straw);
+    draw::fillRoundRect(r, X(49), Y(17 + c), 30 * u, 17 * u, 7 * u, straw);
+    draw::fillRect(r, X(49), Y(28 + c), 30 * u, 4 * u, band);
 }

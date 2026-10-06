@@ -76,6 +76,7 @@ What you can replace:
 
 - **Crops**: ripe lettuce, carrot and pumpkin, a growing sprout (one shared, or one per crop)
 - **Farm**: background, the garden bed, the soil mound under each plant (and under the pointer), top bar
+- **Farmers**: `farm/farmer` (standing), plus optional `farm/farmer_walk1` / `farm/farmer_walk2` (walking steps) and `farm/farmer_pick` (bending to pick). Only `farm/farmer` is needed: missing poses use it, bobbing as it walks
 - **Effects**: pick particles, the Wide Reach circle
 - **HUD**: logo, coin, day timer bar, picking bar, pause and debug buttons
 - **Menus**: main menu background and logo, save-slot screen background, pop-up panel, summary header, volume sliders
@@ -89,6 +90,7 @@ Things to know:
 - Buttons, panels, upgrade boxes and the tooltip are **9-slice**: their corners keep their shape and the middle stretches, so one image fits every size. You can set the corner size in `assets/art.txt`.
 - Making pixel art? Put `filter nearest` in `assets/art.txt` so it stays crisp.
 - Draw `fx/particle` and `ui/font` in white; the game colours them.
+- Draw the farmer **facing right** with its feet at the bottom middle (about 8% up from the bottom edge). The game mirrors it when a farmer walks left.
 - If a file's name doesn't match anything (a typo), the game ignores it and the debug screen's Info tab (F1) lists it.
 - Changed something and want fresh templates? Run `IncraVegetable --export-art-templates` (optionally followed by a folder name) to rewrite them.
 - The `assets/` folder is copied next to the executable when you build, and packed into the app on iOS.
@@ -158,10 +160,16 @@ Save and settings files live in your user data folder:
 | Lucky Streak | +5% auto-pick chance per level (up to 60%) | Helping Hand |
 | Bumper Bunch | Auto-pick picks 1 more crop per level (up to 6) | Helping Hand |
 | Spreading Roots | Auto-pick reaches +0.5 plant widths per level (up to 4.5) | Helping Hand |
+| Farmhand | Hires a farmer who walks the patch picking ripe crops | Fertile Soil 1 |
+| Farm Crew | +1 farmer per level (up to 5) | Farmhand |
+| Comfy Boots | Farmers walk 20% faster per level | Farmhand |
+| Sharp Shears | Farmers pick 15% faster per level | Farmhand |
 
 Nodes stay hidden until one of their prerequisites has been bought, so the tree reveals itself as you play.
 
 **Auto-pick** (Helping Hand and its upgrades): every time you pick a crop yourself, the chance is rolled once. If it succeeds, the nearest ripe crops within the radius are picked too, up to the crop count, with a green sparkle trail and an "Auto-pick!" pop-up. Crops picked this way never set off another auto-pick. The debug screen's *Show plant info* draws the auto-pick range around the plant under the pointer.
+
+**Farmers** (Farmhand and its upgrades): each farmer heads for the nearest ripe crop that no other farmer is going for, walks to it, picks it and moves on. With nothing ripe they wander about the bed. If you pick their crop first, they simply find another. Crops farmers pick don't set off auto-pick. They start each day at the front of the bed, and stop when the day ends.
 
 ### Designing the tech tree: TechTreeEditor
 
@@ -218,6 +226,9 @@ The stats a tech can change:
 | Auto-pick chance | % chance that picking a crop sets off an auto-pick (0 at the start) |
 | Auto-pick crops | How many of the nearest ripe crops an auto-pick picks (0 = off) |
 | Auto-pick radius | How far away counts as nearby, in plant widths, centre to centre (0 = off) |
+| Farmers | Helpers picking crops on their own (0 at the start) |
+| Farmer speed | How fast farmers walk, in plant widths per second (starts at 2) |
+| Farmer pick time | Seconds for a farmer to pick a lettuce; other crops take longer, as they do for you (starts at 1.5) |
 
 **A brand-new kind of effect** (one that isn't a stat above) still needs a little code:
 

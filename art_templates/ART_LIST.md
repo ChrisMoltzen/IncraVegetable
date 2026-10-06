@@ -21,6 +21,10 @@ is brightened or darkened automatically.
 | `crops/lettuce_sprout.png` | 128 x 128 |  | Growing Lettuce (optional - otherwise crops/sprout is used) |
 | `crops/carrot_sprout.png` | 128 x 128 |  | Growing Carrot (optional - otherwise crops/sprout is used) |
 | `crops/pumpkin_sprout.png` | 128 x 128 |  | Growing Pumpkin (optional - otherwise crops/sprout is used) |
+| `farm/farmer.png` | 128 x 128 |  | Hired farmer, standing. Feet at the bottom middle, about 8% up from the bottom edge. Draw it facing RIGHT: it's mirrored when the farmer walks left. |
+| `farm/farmer_walk1.png` | 128 x 128 |  | Farmer walking, first step (optional - else farm/farmer bobs). Feet at the bottom middle, about 8% up from the bottom edge. Draw it facing RIGHT: it's mirrored when the farmer walks left. |
+| `farm/farmer_walk2.png` | 128 x 128 |  | Farmer walking, second step (optional). Feet at the bottom middle, about 8% up from the bottom edge. Draw it facing RIGHT: it's mirrored when the farmer walks left. |
+| `farm/farmer_pick.png` | 128 x 128 |  | Farmer bending down to pick a crop (optional). Feet at the bottom middle, about 8% up from the bottom edge. Draw it facing RIGHT: it's mirrored when the farmer walks left. |
 | `fx/particle.png` | 32 x 32 |  | Burst particle when a vegetable is picked. Draw it WHITE: the game tints it to the crop's colour |
 | `fx/reach_circle.png` | 256 x 256 |  | Picking area around the pointer (Wide Reach upgrade). Usually see-through |
 | `ui/hud_logo.png` | 336 x 30 |  | Game name in the top-left of the farm screen |
@@ -66,6 +70,7 @@ is brightened or darkened automatically.
 | `tree/node_locked.png` | 236 x 78 | yes | Upgrade whose requirements aren't met |
 | `tree/node_maxed.png` | 236 x 78 | yes | Fully upgraded |
 | `tree/icons/patch.png` | 64 x 64 |  | Icon for the 'Bigger Patch' upgrade (optional - shown on the left of its box) |
+| `tree/icons/seeds.png` | 64 x 64 |  | Icon for the 'More Seeds' upgrade (optional - shown on the left of its box) |
 | `tree/icons/daylength.png` | 64 x 64 |  | Icon for the 'Longer Days' upgrade (optional - shown on the left of its box) |
 | `tree/icons/pickspeed.png` | 64 x 64 |  | Icon for the 'Quick Hands' upgrade (optional - shown on the left of its box) |
 | `tree/icons/headstart.png` | 64 x 64 |  | Icon for the 'Head Start' upgrade (optional - shown on the left of its box) |
@@ -74,3 +79,11 @@ is brightened or darkened automatically.
 | `tree/icons/reach.png` | 64 x 64 |  | Icon for the 'Wide Reach' upgrade (optional - shown on the left of its box) |
 | `tree/icons/carrots.png` | 64 x 64 |  | Icon for the 'Carrots' upgrade (optional - shown on the left of its box) |
 | `tree/icons/pumpkins.png` | 64 x 64 |  | Icon for the 'Pumpkins' upgrade (optional - shown on the left of its box) |
+| `tree/icons/autopick.png` | 64 x 64 |  | Icon for the 'Helping Hand' upgrade (optional - shown on the left of its box) |
+| `tree/icons/autopickchance.png` | 64 x 64 |  | Icon for the 'Lucky Streak' upgrade (optional - shown on the left of its box) |
+| `tree/icons/autopickcount.png` | 64 x 64 |  | Icon for the 'Bumper Bunch' upgrade (optional - shown on the left of its box) |
+| `tree/icons/autopickradius.png` | 64 x 64 |  | Icon for the 'Spreading Roots' upgrade (optional - shown on the left of its box) |
+| `tree/icons/farmhand.png` | 64 x 64 |  | Icon for the 'Farmhand' upgrade (optional - shown on the left of its box) |
+| `tree/icons/farmcrew.png` | 64 x 64 |  | Icon for the 'Farm Crew' upgrade (optional - shown on the left of its box) |
+| `tree/icons/farmerspeed.png` | 64 x 64 |  | Icon for the 'Comfy Boots' upgrade (optional - shown on the left of its box) |
+| `tree/icons/farmerpick.png` | 64 x 64 |  | Icon for the 'Sharp Shears' upgrade (optional - shown on the left of its box) |

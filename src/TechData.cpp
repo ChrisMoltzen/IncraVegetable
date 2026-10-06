@@ -75,6 +75,9 @@ const std::vector<StatInfo>& stats() {
         {"autoPickChance", "Auto-pick chance", "% chance that picking a crop also picks ripe crops near it. Starts at 0.", false},
         {"autoPickCount", "Auto-pick crops", "How many nearby ripe crops an auto-pick picks. Starts at 0 (off).", true},
         {"autoPickRadius", "Auto-pick radius", "How near counts as nearby for auto-pick, in plant widths. Starts at 0.", false},
+        {"farmers", "Farmers", "Helpers walking the patch and picking ripe crops. Starts at 0.", true},
+        {"farmerSpeed", "Farmer speed", "How fast farmers walk, in plant widths per second. Starts at 2.", false},
+        {"farmerPickTime", "Farmer pick time", "Seconds for a farmer to pick a lettuce (others take longer). Starts at 1.5.", false},
     };
     return list;
 }
@@ -100,6 +103,9 @@ float getStat(const Stats& s, int index) {
     case 9: return s.autoPickChance;
     case 10: return static_cast<float>(s.autoPickCount);
     case 11: return s.autoPickRadius;
+    case 12: return static_cast<float>(s.farmers);
+    case 13: return s.farmerSpeed;
+    case 14: return s.farmerPickTime;
     }
     return 0.f;
 }
@@ -118,6 +124,9 @@ void setStat(Stats& s, int index, float v) {
     case 9: s.autoPickChance = std::clamp(v, 0.f, 100.f); break;
     case 10: s.autoPickCount = std::max(0, static_cast<int>(std::lround(v))); break;
     case 11: s.autoPickRadius = std::max(0.f, v); break;
+    case 12: s.farmers = std::clamp(static_cast<int>(std::lround(v)), 0, 50); break;
+    case 13: s.farmerSpeed = std::max(0.1f, v); break;
+    case 14: s.farmerPickTime = std::max(0.001f, v); break;
     }
 }
 
@@ -139,6 +148,9 @@ std::string formatStat(int index, const Stats& s) {
     case 10: return s.autoPickCount <= 0 ? std::string("no auto-pick")
                    : fmt(s.autoPickCount == 1 ? "auto-picks %.0f crop" : "auto-picks up to %.0f crops", v);
     case 11: return v <= 0.f ? std::string("auto-pick off") : fmt("auto-pick within %.1f plants", v);
+    case 12: return s.farmers <= 0 ? std::string("no farmers") : fmt(s.farmers == 1 ? "%.0f farmer" : "%.0f farmers", v);
+    case 13: return fmt("farmers walk %.2f plants/s", v);
+    case 14: return fmt("farmers pick in %.2fs", v);
     }
     return "";
 }

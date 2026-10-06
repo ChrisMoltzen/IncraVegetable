@@ -146,6 +146,17 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
     }
 
     // ---------------- Effects ----------------
+    // Farmers (Hired Hand upgrade). Only farm/farmer is needed; the others are optional poses.
+    const char* farmerSize = " Feet at the bottom middle, about 8% up from the bottom edge. Draw it facing RIGHT: "
+                             "it's mirrored when the farmer walks left.";
+    add({"farm/farmer", 128, 128, std::string("Hired farmer, standing.") + farmerSize, false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawFarmerBuiltin(r, rc, 0); }});
+    add({"farm/farmer_walk1", 128, 128, std::string("Farmer walking, first step (optional - else farm/farmer bobs).") + farmerSize,
+         false, [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawFarmerBuiltin(r, rc, 1); }});
+    add({"farm/farmer_walk2", 128, 128, std::string("Farmer walking, second step (optional).") + farmerSize, false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawFarmerBuiltin(r, rc, 2); }});
+    add({"farm/farmer_pick", 128, 128, std::string("Farmer bending down to pick a crop (optional).") + farmerSize, false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawFarmerBuiltin(r, rc, 3); }});
     add({"fx/particle", 32, 32, "Burst particle when a vegetable is picked. Draw it WHITE: the game tints it to the crop's colour",
          false, [](SDL_Renderer* r, const SDL_FRect& rc) {
              draw::fillCircle(r, rc.x + rc.w * 0.5f, rc.y + rc.h * 0.5f, rc.w * 0.45f, SDL_Color{255, 255, 255, 255});

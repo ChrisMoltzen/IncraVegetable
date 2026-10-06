@@ -31,6 +31,10 @@ struct Stats {
     float autoPickChance = 0.f; // percent chance (0-100) each time you pick a crop
     int autoPickCount = 0;      // how many nearby ripe crops it picks
     float autoPickRadius = 0.f; // how far counts as "nearby", in plant widths (centre to centre)
+    // Farmers: helpers that walk around the patch picking ripe crops.
+    int farmers = 0;            // how many are working the patch
+    float farmerSpeed = 2.0f;   // walking speed, in plant widths per second
+    float farmerPickTime = 1.5f; // seconds for a farmer to pick a lettuce (other crops take longer, as for you)
 };
 
 struct Prereq {
