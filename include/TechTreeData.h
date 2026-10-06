@@ -48,7 +48,7 @@ tech pickspeed
   cost 8
   growth 1.7
   pos 1 0
-  effect pickTime multiply 0.8199999928
+  effect pickTime multiply 0.82
 end
 
 tech headstart
@@ -59,7 +59,7 @@ tech headstart
   growth 2
   pos -1 1
   requires daylength 2
-  effect headStart add 0.200000003
+  effect headStart add 0.2
 end
 
 tech growspeed
@@ -70,7 +70,7 @@ tech growspeed
   growth 1.8
   pos 0 1
   requires patch 1
-  effect growTime multiply 0.8799999952
+  effect growTime multiply 0.88
 end
 
 tech value
@@ -116,6 +116,52 @@ tech pumpkins
   requires carrots 1
   requires value 3
   effect cropTier atleast 2
+end
+
+tech autopick
+  name Helping Hand
+  desc Sometimes picking a crop also picks a ripe one next to it: 10% chance, 1 crop, within 1.5 plant widths.
+  max 1
+  cost 200
+  growth 1
+  pos 2 2
+  requires reach 1
+  effect autoPickChance add 10
+  effect autoPickCount add 1
+  effect autoPickRadius add 1.5
+end
+
+tech autopickchance
+  name Lucky Streak
+  desc Helping Hand happens more often: +5% chance per level.
+  max 10
+  cost 150
+  growth 1.7
+  pos 1 2
+  requires autopick 1
+  effect autoPickChance add 5
+end
+
+tech autopickcount
+  name Bumper Bunch
+  desc Helping Hand picks one more nearby crop per level.
+  max 5
+  cost 250
+  growth 2.2
+  pos 1.37 3
+  requires autopick 1
+  effect autoPickCount add 1
+end
+
+tech autopickradius
+  name Spreading Roots
+  desc Helping Hand reaches further: +0.5 plant widths per level.
+  max 6
+  cost 180
+  growth 1.9
+  pos 2.24 3
+  requires autopick 1
+  effect autoPickRadius add 0.5
 end
 
 )TECHTREE",

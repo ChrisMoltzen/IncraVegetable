@@ -1007,22 +1007,32 @@ void Editor::drawStatPicker() {
         return;
     }
     const std::string current = techs_[pickTech_].effects[pickEffect_].stat;
-    const float rowH = 52.f;
-    float w = std::min(720.f, winW_ - 40.f);
-    float h = std::min(80.f + rowH * list.size() + 70.f, winH_ - 40.f);
+    const float colW = 640.f;
+    float rowH = 52.f;
+    const int n = static_cast<int>(list.size());
+    // One column if it fits the window, otherwise two side by side; in a
+    // small window the rows get shorter (and drop their help line) instead.
+    int cols = (80.f + rowH * n + 70.f <= winH_ - 40.f || winW_ < colW * 2 + 72.f) ? 1 : 2;
+    int perCol = (n + cols - 1) / cols;
+    rowH = std::clamp((winH_ - 40.f - 150.f) / perCol, 30.f, 52.f);
+    const bool showHelp = rowH >= 46.f;
+    float w = std::min(cols == 1 ? 720.f : colW * 2 + 32.f, winW_ - 40.f);
+    float h = std::min(80.f + rowH * perCol + 70.f, winH_ - 40.f);
     float x = (winW_ - w) / 2, y = (winH_ - h) / 2;
+    float cw = (w - 32.f) / cols;
     fillRound(r_, {x - 2, y - 2, w + 4, h + 4}, 14, col::accent);
     fillRound(r_, {x, y, w, h}, 12, col::panel);
     text(r_, x + 24, y + 22, "Which stat does this effect change?", 2.f, col::text);
 
-    float ry = y + 64;
-    for (int s = 0; s < static_cast<int>(list.size()); ++s) {
-        SDL_FRect row{x + 16, ry, w - 32, rowH - 6};
+    for (int s = 0; s < n; ++s) {
+        int c = s / perCol;
+        SDL_FRect row{x + 16 + c * cw, y + 64 + rowH * (s % perCol), cw - (cols > 1 ? 8.f : 0.f), rowH - 6};
         bool isCurrent = current == list[s].key;
         bool over = ui_.hovered(row);
         if (isCurrent || over) fillRound(r_, row, 8, isCurrent ? SDL_Color{70, 56, 30, 255} : SDL_Color{48, 54, 60, 255});
-        text(r_, row.x + 12, row.y + 7, list[s].label, 1.75f, isCurrent ? col::accent : col::text);
-        text(r_, row.x + 12, row.y + 28, fit(list[s].help, 1.25f, row.w - 24), 1.25f, col::dim);
+        text(r_, row.x + 12, row.y + (showHelp ? 7.f : (row.h - 14.f) / 2), list[s].label, 1.75f,
+             isCurrent ? col::accent : col::text);
+        if (showHelp) text(r_, row.x + 12, row.y + 28, fit(list[s].help, 1.25f, row.w - 24), 1.25f, col::dim);
         if (over && in_.released) {
             if (!isCurrent) {
                 pushUndo();
@@ -1031,7 +1041,6 @@ void Editor::drawStatPicker() {
             modal_ = Modal::None;
             return;
         }
-        ry += rowH;
     }
     if (ui_.button("m_cancel", {x + w - 176, y + h - 60, 160, 44}, "Cancel")) modal_ = Modal::None;
     if (in_.key(SDLK_ESCAPE)) modal_ = Modal::None;

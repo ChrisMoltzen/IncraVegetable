@@ -447,7 +447,12 @@ void Farm::update(float dt, float mouseX, float mouseY, bool mouseInside, double
     std::erase_if(floatTexts_, [](const FloatText& f) { return f.life <= 0.f; });
 }
 
-void Farm::harvest(int index, double& coins, std::mt19937& rng) {
+float Farm::autoPickRange() const {
+    if (stats_.autoPickChance <= 0.f || stats_.autoPickCount <= 0 || stats_.autoPickRadius <= 0.f) return 0.f;
+    return stats_.autoPickRadius * plantSize_;
+}
+
+void Farm::harvest(int index, double& coins, std::mt19937& rng, bool autoPicked) {
     Tile& t = tiles_[index];
     const CropInfo& info = cropInfo(t.crop);
     double gain = info.value * stats_.valueMult;
@@ -468,7 +473,23 @@ void Farm::harvest(int index, double& coins, std::mt19937& rng) {
                               0.4f + unit(rng) * 0.4f, 2.f + unit(rng) * 3.f,
                               k % 3 == 0 ? SDL_Color{255, 225, 90, 255} : burst});
     }
-    floatTexts_.push_back({cx, cy - plantSize_ * 0.3f, 1.0f, "+" + draw::number(gain), SDL_Color{255, 230, 90, 255}});
+    floatTexts_.push_back({cx, cy - plantSize_ * 0.3f, 1.0f, "+" + draw::number(gain),
+                           autoPicked ? SDL_Color{150, 240, 140, 255} : SDL_Color{255, 230, 90, 255}});
+
+    // Auto-pick: a chance to also pick the nearest ripe crops within range.
+    std::vector<int> extra;
+    const float range = autoPickRange();
+    if (!autoPicked && range > 0.f && unit(rng) * 100.f < stats_.autoPickChance) {
+        std::vector<std::pair<float, int>> near;
+        for (int j = 0; j < static_cast<int>(tiles_.size()); ++j) {
+            if (j == index || tiles_[j].growth < 1.f) continue;
+            float dx = tiles_[j].x - cx, dy = tiles_[j].y - cy, d2 = dx * dx + dy * dy;
+            if (d2 <= range * range) near.push_back({d2, j});
+        }
+        std::sort(near.begin(), near.end());
+        for (int k = 0; k < static_cast<int>(near.size()) && k < stats_.autoPickCount; ++k) extra.push_back(near[k].second);
+        if (!extra.empty()) floatTexts_.push_back({cx, cy - plantSize_ * 0.75f, 1.1f, "Auto-pick!", SDL_Color{150, 240, 140, 255}});
+    }
 
     // Replant straight away, in a new random spot.
     t.crop = randomCrop(rng);
@@ -476,6 +497,17 @@ void Farm::harvest(int index, double& coins, std::mt19937& rng) {
     t.pick = 0.f;
     t.pop = 1.f;
     moveToFreeSpot(index, rng);
+
+    for (int j : extra) {
+        // A trail of sparkles from the crop you picked to each one it picked for you.
+        float tx = tiles_[j].x, ty = tiles_[j].y;
+        for (int k = 1; k <= 8; ++k) {
+            float f = k / 9.f;
+            particles_.push_back({cx + (tx - cx) * f, cy + (ty - cy) * f, (unit(rng) - 0.5f) * 30.f, -40.f - unit(rng) * 40.f,
+                                  0.35f + 0.04f * k, 2.5f, SDL_Color{170, 255, 150, 255}});
+        }
+        harvest(j, coins, rng, true);
+    }
 }
 
 const char* cropArtName(Crop c) {
@@ -662,6 +694,10 @@ void Farm::render(SDL_Renderer* r) const {
         draw::outlineRect(r, bed.x, bed.y, bed.w, bed.h, SDL_Color{255, 255, 0, 120});
         float rad = pickRadius();
         if (rad > 0.f && mouseInside_) draw::circleOutline(r, mouseX_, mouseY_, rad, SDL_Color{0, 255, 255, 200});
+        // Auto-pick range around the plant under the pointer.
+        float ap = autoPickRange();
+        if (ap > 0.f && hovered_ >= 0)
+            draw::circleOutline(r, tiles_[hovered_].x, tiles_[hovered_].y, ap, SDL_Color{150, 255, 140, 200});
     }
 
     for (const auto& p : particles_) {

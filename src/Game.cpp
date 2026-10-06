@@ -763,6 +763,8 @@ std::vector<std::string> Game::debugInfo() const {
                                    st.dayLength, st.growTime, st.pickTime));
         lines.push_back(draw::strf("Value x%.2f   Reach %d   Crop tier %d   Head start %.0f%%", st.valueMult, st.reach,
                                    st.cropTier, st.headStart * 100.f));
+        lines.push_back(draw::strf("Auto-pick %.0f%% chance, up to %d crops within %.1f plants", st.autoPickChance,
+                                   st.autoPickCount, st.autoPickRadius));
         if (dayRunning())
             lines.push_back(draw::strf("Today: %.1fs left, %d picked, %.2f coins earned", farm_.timeLeft(),
                                        farm_.pickedToday(), farm_.earnedToday()));
