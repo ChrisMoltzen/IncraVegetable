@@ -1,0 +1,22 @@
+# Build output (the Makefile builds into build/; keep the folder itself)
+build/*
+!build/.gitkeep
+build-*/
+!build-ios.sh
+cmake-build-*/
+out/
+
+# Editors / IDEs
+.vs/
+.vscode/
+.idea/
+*.xcuserstate
+xcuserdata/
+
+# macOS / Windows clutter
+.DS_Store
+Thumbs.db
+
+# Game saves accidentally made in the project folder
+*.sav
+*.sav.bak
