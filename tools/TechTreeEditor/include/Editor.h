@@ -3,7 +3,7 @@
 #pragma once
 
 #include "TechData.h"
-#include "Ui.h"
+#include "EditorUi.h"
 
 #include <SDL3/SDL.h>
 #include <string>

@@ -1,4 +1,4 @@
-#include "Ui.h"
+#include "EditorUi.h"
 
 #include <algorithm>
 #include <cmath>
