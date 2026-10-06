@@ -1,0 +1,20 @@
+# IncraVegetable art settings. Lines starting with # are ignored.
+
+# How images are scaled:
+#   linear  = smooth (painted / hand-drawn art)
+#   nearest = crisp, blocky pixels (pixel art)
+filter linear
+
+# You can also set it for one image:
+# filter crops/lettuce nearest
+
+# 9-slice images (buttons, panels, tree nodes, tooltip, patch frame) keep
+# their corners and stretch the middle. By default the corner is a quarter
+# of the image's smaller side. Set it yourself (in pixels of your image),
+# and optionally how big corners appear on screen (1 = actual size):
+# slice ui/panel 48
+# slice ui/button_primary 24 0.5
+
+# The main menu draws rows of vegetables drifting across its background.
+# Turn them off if your menu/background already has a field in it:
+menu_crop_rows on
