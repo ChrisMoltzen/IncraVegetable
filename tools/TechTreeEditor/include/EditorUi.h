@@ -1,4 +1,4 @@
-// Ui.h - a small immediate-mode UI (buttons and text fields) for the editor.
+// EditorUi.h - a small immediate-mode UI (buttons and text fields) for the editor.
 //
 // Every frame the editor calls button()/textField() for what's on screen;
 // the Ui works out hover, clicks and typing. Text fields only change the
