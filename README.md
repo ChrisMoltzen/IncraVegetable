@@ -179,7 +179,8 @@ Run it from the project folder (or pass the path to `TechTreeData.h`). It opens 
   - **Max level**, **Cost** of level 1, and **Cost growth** (each level costs this many times the last).
   - **Position** in columns and rows.
   - **Requirements:** which techs, at which level. A tech's box stays hidden in the game until one of these has been bought.
-  - **Effects:** click the first button to choose a stat, the second to choose how it changes (Shift+click goes backwards), then type the amount. Each effect shows in words what it does at level 1 and at max level.
+  - **Effects:** click the first button to pick a stat from a list (each with a line saying what it does), the second to choose how it changes (Shift+click goes backwards), then type the amount. Each effect shows in words what it does at level 1 and at max level.
+  - With nothing selected, the panel shows **With everything bought**: every stat at the start and with the whole tree bought. It also warns when *Crops at once* and the patch's room don't match up (crops can never be more than the patch has room for).
   - **Preview:** the cost of every level and what the tech gives at each level.
   - **Problems:** missing requirements, loops that make techs impossible to buy, duplicate ids, techs on the same spot, techs with no effects.
 - **Keys:** Ctrl+S save, Ctrl+Z / Ctrl+Y undo / redo, Ctrl+D duplicate, Delete removes the selected tech, arrow keys nudge it. On a Mac, Cmd works too.
