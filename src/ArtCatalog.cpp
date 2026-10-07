@@ -178,12 +178,12 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
 
     // ---------------- Buttons, panels, sliders ----------------
     addButtonStyle(ui::Style::Primary, "Main orange button (New Game, Start Day...)");
-    addButtonStyle(ui::Style::Secondary, "Green button (Continue, Resume, Tech Tree...)");
+    addButtonStyle(ui::Style::Secondary, "Green button (Continue, Resume, The Barn...)");
     addButtonStyle(ui::Style::Danger, "Red button (Overwrite, Quit Game...)");
     addButtonStyle(ui::Style::Ghost, "Grey button (Settings, Back...)");
     add({"ui/panel", 256, 256, "Pop-up box behind menus (pause, settings, day summary, confirm)", true, ui::drawPanelBuiltin});
     add({"ui/panel_header", 560, 70, "Coloured title strip at the top of the day summary", false, drawPanelHeaderBuiltin});
-    add({"ui/tooltip", 128, 128, "Box behind tech tree upgrade descriptions", true, TechTreeScreen::drawTooltipBuiltin});
+    add({"ui/tooltip", 128, 128, "Box behind upgrade descriptions in The Barn", true, TechTreeScreen::drawTooltipBuiltin});
     add({"ui/slider_track", 300, 14, "Empty volume slider", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { SettingsMenu::drawSliderBarBuiltin(r, rc, false); }});
     add({"ui/slider_fill", 300, 14, "Full volume slider (cropped to the volume)", false,
@@ -202,9 +202,9 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          SlotMenu::drawBackgroundBuiltin});
 
     // ---------------- Tech tree ----------------
-    add({"tree/background", 1280, 720, "Tech tree background", false,
+    add({"tree/background", 1280, 720, "Background of The Barn (tech tree)", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { TechTreeScreen::drawBackgroundBuiltin(r, rc, 0.f, 0.f); }});
-    add({"tree/header_bar", 1280, 64, "Strip along the top of the tech tree", false, TechTreeScreen::drawHeaderBuiltin});
+    add({"tree/header_bar", 1280, 64, "Strip along the top of The Barn (tech tree)", false, TechTreeScreen::drawHeaderBuiltin});
     addNodeStyle("tree/node", {44, 50, 56, 255}, {120, 128, 135, 255}, "Upgrade you can't afford yet");
     addNodeStyle("tree/node_affordable", {32, 72, 38, 255}, {130, 220, 120, 255}, "Upgrade you can buy now");
     addNodeStyle("tree/node_locked", {32, 33, 37, 255}, {70, 72, 78, 255}, "Upgrade whose requirements aren't met");

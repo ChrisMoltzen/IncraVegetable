@@ -13,6 +13,7 @@
 #include <set>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace techdata {
 
@@ -440,6 +441,7 @@ const std::vector<BuiltinIcon>& builtinIcons() {
         {"pumpkins", "Pumpkin"},      {"autopick", "Sparkle"},       {"autopickchance", "Clover"},
         {"autopickcount", "Bunch"},   {"autopickradius", "Ring"},    {"farmhand", "Farmer"},
         {"farmcrew", "Two farmers"},  {"farmerspeed", "Boot"},       {"farmerpick", "Shears"},
+        {"barn", "Barn"},
     };
     return list;
 }
@@ -468,6 +470,10 @@ std::vector<Problem> findProblems(const std::vector<TechDef>& techs) {
         if (!index.emplace(techs[i].id, i).second)
             found.push_back({techs[i].id, "id '" + techs[i].id + "' is used more than once"});
     }
+    std::unordered_set<std::string> needed; // ids some other tech requires
+    for (const auto& t : techs)
+        for (const auto& q : t.needs)
+            if (q.id != t.id) needed.insert(q.id);
     // Techs at each spot, to spot overlaps without comparing every pair.
     std::map<std::pair<float, float>, std::vector<int>> spots;
     for (int i = 0; i < n; ++i) spots[{techs[i].gridX, techs[i].gridY}].push_back(i);
@@ -487,7 +493,8 @@ std::vector<Problem> findProblems(const std::vector<TechDef>& techs) {
         if (t.maxLevel < 1) add("max level must be at least 1");
         if (t.baseCost < 0) add("cost can't be negative");
         if (t.costGrowth <= 0) add("cost growth must be more than 0");
-        if (t.effects.empty()) add("has no effects (buying it does nothing)");
+        // A tech with no effects is fine when it unlocks other techs (like The Barn).
+        if (t.effects.empty() && !needed.count(id)) add("has no effects (buying it does nothing)");
         for (const auto& e : t.effects) {
             if (statIndex(e.stat) < 0) add("unknown stat '" + e.stat + "'");
             if (e.op == Op::Multiply && e.amount <= 0) add("multiply amount must be more than 0");

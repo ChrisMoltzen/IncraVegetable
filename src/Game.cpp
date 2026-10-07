@@ -162,6 +162,21 @@ bool Game::loadGame(int slot) {
     }
     day_ = std::max(1, day_);
     coins_ = std::max(0.0, coins_);
+    // A tech added in front of others (like The Barn) counts as bought in saves
+    // that already own the techs behind it.
+    for (bool changed = true; changed;) {
+        changed = false;
+        for (const auto& n : tree_.nodes()) {
+            if (n.level <= 0) continue;
+            for (const auto& p : n.prereqs) {
+                TechNode* need = tree_.find(p.id);
+                if (need && need->level < std::min(p.level, need->maxLevel)) {
+                    need->level = std::min(p.level, need->maxLevel);
+                    changed = true;
+                }
+            }
+        }
+    }
 
     currentSlot_ = slot;
     settings_.lastSlot = slot;
@@ -759,7 +774,7 @@ void Game::renderSummary() {
     bool over = ready && !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, summaryButton_);
     ui::Button b;
     b.rect = summaryButton_;
-    b.label = "Tech Tree >";
+    b.label = "The Barn >";
     b.style = ui::Style::Secondary;
     b.enabled = ready;
     ui::drawButton(renderer_, b, over, false);
@@ -794,7 +809,7 @@ const char* Game::stateName(State s) const {
     case State::Settings: return "Settings";
     case State::Farming: return "Farming";
     case State::DaySummary: return "Day summary";
-    case State::TechTree: return "Tech tree";
+    case State::TechTree: return "The Barn";
     case State::Paused: return "Paused";
     }
     return "?";

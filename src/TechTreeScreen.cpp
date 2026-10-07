@@ -348,7 +348,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
 
     // Header.
     art::draw(r, "tree/header_bar", SDL_FRect{0, 0, 1280, 64});
-    draw::textShadow(r, 24, 18, "TECH TREE", 3.f, kWhite);
+    draw::textShadow(r, 24, 18, "THE BARN", 3.f, kWhite);
     std::string coinText = draw::number(coins) + " coins";
     float coinX = 1192.f - draw::textWidth(coinText, 3.f);
     ui::drawCoin(r, coinX - 22, 32, 12);
@@ -406,6 +406,20 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
         if (!maxed) lines.push_back({"Next: " + n.describeStats(tree.computeStatsWith(n, n.level + 1)), 1.5f, kGreen});
         if (n.maxLevel > 1 && n.level + 1 < n.maxLevel)
             lines.push_back({"At max: " + n.describeStats(tree.computeStatsWith(n, n.maxLevel)), 1.5f, kGrey});
+    }
+    if (!n.describeStats) {
+        // A tech that only unlocks others: say which.
+        std::string names;
+        for (const auto& o : tree.nodes())
+            for (const auto& p : o.prereqs)
+                if (p.id == n.id) names += (names.empty() ? "" : ", ") + o.name;
+        if (!names.empty()) {
+            bool first = true;
+            for (const auto& w : draw::wrap("Unlocks: " + names, 36)) {
+                lines.push_back({(first ? "" : "  ") + w, 1.5f, SDL_Color{190, 220, 255, 255}});
+                first = false;
+            }
+        }
     }
     for (const auto& p : n.prereqs) {
         const TechNode* other = tree.find(p.id);
@@ -529,7 +543,25 @@ void TechTreeScreen::drawIconBuiltin(SDL_Renderer* r, const SDL_FRect& rc, const
         }
     };
 
-    if (id == "patch") {
+    if (id == "barn") {
+        // A red barn: gable roof, white trim, big cross-braced doors, a hayloft window.
+        const SDL_Color barnRed{176, 62, 50, 255}, roof{120, 48, 40, 255}, trim{236, 228, 214, 255};
+        draw::fillRect(r, X(4), Y(56), 56 * u, 4 * u, SDL_Color{90, 140, 70, 255});           // grass
+        draw::fillTriangle(r, {X(32), Y(6)}, {X(4), Y(28)}, {X(60), Y(28)}, roof);           // roof
+        draw::fillTriangle(r, {X(32), Y(11)}, {X(10), Y(28)}, {X(54), Y(28)}, barnRed);      // gable
+        draw::fillRect(r, X(10), Y(28), 44 * u, 29 * u, barnRed);                           // walls
+        draw::thickLine(r, X(32), Y(6), X(4), Y(28), 2.5f * u, trim);
+        draw::thickLine(r, X(32), Y(6), X(60), Y(28), 2.5f * u, trim);
+        draw::fillRect(r, X(27), Y(16), 10 * u, 8 * u, trim);                               // hayloft
+        draw::fillRect(r, X(29), Y(18), 6 * u, 4 * u, SDL_Color{70, 40, 30, 255});
+        draw::fillRect(r, X(20), Y(34), 24 * u, 23 * u, trim);                              // doors
+        draw::fillRect(r, X(22), Y(36), 9 * u, 21 * u, barnRed);
+        draw::fillRect(r, X(33), Y(36), 9 * u, 21 * u, barnRed);
+        draw::thickLine(r, X(22), Y(36), X(31), Y(57), 2.f * u, trim);
+        draw::thickLine(r, X(31), Y(36), X(22), Y(57), 2.f * u, trim);
+        draw::thickLine(r, X(33), Y(36), X(42), Y(57), 2.f * u, trim);
+        draw::thickLine(r, X(42), Y(36), X(33), Y(57), 2.f * u, trim);
+    } else if (id == "patch") {
         draw::fillRoundRect(r, X(6), Y(14), 52 * u, 38 * u, 6 * u, wood);
         draw::fillRoundRect(r, X(10), Y(18), 44 * u, 30 * u, 4 * u, soil);
         for (int k = 0; k < 4; ++k) Farm::drawSproutBuiltin(r, R(12.f + (k % 2) * 22.f, 18.f + (k / 2) * 14.f, 18, 16));
