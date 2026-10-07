@@ -17,6 +17,9 @@
 //     growth 2.1                    <- each level costs this many times more than the last
 //     pos 0 0                       <- column and row on the tech tree screen (halves allowed)
 //     icon seeds                    <- optional: which icon to show (default: the tech's own id)
+//     shape circle                  <- optional tile shape: square (default), circle, triangle, pentagon
+//     color 47613f                  <- optional tile colour once it's unlocked (hex)
+//     lockedcolor 2e3530            <- optional tile colour while it's locked (hex)
 //     requires daylength 2          <- needs "daylength" at level 2 (any number of these lines)
 //     effect patchSize add 1        <- stat, operation, amount (any number of these lines)
 //   end
@@ -95,6 +98,9 @@ struct TechDef {
     double costGrowth = 1.5;
     float gridX = 0.f, gridY = 0.f;
     std::string icon; // icon name; empty = the tech's id. Art: assets/tree/icons/<name>.png
+    std::string shape;       // tile shape; empty = square
+    std::string color;       // tile colour when unlocked (hex); empty = the usual colours
+    std::string lockedColor; // tile colour while locked (hex); empty = the usual dark grey
     std::vector<Requirement> needs; // ("requires" is a C++20 keyword)
     std::vector<Effect> effects;
 };

@@ -24,6 +24,9 @@ TechTree::TechTree() {
         n.name = def.name;
         n.description = def.description;
         n.icon = techdata::iconOf(def);
+        n.shape = def.shape;
+        n.color = def.color;
+        n.lockedColor = def.lockedColor;
         n.maxLevel = std::max(1, def.maxLevel);
         n.baseCost = def.baseCost;
         n.costGrowth = def.costGrowth;

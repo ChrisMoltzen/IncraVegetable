@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "CropLooks.h"
+#include "TileShapes.h"
 #include "Draw.h"
 #include "Farm.h"
 #include "UI.h"
@@ -192,30 +193,39 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         }
         if (i == hovered) border = kWhite;
 
+        // The tech's own shape and colours (set in the editor). The frame
+        // colour still shows its state: pulsing green = can buy, gold = maxed.
+        const std::string shape = n.shape.empty() ? std::string("square") : n.shape;
+        const bool locked = !unlocked && !maxed;
+        SDL_Color custom;
+        bool customFill = tileshape::parseHex(locked ? n.lockedColor : n.color, custom);
+        if (customFill) fill = custom;
+
         SDL_FRect outer{rc.x - 3, rc.y - 3, rc.w + 6, rc.h + 6};
-        if (art::has(artName)) {
-            art::drawVariant(r, artName, i == hovered ? "_hover" : "", outer);
+        if (shape == "square" && !customFill && art::has(artName)) {
+            art::drawVariant(r, artName, i == hovered ? "_hover" : "", outer); // your tile art (square, usual colours)
         } else {
-            draw::fillRoundRect(r, rc.x + 3, rc.y + 5, rc.w, rc.h, 14, SDL_Color{0, 0, 0, 90});
-            drawNodeBuiltin(r, outer, fill, border);
+            tileshape::fill(r, shape, SDL_FRect{rc.x + 3, rc.y + 5, rc.w, rc.h}, SDL_Color{0, 0, 0, 90}); // shadow
+            tileshape::draw(r, shape, outer, fill, border, 3.f);
         }
 
-        // The icon (assets/tree/icons/<id>.png, or the built-in picture).
-        SDL_FRect ic{rc.x + (rc.w - kIcon) * 0.5f, rc.y + (rc.h - kIcon) * 0.5f - 3.f, kIcon, kIcon};
+        // The icon (assets/tree/icons/<id>.png, or the built-in picture). Locked: faded into the tile.
+        SDL_FRect ic = tileshape::iconRect(shape, rc, kIcon);
         art::draw(r, "tree/icons/" + (n.icon.empty() ? n.id : n.icon), ic);
-        if (!unlocked && !maxed) draw::fillRoundRect(r, rc.x + 3, rc.y + 3, rc.w - 6, rc.h - 6, 11, SDL_Color{20, 22, 24, 150});
+        if (locked) draw::fillRoundRect(r, ic.x - 2, ic.y - 2, ic.w + 4, ic.h + 4, 8, draw::withAlpha(fill, 165));
 
-        // A thin bar along the bottom shows how many levels are bought.
+        // A thin bar near the bottom shows how many levels are bought.
         if (n.maxLevel > 0) {
-            float bw = rc.w - 20.f, f = static_cast<float>(n.level) / static_cast<float>(n.maxLevel);
-            draw::fillRoundRect(r, rc.x + 10, rc.y + rc.h - 10, bw, 4, 2, SDL_Color{0, 0, 0, 120});
-            if (f > 0.f) draw::fillRoundRect(r, rc.x + 10, rc.y + rc.h - 10, std::max(4.f, bw * f), 4, 2, maxed ? kGold : kGreen);
+            SDL_FRect bar = tileshape::barRect(shape, rc);
+            float f = static_cast<float>(n.level) / static_cast<float>(n.maxLevel);
+            draw::fillRoundRect(r, bar.x, bar.y, bar.w, bar.h, 2, SDL_Color{0, 0, 0, 120});
+            if (f > 0.f) draw::fillRoundRect(r, bar.x, bar.y, std::max(4.f, bar.w * f), bar.h, 2, maxed ? kGold : kGreen);
         }
 
         if (i < static_cast<int>(flash_.size()) && flash_[i] > 0.f) {
-            float f = flash_[i];
-            draw::fillRoundRect(r, rc.x - 3 - 8 * (1 - f), rc.y - 3 - 8 * (1 - f), rc.w + 6 + 16 * (1 - f),
-                                rc.h + 6 + 16 * (1 - f), 16, SDL_Color{255, 255, 200, static_cast<Uint8>(160 * f)});
+            float f = flash_[i], g = 8.f * (1.f - f);
+            tileshape::fill(r, shape, SDL_FRect{rc.x - 3 - g, rc.y - 3 - g, rc.w + 6 + 2 * g, rc.h + 6 + 2 * g},
+                            SDL_Color{255, 255, 200, static_cast<Uint8>(160 * f)});
         }
     }
 
