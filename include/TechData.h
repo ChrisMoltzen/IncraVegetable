@@ -148,6 +148,12 @@ std::string serialize(const std::vector<TechDef>& techs, const std::vector<CropD
 // requirements, loops, ...). Empty = all good. If `forTech` is not empty, only
 // problems about that tech are returned.
 std::vector<std::string> validate(const std::vector<TechDef>& techs, const std::string& forTech = "");
+// The same problems as (tech id, problem) pairs, all techs at once.
+struct Problem {
+    std::string id;
+    std::string message;
+};
+std::vector<Problem> findProblems(const std::vector<TechDef>& techs);
 // Problems with the crops ("crop <id>: ..."), e.g. one no tech ever unlocks.
 std::vector<std::string> validateCrops(const std::vector<CropDef>& crops, const std::vector<TechDef>& techs);
 

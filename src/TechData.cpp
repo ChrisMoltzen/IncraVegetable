@@ -12,6 +12,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <unordered_map>
 
 namespace techdata {
 
@@ -456,14 +457,25 @@ bool isValidId(const std::string& id) {
     return true;
 }
 
-std::vector<std::string> validate(const std::vector<TechDef>& techs, const std::string& forTech) {
-    std::vector<std::pair<std::string, std::string>> found; // (tech id, problem)
-    std::map<std::string, int> index;
-    for (int i = 0; i < static_cast<int>(techs.size()); ++i) {
-        if (index.count(techs[i].id)) found.push_back({techs[i].id, "id '" + techs[i].id + "' is used more than once"});
-        else index[techs[i].id] = i;
+// Runs every frame in the editor, so it stays quick on big trees: lookups go
+// through hash maps and the loop search works on indexes, not names.
+std::vector<Problem> findProblems(const std::vector<TechDef>& techs) {
+    std::vector<Problem> found; // (tech id, problem)
+    const int n = static_cast<int>(techs.size());
+    std::unordered_map<std::string, int> index;
+    index.reserve(n * 2);
+    for (int i = 0; i < n; ++i) {
+        if (!index.emplace(techs[i].id, i).second)
+            found.push_back({techs[i].id, "id '" + techs[i].id + "' is used more than once"});
     }
-    for (const auto& t : techs) {
+    // Techs at each spot, to spot overlaps without comparing every pair.
+    std::map<std::pair<float, float>, std::vector<int>> spots;
+    for (int i = 0; i < n; ++i) spots[{techs[i].gridX, techs[i].gridY}].push_back(i);
+
+    // Each requirement as an index (-1 = missing or itself), for the loop search.
+    std::vector<std::vector<int>> needIdx(n);
+    for (int i = 0; i < n; ++i) {
+        const TechDef& t = techs[i];
         const std::string& id = t.id;
         auto add = [&](const std::string& msg) { found.push_back({id, msg}); };
         if (!isValidId(id)) add("id must be letters, numbers or _ (no spaces)");
@@ -484,47 +496,56 @@ std::vector<std::string> validate(const std::vector<TechDef>& techs, const std::
             auto it = index.find(q.id);
             if (q.id == id) add("requires itself");
             else if (it == index.end()) add("requires '" + q.id + "', which doesn't exist");
-            else if (q.level < 1 || q.level > techs[it->second].maxLevel)
-                add("requires " + q.id + " level " + std::to_string(q.level) + ", but it only goes to " +
-                    std::to_string(techs[it->second].maxLevel));
+            else {
+                if (q.level < 1 || q.level > techs[it->second].maxLevel)
+                    add("requires " + q.id + " level " + std::to_string(q.level) + ", but it only goes to " +
+                        std::to_string(techs[it->second].maxLevel));
+                needIdx[i].push_back(it->second);
+            }
         }
-        for (const auto& o : techs) {
-            if (&o != &t && o.gridX == t.gridX && o.gridY == t.gridY && &o < &t)
-                add("is in the same spot as '" + o.id + "'");
+        for (int o : spots[{t.gridX, t.gridY}]) {
+            if (o >= i) break;
+            add("is in the same spot as '" + techs[o].id + "'");
         }
     }
+
     // Loops: A needs B needs ... needs A means none of them can ever be bought.
-    std::map<std::string, int> state; // 0 new, 1 visiting, 2 done
-    std::set<std::string> inLoop;
-    std::function<void(const std::string&, std::vector<std::string>&)> dfs = [&](const std::string& id,
-                                                                                  std::vector<std::string>& path) {
-        state[id] = 1;
-        path.push_back(id);
-        auto it = index.find(id);
-        if (it != index.end()) {
-            for (const auto& q : techs[it->second].needs) {
-                if (!index.count(q.id) || q.id == id) continue;
-                if (state[q.id] == 1) {
-                    auto start = std::find(path.begin(), path.end(), q.id);
-                    for (auto p = start; p != path.end(); ++p) inLoop.insert(*p);
-                } else if (state[q.id] == 0) {
-                    dfs(q.id, path);
-                }
+    // (Duplicate ids all point at the first tech with that id, as above.)
+    std::vector<char> state(n, 0); // 0 new, 1 visiting, 2 done
+    std::vector<char> inLoop(n, 0);
+    std::vector<int> path;
+    std::vector<int> posInPath(n, -1);
+    std::function<void(int)> dfs = [&](int v) {
+        state[v] = 1;
+        posInPath[v] = static_cast<int>(path.size());
+        path.push_back(v);
+        for (int w : needIdx[v]) {
+            if (w == v) continue;
+            if (state[w] == 1) {
+                for (size_t p = posInPath[w]; p < path.size(); ++p) inLoop[path[p]] = 1;
+            } else if (state[w] == 0) {
+                dfs(w);
             }
         }
         path.pop_back();
-        state[id] = 2;
+        posInPath[v] = -1;
+        state[v] = 2;
     };
-    for (const auto& t : techs) {
-        if (state[t.id] == 0) {
-            std::vector<std::string> path;
-            dfs(t.id, path);
-        }
+    for (int i = 0; i < n; ++i) {
+        int first = index[techs[i].id];
+        if (state[first] == 0) dfs(first);
     }
-    for (const auto& id : inLoop) found.push_back({id, "is part of a requirement loop, so it can never be bought"});
+    // In id order, as before.
+    std::set<std::string> loopIds;
+    for (int i = 0; i < n; ++i)
+        if (inLoop[i]) loopIds.insert(techs[i].id);
+    for (const auto& id : loopIds) found.push_back({id, "is part of a requirement loop, so it can never be bought"});
+    return found;
+}
 
+std::vector<std::string> validate(const std::vector<TechDef>& techs, const std::string& forTech) {
     std::vector<std::string> out;
-    for (const auto& [id, msg] : found) {
+    for (const auto& [id, msg] : findProblems(techs)) {
         if (!forTech.empty() && id != forTech) continue;
         out.push_back(forTech.empty() ? (id.empty() ? "(no id)" : id) + ": " + msg : msg);
     }

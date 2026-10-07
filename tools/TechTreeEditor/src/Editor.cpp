@@ -587,6 +587,7 @@ void Editor::frame() {
         canvasInput();
     }
 
+    refreshProblems();
     SDL_SetRenderDrawColor(r_, col::bg.r, col::bg.g, col::bg.b, 255);
     SDL_RenderClear(r_);
     ui_.setBlocked(modal_ != Modal::None); // a pop-up box takes all the clicks
@@ -627,6 +628,13 @@ void Editor::toast(const std::string& msg, bool error) {
 // Drawing: canvas
 // ===========================================================================
 
+void Editor::refreshProblems() {
+    problems_ = techdata::findProblems(techs_);
+    cropProblems_ = techdata::validateCrops(crops_, techs_);
+    problemIds_.clear();
+    for (const auto& p : problems_) problemIds_.insert(p.id);
+}
+
 void Editor::drawCanvas() {
     SDL_FRect c = canvasRect();
     SDL_Rect clip{static_cast<int>(c.x), static_cast<int>(c.y), static_cast<int>(c.w), static_cast<int>(c.h)};
@@ -643,20 +651,32 @@ void Editor::drawCanvas() {
         fillRect(r_, {c.x, o.y + j * sy, c.w, 1}, j % 2 ? col::grid : col::gridMajor);
     text(r_, o.x + 4, o.y - 14, "0,0", 1.f, col::faint);
 
-    std::vector<std::string> allProblems;
     std::vector<bool> hasProblem(techs_.size(), false);
     for (int i = 0; i < static_cast<int>(techs_.size()); ++i)
-        hasProblem[i] = !techdata::validate(techs_, techs_[i].id).empty() && !techs_[i].id.empty();
+        hasProblem[i] = !techs_[i].id.empty() && problemIds_.count(techs_[i].id);
+
+    // Only draw what's in view: big trees have far more techs off screen than on.
+    // (A tile's name hangs below it, so allow some room around the canvas.)
+    const float margin = 120.f * std::max(zoom_, 0.5f);
+    auto onScreen = [&](float x1, float y1, float x2, float y2) {
+        return std::max(x1, x2) >= c.x - margin && std::min(x1, x2) <= c.x + c.w + margin &&
+               std::max(y1, y2) >= c.y - margin && std::min(y1, y2) <= c.y + c.h + margin;
+    };
+    std::unordered_map<std::string, int> at; // id -> index (first tech with that id)
+    at.reserve(techs_.size() * 2);
+    for (int i = 0; i < static_cast<int>(techs_.size()); ++i) at.emplace(techs_[i].id, i);
 
     // Requirement lines, with an arrow pointing at the tech that needs it.
     for (int i = 0; i < static_cast<int>(techs_.size()); ++i) {
         const TechDef& t = techs_[i];
         SDL_FRect to = nodeRect(t);
         for (const auto& q : t.needs) {
-            int j = indexOf(q.id);
-            if (j < 0) continue;
+            auto found = at.find(q.id);
+            if (found == at.end()) continue;
+            int j = found->second;
             SDL_FRect from = nodeRect(techs_[j]);
             float x1 = from.x + from.w / 2, y1 = from.y + from.h / 2, x2 = to.x + to.w / 2, y2 = to.y + to.h / 2;
+            if (!onScreen(x1, y1, x2, y2)) continue;
             bool related = i == sel_ || j == sel_;
             SDL_Color lc = related ? col::accent : SDL_Color{95, 140, 100, 255};
             line(r_, x1, y1, x2, y2, std::max(2.f, 4.f * zoom_), lc);
@@ -672,6 +692,8 @@ void Editor::drawCanvas() {
                 triangle(r_, {ax, ay}, {ax - dx * s - dy * s * 0.6f, ay - dy * s + dx * s * 0.6f},
                          {ax - dx * s + dy * s * 0.6f, ay - dy * s - dx * s * 0.6f}, lc);
             }
+            // The level it needs; a one-level tech can only be needed at level 1, so skip the label.
+            if (techs_[j].maxLevel <= 1 && q.level == 1) continue;
             std::string lbl = strf("Lv%d", q.level);
             float mx = (x1 + x2) / 2, my = (y1 + y2) / 2, ls = std::max(1.f, 1.25f * zoom_);
             fillRound(r_, {mx - textWidth(lbl, ls) / 2 - 6, my - 6 * ls, textWidth(lbl, ls) + 12, 12 * ls}, 6, SDL_Color{40, 46, 50, 240});
@@ -683,6 +705,7 @@ void Editor::drawCanvas() {
     for (int i = 0; i < static_cast<int>(techs_.size()); ++i) {
         const TechDef& t = techs_[i];
         SDL_FRect rc = nodeRect(t);
+        if (!onScreen(rc.x, rc.y, rc.x + rc.w, rc.y + rc.h)) continue;
         bool selected = i == sel_;
         bool hover = inside(in_.mx, in_.my, rc) && inside(in_.mx, in_.my, c);
         SDL_Color border = selected ? col::accent : hasProblem[i] ? col::bad : hover ? SDL_Color{180, 186, 190, 255} : SDL_Color{110, 120, 128, 255};
@@ -1100,7 +1123,9 @@ void Editor::drawTechPanel(float x, float& y, float w) {
     }
 
     // ---- Problems ----
-    auto problems = techdata::validate(techs_, t.id);
+    std::vector<std::string> problems;
+    for (const auto& p : problems_)
+        if (p.id == t.id) problems.push_back(p.message);
     heading(r_, x, y, w, "Problems");
     if (problems.empty()) {
         text(r_, x, y, "None", 1.5f, col::good);
@@ -1454,9 +1479,8 @@ void Editor::drawCropPanel(float x, float& y, float w) {
     y += fh + 10;
 
     // Problems with this crop.
-    auto problems = techdata::validateCrops(crops_, techs_);
     std::vector<std::string> mine;
-    for (const auto& p : problems)
+    for (const auto& p : cropProblems_)
         if (p.rfind("crop " + c.id + ":", 0) == 0) mine.push_back(p.substr(p.find(':') + 2));
     heading(r_, x, y, w, mine.empty() ? "Problems: none" : "Problems");
     for (const auto& p : mine)
@@ -1482,8 +1506,9 @@ void Editor::drawTreePanel(float x, float& y, float w) {
     drawCropsSection(x, y, w);
     drawTreeTotals(x, y, w);
 
-    auto problems = techdata::validate(techs_);
-    for (const auto& p : techdata::validateCrops(crops_, techs_)) problems.push_back(p);
+    std::vector<std::string> problems;
+    for (const auto& p : problems_) problems.push_back((p.id.empty() ? std::string("(no id)") : p.id) + ": " + p.message);
+    for (const auto& p : cropProblems_) problems.push_back(p);
     heading(r_, x, y, w, problems.empty() && fileErrors_.empty() ? "Problems: none" : "Problems");
     for (const auto& fe : fileErrors_) {
         for (const auto& ln : wrap("File: " + fe, static_cast<size_t>(w / 12))) {
