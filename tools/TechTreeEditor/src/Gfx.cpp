@@ -6,6 +6,29 @@
 #include <cstdio>
 #include <sstream>
 
+// stb is third-party code; don't let its style trip our warning flags.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(_MSC_VER)
+#pragma warning(push, 0)
+#endif
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+#define STBI_ONLY_JPEG
+#define STBI_ONLY_BMP
+#define STBI_ONLY_TGA
+#include "stb_image.h"
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 namespace gfx {
 
 static SDL_FColor f(SDL_Color c) { return SDL_FColor{c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f}; }
@@ -160,6 +183,24 @@ std::string number(double v) {
         ++t;
     }
     return strf(v >= 100 ? "%.0f%s" : (v >= 10 ? "%.1f%s" : "%.2f%s"), v, suffix[t]);
+}
+
+SDL_Texture* loadImage(SDL_Renderer* r, const std::string& path) {
+    size_t size = 0;
+    void* data = SDL_LoadFile(path.c_str(), &size);
+    if (!data) return nullptr;
+    int w = 0, h = 0, n = 0;
+    stbi_uc* px = stbi_load_from_memory(static_cast<const stbi_uc*>(data), static_cast<int>(size), &w, &h, &n, 4);
+    SDL_free(data);
+    if (!px) return nullptr;
+    SDL_Texture* tex = nullptr;
+    if (SDL_Surface* s = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_RGBA32, px, w * 4)) {
+        tex = SDL_CreateTextureFromSurface(r, s);
+        SDL_DestroySurface(s);
+    }
+    stbi_image_free(px);
+    if (tex) SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_LINEAR);
+    return tex;
 }
 
 } // namespace gfx

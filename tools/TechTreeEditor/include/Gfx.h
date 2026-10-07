@@ -28,6 +28,9 @@ SDL_Color alpha(SDL_Color c, Uint8 a);
 std::string strf(const char* fmt, ...);
 std::string number(double v); // 12.5, 940, 1.23K, 45.6M ...
 
+// Loads a PNG / JPG / BMP / TGA as a texture. nullptr if the file isn't there.
+SDL_Texture* loadImage(SDL_Renderer* r, const std::string& path);
+
 // Colours used throughout the editor.
 namespace col {
 inline constexpr SDL_Color bg{22, 26, 25, 255};

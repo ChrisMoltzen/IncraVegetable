@@ -16,6 +16,7 @@
 //     cost 10                       <- price of level 1
 //     growth 2.1                    <- each level costs this many times more than the last
 //     pos 0 0                       <- column and row on the tech tree screen (halves allowed)
+//     icon seeds                    <- optional: which icon to show (default: the tech's own id)
 //     requires daylength 2          <- needs "daylength" at level 2 (any number of these lines)
 //     effect patchSize add 1        <- stat, operation, amount (any number of these lines)
 //   end
@@ -78,6 +79,7 @@ struct TechDef {
     double baseCost = 10.0;
     double costGrowth = 1.5;
     float gridX = 0.f, gridY = 0.f;
+    std::string icon; // icon name; empty = the tech's id. Art: assets/tree/icons/<name>.png
     std::vector<Requirement> needs; // ("requires" is a C++20 keyword)
     std::vector<Effect> effects;
 };
@@ -104,6 +106,19 @@ std::string serialize(const std::vector<TechDef>& techs);
 std::vector<std::string> validate(const std::vector<TechDef>& techs, const std::string& forTech = "");
 
 bool isValidId(const std::string& id);
+
+// ---- Icons -------------------------------------------------------------------
+
+// The icon a tech shows: its `icon` setting, or its id if that's empty.
+std::string iconOf(const TechDef& t);
+
+struct BuiltinIcon {
+    const char* key;   // icon name, e.g. "carrots"
+    const char* label; // shown in the editor's picker
+};
+// Icons the game can draw itself (any of these works without an image file).
+const std::vector<BuiltinIcon>& builtinIcons();
+bool isBuiltinIcon(const std::string& name);
 
 // TechTreeData.h is a C++ header holding the text above in raw string
 // literals. These convert between the two.

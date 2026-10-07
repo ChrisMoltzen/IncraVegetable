@@ -81,7 +81,7 @@ What you can replace:
 - **HUD**: logo, coin, the day/night dial, picking bar, pause and debug buttons
 - **Menus**: main menu background and logo, save-slot screen background, pop-up panel, summary header, volume sliders
 - **Buttons**: four colours, each with optional hover / pressed / disabled versions
-- **Tech tree**: background, top bar, upgrade tiles (four states), the hover pop-up, and an icon for each upgrade (`tree/icons/<id>`, 64 x 64, drawn in the middle of its tile; every shipped upgrade has a built-in picture, and any new one shows its initials until you draw it)
+- **Tech tree**: background, top bar, upgrade tiles (four states), the hover pop-up, and an icon for each upgrade (`tree/icons/<name>`, 64 x 64, drawn in the middle of its tile; each tech uses the icon named after its id unless you pick another in the editor. There are 18 built-in pictures; a file named like one of them, e.g. `tree/icons/carrots.png`, repaints it, and any other name is a new icon you can choose)
 - **Font**: an optional bitmap font that replaces the built-in pixel font
 
 Things to know:
@@ -190,7 +190,7 @@ On Windows: `make editor-win`, then `build\TechTreeEditor.exe`.
 
 Run it from the project folder (or pass the path to `TechTreeData.h`). It opens the current tree.
 
-- **Canvas (left):** the tree as it looks in the game.
+- **Canvas (left):** the tree as it looks in the game: icon tiles, with each name underneath.
   - Double-click empty space to add a tech.
   - Drag a tech to move it; positions snap to half steps.
   - Shift+click another tech to add or remove a requirement. The arrow points at the tech that needs it.
@@ -198,6 +198,7 @@ Run it from the project folder (or pass the path to `TechTreeData.h`). It opens 
 - **Panel (right):** everything about the selected tech.
   - **ID:** letters, numbers and `_` only. Don't rename a tech after players have saves, because saves store levels by id. If you rename one anyway, the techs that require it are updated for you.
   - **Name** and **Description:** shown in the game's tooltip.
+  - **Icon:** click **Change...** to choose from every built-in picture and your own images in `assets/tree/icons/` (64 x 64 PNGs; the file name is the icon name, so `tractor.png` is the icon "tractor"). **Default** uses the icon named after the tech's id. Click **Rescan** in the picker after adding images while the editor is open. Saved as `icon <name>` in the tech tree file.
   - **Max level**, **Cost** of level 1, and **Cost growth** (each level costs this many times the last).
   - **Position** in columns and rows.
   - **Requirements:** which techs, at which level. A tech's box stays hidden in the game until one of these has been bought.
