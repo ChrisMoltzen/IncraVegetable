@@ -52,7 +52,7 @@ bool Game::init() {
     SDL_SetRenderVSync(renderer_, 1);
 
     std::vector<std::pair<std::string, std::string>> techNodes;
-    for (const auto& n : tree_.nodes()) techNodes.push_back({n.id, n.name});
+    for (const auto& n : tree_.nodes()) techNodes.push_back({n.icon.empty() ? n.id : n.icon, n.name});
     art::init(renderer_, techNodes);
     if (kIsDesktop && settings_.fullscreen) applyDisplaySettings();
 

@@ -10,6 +10,7 @@
 #include "Draw.h"
 #include "Farm.h"
 #include "Menus.h"
+#include "TechData.h"
 #include "TechTreeScreen.h"
 #include "UI.h"
 
@@ -210,10 +211,21 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
     addNodeStyle("tree/node_locked", {32, 33, 37, 255}, {70, 72, 78, 255}, "Upgrade whose requirements aren't met");
     addNodeStyle("tree/node_maxed", {85, 68, 25, 255}, {255, 205, 70, 255}, "Fully upgraded");
     // "_hover" versions of the tree nodes are optional; without them the node is brightened.
-    for (const auto& [id, title] : techNodes) {
-        std::string i = id, t = title;
-        add({"tree/icons/" + id, 64, 64, "Icon for the '" + title + "' upgrade, in the middle of its tile",
-             false, [i, t](SDL_Renderer* r, const SDL_FRect& rc) { TechTreeScreen::drawIconBuiltin(r, rc, i, t); }});
+    // Tech icons: every built-in picture (so any tech can use it, and you can
+    // repaint it), plus any other icon name a tech uses.
+    for (const auto& b : techdata::builtinIcons()) {
+        std::string key = b.key;
+        std::string usedBy;
+        for (const auto& [icon, title] : techNodes)
+            if (icon == key) usedBy += (usedBy.empty() ? "" : ", ") + title;
+        add({"tree/icons/" + key, 64, 64,
+             "Tech icon '" + key + "' (" + b.label + ")" + (usedBy.empty() ? "" : " - used by " + usedBy),
+             false, [key](SDL_Renderer* r, const SDL_FRect& rc) { TechTreeScreen::drawIconBuiltin(r, rc, key, key); }});
+    }
+    for (const auto& [icon, title] : techNodes) {
+        std::string i = icon, t = title;
+        add({"tree/icons/" + icon, 64, 64, "Tech icon '" + icon + "' for the '" + title + "' upgrade", false,
+             [i, t](SDL_Renderer* r, const SDL_FRect& rc) { TechTreeScreen::drawIconBuiltin(r, rc, i, t); }});
     }
 }
 

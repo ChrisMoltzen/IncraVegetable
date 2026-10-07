@@ -201,7 +201,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
 
         // The icon (assets/tree/icons/<id>.png, or the built-in picture).
         SDL_FRect ic{rc.x + (rc.w - kIcon) * 0.5f, rc.y + (rc.h - kIcon) * 0.5f - 3.f, kIcon, kIcon};
-        art::draw(r, "tree/icons/" + n.id, ic);
+        art::draw(r, "tree/icons/" + (n.icon.empty() ? n.id : n.icon), ic);
         if (!unlocked && !maxed) draw::fillRoundRect(r, rc.x + 3, rc.y + 3, rc.w - 6, rc.h - 6, 11, SDL_Color{20, 22, 24, 150});
 
         // A thin bar along the bottom shows how many levels are bought.

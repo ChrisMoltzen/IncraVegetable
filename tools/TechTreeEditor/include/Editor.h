@@ -7,6 +7,7 @@
 
 #include <SDL3/SDL.h>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class Editor {
@@ -62,6 +63,14 @@ private:
     void drawTreePanel(float x, float& y, float w);
     void drawModal();
     void drawStatPicker();
+    void drawIconPicker();
+
+    // Icons: the built-in pictures (from art_templates/tree/icons/) and your
+    // own (assets/tree/icons/), which win when both exist - as in the game.
+    std::string projectRoot() const;
+    void loadIcons();
+    void drawIcon(const std::string& name, const SDL_FRect& rc, const std::string& title);
+    bool hasIconImage(const std::string& name) const { return iconTex_.count(name) != 0; }
     void drawTreeTotals(float x, float& y, float w);
     void toast(const std::string& msg, bool error = false);
 
@@ -96,7 +105,10 @@ private:
     bool toastError_ = false;
     float toastTime_ = 0.f;
 
-    enum class Modal { None, Quit, Reload, StatPicker };
+    enum class Modal { None, Quit, Reload, StatPicker, IconPicker };
     Modal modal_ = Modal::None;
     int pickTech_ = -1, pickEffect_ = -1; // the effect whose stat is being chosen
+    int iconTech_ = -1;                   // the tech whose icon is being chosen
+    std::unordered_map<std::string, SDL_Texture*> iconTex_;
+    std::vector<std::string> customIcons_; // names of images in assets/tree/icons/ that aren't built-in icons
 };

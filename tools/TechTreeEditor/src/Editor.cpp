@@ -1,6 +1,7 @@
 #include "Editor.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 
 using namespace gfx;
@@ -9,9 +10,9 @@ using techdata::Op;
 using techdata::Requirement;
 
 namespace {
-// Same layout numbers as the game's tech tree screen, so it looks the same.
-constexpr float kSpacingX = 270.f, kSpacingY = 118.f;
-constexpr float kNodeW = 230.f, kNodeH = 72.f;
+// Same layout numbers as the game's tech tree screen (icon tiles), so it looks the same.
+constexpr float kSpacingX = 140.f, kSpacingY = 112.f;
+constexpr float kNodeW = 84.f, kNodeH = 84.f;
 constexpr float kTopBar = 56.f;
 constexpr float kPanelW = 560.f;
 constexpr size_t kMaxUndo = 300;
@@ -44,10 +45,13 @@ bool Editor::init(int argc, char** argv) {
     if (!load(path_)) {
         toast("No tech tree found at " + path_ + " - Save will create it", true);
     }
+    loadIcons();
     return true;
 }
 
 void Editor::shutdown() {
+    for (auto& [name, tex] : iconTex_) SDL_DestroyTexture(tex);
+    iconTex_.clear();
     if (r_) SDL_DestroyRenderer(r_);
     if (win_) SDL_DestroyWindow(win_);
     SDL_Quit();
@@ -67,6 +71,73 @@ std::string Editor::findFile(int argc, char** argv) const {
         }
     }
     return "include/TechTreeData.h";
+}
+
+// The project folder: the one holding include/TechTreeData.h.
+std::string Editor::projectRoot() const {
+    std::string dir = path_;
+    size_t slash = dir.find_last_of("/\\");
+    dir = slash == std::string::npos ? std::string(".") : dir.substr(0, slash);
+    if (dir.size() >= 7 && dir.compare(dir.size() - 7, 7, "include") == 0) {
+        dir = dir.substr(0, dir.size() - 7);
+        if (!dir.empty() && (dir.back() == '/' || dir.back() == '\\')) dir.pop_back();
+        if (dir.empty()) dir = ".";
+    }
+    return dir;
+}
+
+void Editor::loadIcons() {
+    for (auto& [name, tex] : iconTex_) SDL_DestroyTexture(tex);
+    iconTex_.clear();
+    customIcons_.clear();
+    const std::string root = projectRoot();
+    const std::string mine = root + "/assets/tree/icons/", templates = root + "/art_templates/tree/icons/";
+    const char* exts[] = {".png", ".jpg", ".jpeg", ".bmp", ".tga"};
+    // Your own images first (they're what the game shows), then the built-in pictures.
+    int count = 0;
+    if (char** files = SDL_GlobDirectory(mine.c_str(), "*", 0, &count)) {
+        for (int k = 0; k < count; ++k) {
+            std::string f = files[k];
+            std::string lower = f;
+            for (char& c : lower) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            for (const char* e : exts) {
+                size_t n = std::string(e).size();
+                if (lower.size() <= n || lower.compare(lower.size() - n, n, e) != 0) continue;
+                std::string name = f.substr(0, f.size() - n);
+                if (!techdata::isValidId(name) || iconTex_.count(name)) break;
+                if (SDL_Texture* t = loadImage(r_, mine + f)) {
+                    iconTex_[name] = t;
+                    if (!techdata::isBuiltinIcon(name)) customIcons_.push_back(name);
+                }
+                break;
+            }
+        }
+        SDL_free(files);
+    }
+    for (const auto& b : techdata::builtinIcons()) {
+        if (iconTex_.count(b.key)) continue;
+        if (SDL_Texture* t = loadImage(r_, templates + b.key + ".png")) iconTex_[b.key] = t;
+    }
+    std::sort(customIcons_.begin(), customIcons_.end());
+}
+
+// The icon if there's an image for it; otherwise its initials on a badge (as in the game).
+void Editor::drawIcon(const std::string& name, const SDL_FRect& rc, const std::string& title) {
+    auto it = iconTex_.find(name);
+    if (it != iconTex_.end()) {
+        SDL_RenderTexture(r_, it->second, nullptr, &rc);
+        return;
+    }
+    fillRound(r_, {rc.x + rc.w * 0.04f, rc.y + rc.h * 0.04f, rc.w * 0.92f, rc.h * 0.92f}, rc.w * 0.2f, SDL_Color{70, 110, 160, 255});
+    std::string initials;
+    bool next = true;
+    for (char c : title.empty() ? name : title) {
+        if (next && std::isalpha(static_cast<unsigned char>(c))) initials += static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+        next = c == ' ' || c == '_';
+    }
+    initials = initials.substr(0, 2);
+    float sc = std::max(1.f, rc.w / 32.f);
+    text(r_, rc.x + rc.w / 2, rc.y + rc.h / 2 - 4 * sc, initials, sc, col::text, Align::Center);
 }
 
 bool Editor::load(const std::string& path) {
@@ -582,14 +653,15 @@ void Editor::drawCanvas() {
         float b = selected ? 4.f : 3.f;
         fillRound(r_, {rc.x - b, rc.y - b, rc.w + 2 * b, rc.h + 2 * b}, 14 * zoom_, border);
         fillRound(r_, rc, 11 * zoom_, fill);
+        // The icon, as in the game; name (and id) underneath.
+        float is = 60.f * zoom_;
+        drawIcon(techdata::iconOf(t), {rc.x + (rc.w - is) / 2, rc.y + (rc.h - is) / 2, is, is}, t.name);
 
         std::string name = t.name.empty() ? "(no name)" : t.name;
-        float ns = std::min(2.f * zoom_, (rc.w - 16) / std::max(1.f, textWidth(name, 1.f)));
-        text(r_, rc.x + rc.w / 2, rc.y + 12 * zoom_, name, ns, col::text, Align::Center);
-        float small = std::max(1.f, 1.5f * zoom_);
-        text(r_, rc.x + 10 * zoom_, rc.y + rc.h - 20 * zoom_, strf("max %d", t.maxLevel), small, col::dim);
-        text(r_, rc.x + rc.w - 10 * zoom_, rc.y + rc.h - 20 * zoom_, number(techdata::costAt(t, 0)), small, col::gold, Align::Right);
-        if (zoom_ >= 0.7f) text(r_, rc.x, rc.y + rc.h + 6, fit(t.id, 1.f, rc.w), 1.f, col::faint);
+        float labelW = rc.w * 1.25f; // neighbours can be under a column apart, so keep names short
+        float ns = std::clamp(labelW / std::max(1.f, textWidth(name, 1.f)), 0.75f, 1.5f * zoom_);
+        text(r_, rc.x + rc.w / 2, rc.y + rc.h + 6, fit(name, ns, labelW), ns, selected ? col::accent : col::text, Align::Center);
+        if (zoom_ >= 0.8f) text(r_, rc.x + rc.w / 2, rc.y + rc.h + 8 + 8 * ns, fit(t.id, 1.f, labelW), 1.f, col::faint, Align::Center);
     }
 
     if (techs_.empty()) {
@@ -713,6 +785,27 @@ void Editor::drawTechPanel(float x, float& y, float w) {
         T().name = v;
     });
     y += fh + 10;
+
+    // Icon: a preview, its name, and a button to pick another.
+    label("Icon");
+    {
+        const std::string icon = techdata::iconOf(t);
+        fillRound(r_, {fx, y - 6, 52, 52}, 8, SDL_Color{44, 50, 56, 255});
+        drawIcon(icon, {fx + 4, y - 2, 44, 44}, t.name);
+        std::string what = t.icon.empty() ? icon + "  (default)" : icon;
+        text(r_, fx + 64, y + 4, fit(what, 1.5f, fw - 64 - 140), 1.5f, col::text);
+        const char* where = hasIconImage(icon) ? (techdata::isBuiltinIcon(icon) ? "built-in" : "your image")
+                                               : "no image: initials";
+        text(r_, fx + 64, y + 24, fit(where, 1.25f, fw - 64 - 140), 1.25f, hasIconImage(icon) ? col::faint : col::accent);
+        if (ui_.button("f_icon", {fx + fw - 130, y, 130, fh}, "Change...", true, false, 1.5f)) {
+            ui_.commitFocus();
+            loadIcons(); // pick up images added since the editor started
+            iconTech_ = i;
+            modal_ = Modal::IconPicker;
+            return;
+        }
+    }
+    y += fh + 16;
 
     label("Description");
     ui_.textField("f_desc", {fx, y, fw, 112}, t.description,
@@ -1046,9 +1139,70 @@ void Editor::drawStatPicker() {
     if (in_.key(SDLK_ESCAPE)) modal_ = Modal::None;
 }
 
+// Grid of every icon to choose from: the tech's default, the built-in
+// pictures, and your own images in assets/tree/icons/.
+void Editor::drawIconPicker() {
+    if (iconTech_ < 0 || iconTech_ >= static_cast<int>(techs_.size())) {
+        modal_ = Modal::None;
+        return;
+    }
+    const TechDef& t = techs_[iconTech_];
+    struct Option {
+        std::string icon;  // what to store ("" = default)
+        std::string shows; // icon name drawn
+        std::string label;
+    };
+    std::vector<Option> opts;
+    opts.push_back({"", t.id, "Default"});
+    for (const auto& b : techdata::builtinIcons())
+        if (b.key != t.id) opts.push_back({b.key, b.key, b.label});
+    for (const auto& c : customIcons_)
+        if (c != t.id) opts.push_back({c, c, c});
+    const size_t firstCustom = 1 + techdata::builtinIcons().size() - (techdata::isBuiltinIcon(t.id) ? 1 : 0);
+
+    const float cellW = 104.f, cellH = 104.f, icon = 60.f;
+    float w = std::min(winW_ - 40.f, 16.f + cellW * 10.f + 16.f);
+    int cols = std::max(1, static_cast<int>((w - 32.f) / cellW));
+    int rows = (static_cast<int>(opts.size()) + cols - 1) / cols;
+    float h = std::min(winH_ - 40.f, 70.f + rows * cellH + 30.f + 76.f);
+    float x = (winW_ - w) / 2, y = (winH_ - h) / 2;
+    fillRound(r_, {x - 2, y - 2, w + 4, h + 4}, 14, col::accent);
+    fillRound(r_, {x, y, w, h}, 12, col::panel);
+    text(r_, x + 24, y + 22, fit("Icon for " + (t.name.empty() ? t.id : t.name), 2.f, w - 48), 2.f, col::text);
+
+    const std::string current = t.icon;
+    for (int k = 0; k < static_cast<int>(opts.size()); ++k) {
+        const Option& o = opts[k];
+        float cx = x + 16 + (k % cols) * cellW, cy = y + 64 + (k / cols) * cellH;
+        if (cy + cellH > y + h - 76) break; // (only with an enormous number of images)
+        SDL_FRect cell{cx + 4, cy, cellW - 8, cellH - 6};
+        bool isCurrent = o.icon == current || (o.icon.empty() && current == t.id);
+        bool over = ui_.hovered(cell);
+        if (isCurrent || over) fillRound(r_, cell, 10, isCurrent ? SDL_Color{70, 56, 30, 255} : SDL_Color{48, 54, 60, 255});
+        if (static_cast<size_t>(k) == firstCustom) fillRect(r_, {cell.x - 6, cell.y + 6, 2, cell.h - 12}, col::accent);
+        drawIcon(o.shows, {cell.x + (cell.w - icon) / 2, cell.y + 8, icon, icon}, o.icon.empty() ? t.name : o.label);
+        text(r_, cell.x + cell.w / 2, cell.y + cell.h - 22, fit(o.label, 1.25f, cell.w - 6), 1.25f,
+             isCurrent ? col::accent : col::dim, Align::Center);
+        if (over && in_.released) {
+            if (!isCurrent) {
+                pushUndo();
+                techs_[iconTech_].icon = o.icon == techs_[iconTech_].id ? "" : o.icon;
+            }
+            modal_ = Modal::None;
+            return;
+        }
+    }
+    text(r_, x + 24, y + h - 64, "Your own icons: 64x64 PNGs in assets/tree/icons/ - the file name is the icon name.", 1.25f, col::dim);
+    text(r_, x + 24, y + h - 46, "A file named like a built-in icon (e.g. carrots.png) repaints that one.", 1.25f, col::faint);
+    if (ui_.button("ip_rescan", {x + w - 336, y + h - 58, 150, 42}, "Rescan", true, false, 1.5f)) loadIcons();
+    if (ui_.button("m_cancel", {x + w - 176, y + h - 58, 160, 42}, "Cancel")) modal_ = Modal::None;
+    if (in_.key(SDLK_ESCAPE)) modal_ = Modal::None;
+}
+
 void Editor::drawModal() {
     fillRect(r_, {0, 0, static_cast<float>(winW_), static_cast<float>(winH_)}, SDL_Color{0, 0, 0, 160});
     if (modal_ == Modal::StatPicker) return drawStatPicker();
+    if (modal_ == Modal::IconPicker) return drawIconPicker();
     float w = 560, h = 190, x = (winW_ - w) / 2, y = (winH_ - h) / 2;
     fillRound(r_, {x - 2, y - 2, w + 4, h + 4}, 14, col::accent);
     fillRound(r_, {x, y, w, h}, 12, col::panel);

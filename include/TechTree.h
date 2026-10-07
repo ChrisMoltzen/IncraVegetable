@@ -46,6 +46,7 @@ struct TechNode {
     std::string id;
     std::string name;
     std::string description;
+    std::string icon; // art name under tree/icons/ (the tech's id unless the tree picks another)
     int maxLevel = 1;
     double baseCost = 10;     // cost of level 1
     double costGrowth = 1.5;  // each level costs this many times more than the last

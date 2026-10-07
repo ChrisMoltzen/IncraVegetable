@@ -269,6 +269,10 @@ ParseResult parse(const std::string& text) {
         }
         std::istringstream args(rest);
         if (key == "name") cur->name = rest;
+        else if (key == "icon") {
+            cur->icon = rest;
+            if (!isValidId(rest)) err("icon must be letters, numbers or _");
+        }
         else if (key == "desc") cur->description = rest;
         else if (key == "max") {
             if (!(args >> cur->maxLevel)) err("max needs a whole number");
@@ -315,6 +319,7 @@ std::string serialize(const std::vector<TechDef>& techs) {
         o << "  cost " << num(t.baseCost) << "\n";
         o << "  growth " << num(t.costGrowth) << "\n";
         o << "  pos " << num(t.gridX) << " " << num(t.gridY) << "\n";
+        if (!t.icon.empty() && t.icon != t.id) o << "  icon " << clean(t.icon) << "\n";
         for (const auto& q : t.needs) o << "  requires " << clean(q.id) << " " << q.level << "\n";
         for (const auto& e : t.effects)
             o << "  effect " << clean(e.stat) << " " << opKey(e.op) << " " << num(e.amount) << "\n";
@@ -326,6 +331,26 @@ std::string serialize(const std::vector<TechDef>& techs) {
 // ---------------------------------------------------------------------------
 // Checking
 // ---------------------------------------------------------------------------
+
+std::string iconOf(const TechDef& t) { return t.icon.empty() ? t.id : t.icon; }
+
+const std::vector<BuiltinIcon>& builtinIcons() {
+    static const std::vector<BuiltinIcon> list = {
+        {"patch", "Garden plot"},     {"seeds", "Seed packet"},      {"daylength", "Sun"},
+        {"headstart", "Sunrise"},     {"pickspeed", "Quick lettuce"}, {"growspeed", "Sprout"},
+        {"value", "Coins"},           {"reach", "Reach ring"},       {"carrots", "Carrot"},
+        {"pumpkins", "Pumpkin"},      {"autopick", "Sparkle"},       {"autopickchance", "Clover"},
+        {"autopickcount", "Bunch"},   {"autopickradius", "Ring"},    {"farmhand", "Farmer"},
+        {"farmcrew", "Two farmers"},  {"farmerspeed", "Boot"},       {"farmerpick", "Shears"},
+    };
+    return list;
+}
+
+bool isBuiltinIcon(const std::string& name) {
+    for (const auto& b : builtinIcons())
+        if (name == b.key) return true;
+    return false;
+}
 
 bool isValidId(const std::string& id) {
     if (id.empty() || id.size() > 40) return false;
@@ -345,6 +370,7 @@ std::vector<std::string> validate(const std::vector<TechDef>& techs, const std::
         const std::string& id = t.id;
         auto add = [&](const std::string& msg) { found.push_back({id, msg}); };
         if (!isValidId(id)) add("id must be letters, numbers or _ (no spaces)");
+        if (!t.icon.empty() && !isValidId(t.icon)) add("icon must be letters, numbers or _");
         if (trim(t.name).empty()) add("has no name");
         if (t.maxLevel < 1) add("max level must be at least 1");
         if (t.baseCost < 0) add("cost can't be negative");
