@@ -29,8 +29,8 @@ is brightened or darkened automatically.
 | `fx/reach_circle.png` | 256 x 256 |  | Picking area around the pointer (Wide Reach upgrade). Usually see-through |
 | `ui/hud_logo.png` | 336 x 30 |  | Game name in the top-left of the farm screen |
 | `ui/coin.png` | 64 x 64 |  | Coin icon |
-| `ui/timer_back.png` | 406 x 36 |  | Behind the day timer bar |
-| `ui/timer_fill.png` | 400 x 30 |  | Day timer bar when full. It's cropped from the right as the day runs out |
+| `ui/dial_sky.png` | 256 x 256 |  | Day/night dial: the WHOLE sky disc. Day half on top with the sun at the top middle, night half below with the moon at the bottom middle. The game turns it so the sun rises on the left and sets on the right; only the top half shows |
+| `ui/dial_frame.png` | 280 x 150 |  | Day/night dial: frame drawn over the sky disc. Leave the half-circle window see-through (it fills the frame's width minus about 6% each side, with the horizon about 79% of the way down); the bottom strip hides the sun as it sets |
 | `ui/pick_bar_back.png` | 128 x 16 |  | Behind the picking progress bar under a vegetable |
 | `ui/pick_bar_fill.png` | 128 x 16 |  | Picking progress bar when full (cropped while picking) |
 | `ui/pause_button.png` | 96 x 96 |  | Pause button, top-right while playing |

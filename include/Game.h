@@ -125,5 +125,6 @@ private:
 
     SDL_FRect summaryButton_{640.f - 150.f, 470.f, 300.f, 62.f};
     SDL_FRect pauseButton_{1280.f - 62.f, 12.f, 48.f, 48.f};
+    static constexpr float kDialX = 640.f, kDialHorizon = 56.f, kDialRadius = 48.f; // day/night dial in the HUD
     SDL_FRect endDayButton_{1280.f - 196.f, 720.f - 60.f, 180.f, 46.f}; // bottom-right while farming
 };

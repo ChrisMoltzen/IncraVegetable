@@ -688,19 +688,11 @@ void Game::renderHud() {
     art::draw(renderer_, "ui/hud_logo", SDL_FRect{24, 10, 336, 30});
     draw::text(renderer_, 26, 48, draw::strf("Day %d   -   Slot %d", day_, currentSlot_ + 1), 1.5f, kGrey);
 
-    // Day timer.
-    float ratio = farm_.dayLength() > 0 ? std::min(1.f, farm_.timeLeft() / farm_.dayLength()) : 0.f;
-    const float bx = 440, by = 18, bw = 400, bh = 30;
-    art::draw(renderer_, "ui/timer_back", SDL_FRect{bx - 3, by - 3, bw + 6, bh + 6});
-    if (!art::drawFill(renderer_, "ui/timer_fill", SDL_FRect{bx, by, bw, bh}, ratio)) {
-        // Built-in bar changes colour from green to yellow to red as the day runs out.
-        SDL_Color barCol = ratio > 0.5f ? draw::lerp(SDL_Color{240, 200, 60, 255}, SDL_Color{110, 210, 90, 255}, (ratio - 0.5f) * 2)
-                                        : draw::lerp(SDL_Color{230, 80, 60, 255}, SDL_Color{240, 200, 60, 255}, ratio * 2);
-        if (ratio > 0.f) draw::fillRoundRect(renderer_, bx, by, std::max(bh, bw * ratio), bh, 14, barCol);
-    }
-    draw::textShadow(renderer_, bx + bw * 0.5f, by + 7, draw::strf("%.1fs", farm_.timeLeft()), 2.f, kWhite,
-                     draw::Align::Center);
-    draw::text(renderer_, bx + bw * 0.5f, by + bh + 8, "until sunset", 1.f, kGrey, draw::Align::Center);
+    // Day/night dial: the sun crosses from sunrise (left) to sunset (right) as the day runs out.
+    const float dayT = farm_.dayLength() > 0 ? 1.f - std::clamp(farm_.timeLeft() / farm_.dayLength(), 0.f, 1.f) : 1.f;
+    ui::drawDayDial(renderer_, kDialX, kDialHorizon, kDialRadius, dayT);
+    draw::textShadow(renderer_, kDialX + kDialRadius + 20, 14, draw::strf("%.1fs", farm_.timeLeft()), 2.5f, kWhite);
+    draw::text(renderer_, kDialX + kDialRadius + 22, 42, "until sunset", 1.f, kGrey);
 
     // Coins.
     ui::drawCoin(renderer_, 930, 30, 13);

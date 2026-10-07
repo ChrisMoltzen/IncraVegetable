@@ -28,12 +28,24 @@ void drawPanel(SDL_Renderer* r, const SDL_FRect& rc);
 void drawPauseIcon(SDL_Renderer* r, const SDL_FRect& rc, bool hovered);
 void drawCoin(SDL_Renderer* r, float cx, float cy, float radius);
 
+// The day/night dial in the HUD (like a watch's moon-phase window): a sky
+// disc turns behind a half-circle window, so the sun rises on the left as
+// the day starts and sets on the right at the end, with the moon following.
+// (cx, horizonY) is the middle of the horizon, R the window's radius,
+// t how far through the day it is (0 = sunrise, 1 = sunset).
+// Art: ui/dial_sky is the whole disc (day half on top with the sun at the
+// top, night half below), turned by the game; ui/dial_frame goes over it.
+void drawDayDial(SDL_Renderer* r, float cx, float horizonY, float R, float t);
+SDL_FRect dialFrameRect(float cx, float horizonY, float R);
+
 // Built-in looks, used when there's no image (and for the art templates).
 const char* artName(Style s); // "ui/button_primary" etc.
 void drawButtonBuiltin(SDL_Renderer* r, const SDL_FRect& rc, Style style, ButtonState state);
 void drawPanelBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
 void drawPauseIconBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool hovered);
 void drawCoinBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
+void drawDialSkyBuiltin(SDL_Renderer* r, const SDL_FRect& rc);   // the whole disc, as in the template
+void drawDialFrameBuiltin(SDL_Renderer* r, const SDL_FRect& rc); // rim, ticks, hills and base
 void dim(SDL_Renderer* r, Uint8 alpha);
 
 // A set of buttons that handles hover and press. A button fires when the

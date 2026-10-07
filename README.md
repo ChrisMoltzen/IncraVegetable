@@ -78,7 +78,7 @@ What you can replace:
 - **Farm**: background, the garden bed, the soil mound under each plant (and under the pointer), top bar
 - **Farmers**: `farm/farmer` (standing), plus optional `farm/farmer_walk1` / `farm/farmer_walk2` (walking steps) and `farm/farmer_pick` (bending to pick). Only `farm/farmer` is needed: missing poses use it, bobbing as it walks
 - **Effects**: pick particles, the Wide Reach circle
-- **HUD**: logo, coin, day timer bar, picking bar, pause and debug buttons
+- **HUD**: logo, coin, the day/night dial, picking bar, pause and debug buttons
 - **Menus**: main menu background and logo, save-slot screen background, pop-up panel, summary header, volume sliders
 - **Buttons**: four colours, each with optional hover / pressed / disabled versions
 - **Tech tree**: background, top bar, upgrade boxes (four states), tooltip, and an icon for each upgrade
@@ -90,6 +90,7 @@ Things to know:
 - Buttons, panels, upgrade boxes and the tooltip are **9-slice**: their corners keep their shape and the middle stretches, so one image fits every size. You can set the corner size in `assets/art.txt`.
 - Making pixel art? Put `filter nearest` in `assets/art.txt` so it stays crisp.
 - Draw `fx/particle` and `ui/font` in white; the game colours them.
+- **The day/night dial** works like a watch's moon-phase window: `ui/dial_sky` is the *whole* round sky disc (day half on top with the sun at the top, night half below with the moon at the bottom), and the game turns it so the sun rises on the left and sets on the right; only the top half shows. `ui/dial_frame` goes over it, with a see-through half-circle window. Without a sky image, the built-in dial also warms the sky at dawn and dusk and brings the stars out at sunset.
 - Draw the farmer **facing right** with its feet at the bottom middle (about 8% up from the bottom edge). The game mirrors it when a farmer walks left.
 - If a file's name doesn't match anything (a typo), the game ignores it and the debug screen's Info tab (F1) lists it.
 - Changed something and want fresh templates? Run `IncraVegetable --export-art-templates` (optionally followed by a folder name) to rewrite them.
