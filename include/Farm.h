@@ -16,17 +16,15 @@
 #include <string>
 #include <vector>
 
-enum class Crop { Lettuce, Carrot, Pumpkin };
+#include "TechData.h"
 
-struct CropInfo {
-    const char* name;
-    double value;     // coins before multipliers
-    float growMult;   // multiplier on Stats::growTime
-    float pickMult;   // multiplier on Stats::pickTime
-};
-
-const CropInfo& cropInfo(Crop c);
-const char* cropArtName(Crop c); // "crops/lettuce" etc.
+// Crops are data (see the Crops tab in the Tech Tree Editor): a crop is its
+// index into techdata::crops().
+using Crop = int;
+int cropCount();
+const techdata::CropDef& cropDef(Crop c); // clamps bad indices to the first crop
+std::string cropArtName(Crop c);          // "crops/lettuce" etc.
+SDL_Color cropColor(Crop c);              // the colour of its built-in look
 
 class Farm {
 public:
@@ -58,7 +56,7 @@ public:
     static void drawCrop(SDL_Renderer* r, Crop crop, float cx, float cy, float size);
 
     // Built-in art, used when there's no image in assets/ (see ArtCatalog.cpp).
-    static void drawCropBuiltin(SDL_Renderer* r, Crop crop, float cx, float cy, float size);
+    static void drawCropBuiltin(SDL_Renderer* r, Crop crop, float cx, float cy, float size); // its look and colour
     static void drawSproutBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
     static void drawSoilBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool hovered); // mound under a plant
     static void drawBedBuiltin(SDL_Renderer* r, const SDL_FRect& rc, Uint32 seed);
@@ -83,13 +81,13 @@ public:
     float dayLength() const { return stats_.dayLength; }
     double earnedToday() const { return earnedToday_; }
     int pickedToday() const { return pickedToday_; }
-    int pickedOf(Crop c) const { return pickedByCrop_[static_cast<int>(c)]; }
+    int pickedOf(Crop c) const { return c >= 0 && c < static_cast<int>(pickedByCrop_.size()) ? pickedByCrop_[c] : 0; }
 
 private:
     struct Tile {
         float x = 0.f, y = 0.f; // centre of the plant on screen
         int spot = -1;          // which of spots_ it's growing on
-        Crop crop = Crop::Lettuce;
+        Crop crop = 0;
         float growth = 0.f; // 0..1, ripe at 1
         float pick = 0.f;   // 0..1 picking progress while hovered
         float wobble = 0.f; // random phase so ripe vegetables don't bob in sync
@@ -161,7 +159,7 @@ private:
     float clock_ = 0.f;
     double earnedToday_ = 0.0;
     int pickedToday_ = 0;
-    int pickedByCrop_[3] = {0, 0, 0};
+    std::vector<int> pickedByCrop_; // per crop, indexed like techdata::crops()
     float mouseX_ = -1000.f, mouseY_ = -1000.f;
     bool mouseInside_ = false;
     bool timerFrozen_ = false;

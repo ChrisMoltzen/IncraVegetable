@@ -1,5 +1,7 @@
 #include "TechData.h"
 
+#include "CropLooks.h"
+
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -70,7 +72,7 @@ const std::vector<StatInfo>& stats() {
         {"growTime", "Grow time", "Seconds for a lettuce to grow (other crops take longer). Starts at 3.", false},
         {"valueMult", "Coin value", "Multiplier on the coins from every vegetable. Starts at 1.", false},
         {"reach", "Reach", "Picks everything within this radius of the pointer. Starts at 0 (one plant).", true},
-        {"cropTier", "Crops", "Which crops get planted: 0 lettuce, 1 + carrots, 2 + pumpkins.", true},
+        {"cropTier", "Crops", "Which crops get planted: each crop unlocks at its own level of this (see Crops). Starts at 0.", true},
         {"headStart", "Head start", "Fraction of the bed already ripe when a day starts (0 to 1). Starts at 0.", false},
         {"autoPickChance", "Auto-pick chance", "% chance that picking a crop also picks ripe crops near it. Starts at 0.", false},
         {"autoPickCount", "Auto-pick crops", "How many nearby ripe crops an auto-pick picks. Starts at 0 (off).", true},
@@ -140,9 +142,22 @@ std::string formatStat(int index, const Stats& s) {
     case 4: return fmt("%.2fs to grow", v);
     case 5: return fmt("x%.2f coins", v);
     case 6: return s.reach <= 0 ? std::string("1 plant at a time") : fmt("reach radius %.0f", v);
-    case 7: return s.cropTier <= 0 ? std::string("lettuce only")
-                   : s.cropTier == 1 ? std::string("+ carrots")
-                                     : std::string("+ carrots & pumpkins");
+    case 7: {
+        // Names of the crops this level plants, e.g. "lettuce, carrot & pumpkin".
+        std::vector<std::string> names;
+        for (const auto& c : crops())
+            if (c.tier <= s.cropTier) {
+                std::string n = c.name;
+                for (char& ch : n) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+                names.push_back(n);
+            }
+        if (names.empty()) return std::string("no crops");
+        if (names.size() > 4) return names[0] + ", " + names[1] + " + " + std::to_string(names.size() - 2) + " more";
+        std::string out;
+        for (size_t k = 0; k < names.size(); ++k)
+            out += (k == 0 ? "" : k + 1 == names.size() ? " & " : ", ") + names[k];
+        return out;
+    }
     case 8: return fmt("%.0f%% ripe at dawn", std::clamp(v, 0.f, 1.f) * 100.0);
     case 9: return fmt(std::fabs(v - std::round(v)) < 0.01f ? "%.0f%% auto-pick chance" : "%.1f%% auto-pick chance", v);
     case 10: return s.autoPickCount <= 0 ? std::string("no auto-pick")
@@ -158,6 +173,37 @@ std::string formatStat(int index, const Stats& s) {
 // ---------------------------------------------------------------------------
 // Operations
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Crops
+// ---------------------------------------------------------------------------
+
+namespace {
+std::vector<CropDef>& cropRegistry() {
+    static std::vector<CropDef> list;
+    return list;
+}
+} // namespace
+
+const std::vector<CropDef>& defaultCrops() {
+    static const std::vector<CropDef> list = {
+        {"lettuce", "Lettuce", 1.0, 1.0f, 1.0f, 45.f, 0, "lettuce", ""},
+        {"carrot", "Carrot", 4.0, 1.6f, 1.25f, 35.f, 1, "carrot", ""},
+        {"pumpkin", "Pumpkin", 15.0, 2.6f, 1.6f, 20.f, 2, "pumpkin", ""},
+    };
+    return list;
+}
+
+void setCrops(const std::vector<CropDef>& list) { cropRegistry() = list; }
+
+const std::vector<CropDef>& crops() { return cropRegistry().empty() ? defaultCrops() : cropRegistry(); }
+
+int cropIndex(const std::string& id) {
+    const auto& list = crops();
+    for (int i = 0; i < static_cast<int>(list.size()); ++i)
+        if (list[i].id == id) return i;
+    return -1;
+}
 
 const char* opKey(Op op) {
     switch (op) {
@@ -238,6 +284,7 @@ ParseResult parse(const std::string& text) {
     std::string raw;
     int lineNo = 0;
     TechDef* cur = nullptr;
+    CropDef* crop = nullptr;
     auto err = [&](const std::string& msg) { r.errors.push_back("line " + std::to_string(lineNo) + ": " + msg); };
 
     while (std::getline(in, raw)) {
@@ -252,6 +299,33 @@ ParseResult parse(const std::string& text) {
         rest = trim(rest);
 
         if (key == "version") continue;
+        if (key == "crop") {
+            if (cur || crop) err("'crop' inside another block - missing 'end'?");
+            cur = nullptr;
+            r.crops.push_back({});
+            crop = &r.crops.back();
+            crop->id = rest;
+            crop->name = rest;
+            continue;
+        }
+        if (crop) {
+            std::istringstream args(rest);
+            if (key == "end") crop = nullptr;
+            else if (key == "name") crop->name = rest;
+            else if (key == "value") { if (!(args >> crop->value)) err("value needs a number"); }
+            else if (key == "grow") { if (!(args >> crop->grow)) err("grow needs a number"); }
+            else if (key == "pick") { if (!(args >> crop->pick)) err("pick needs a number"); }
+            else if (key == "weight") { if (!(args >> crop->weight)) err("weight needs a number"); }
+            else if (key == "tier") { if (!(args >> crop->tier)) err("tier needs a whole number"); }
+            else if (key == "look") {
+                crop->look = rest;
+                if (!croplook::isLook(rest)) err("unknown look '" + rest + "'");
+            } else if (key == "color") {
+                crop->color = rest;
+                if (!croplook::isValidColor(rest)) err("color must be 6 hex digits, e.g. e05040");
+            } else err("unknown crop setting '" + key + "'");
+            continue;
+        }
         if (key == "tech") {
             if (cur) err("'tech' inside another tech - missing 'end'?");
             r.techs.push_back({});
@@ -303,14 +377,27 @@ ParseResult parse(const std::string& text) {
         }
     }
     if (cur) r.errors.push_back("end of file: tech '" + cur->id + "' has no 'end'");
+    if (crop) r.errors.push_back("end of file: crop '" + crop->id + "' has no 'end'");
     return r;
 }
 
-std::string serialize(const std::vector<TechDef>& techs) {
+std::string serialize(const std::vector<TechDef>& techs, const std::vector<CropDef>& cropList) {
     std::ostringstream o;
     o << "# IncraVegetable tech tree. Made with TechTreeEditor (tools/TechTreeEditor).\n"
       << "# Format: see include/TechData.h\n"
       << "version 1\n\n";
+    for (const auto& c : cropList) {
+        o << "crop " << clean(c.id) << "\n";
+        o << "  name " << clean(c.name) << "\n";
+        o << "  value " << num(c.value) << "\n";
+        o << "  grow " << num(c.grow) << "\n";
+        o << "  pick " << num(c.pick) << "\n";
+        o << "  weight " << num(c.weight) << "\n";
+        o << "  tier " << c.tier << "\n";
+        o << "  look " << clean(c.look) << "\n";
+        if (!clean(c.color).empty()) o << "  color " << clean(c.color) << "\n";
+        o << "end\n\n";
+    }
     for (const auto& t : techs) {
         o << "tech " << clean(t.id) << "\n";
         o << "  name " << clean(t.name) << "\n";
@@ -435,8 +522,36 @@ std::vector<std::string> validate(const std::vector<TechDef>& techs, const std::
 // Embedding in a C++ header
 // ---------------------------------------------------------------------------
 
-std::string toHeader(const std::vector<TechDef>& techs) {
-    std::string text = serialize(techs);
+std::vector<std::string> validateCrops(const std::vector<CropDef>& list, const std::vector<TechDef>& techs) {
+    std::vector<std::string> out;
+    if (list.empty()) out.push_back("crops: there are no crops - add at least one");
+    // The highest Crops level the tree can reach (everything bought).
+    Stats full;
+    for (const auto& t : techs) applyEffects(t, full, std::max(1, t.maxLevel));
+    std::set<std::string> seen;
+    bool startCrop = false;
+    for (const auto& c : list) {
+        auto add = [&](const std::string& m) { out.push_back("crop " + c.id + ": " + m); };
+        if (!isValidId(c.id)) add("id must be letters, numbers or _ (no spaces)");
+        if (!seen.insert(c.id).second) add("id is used more than once");
+        if (trim(c.name).empty()) add("has no name");
+        if (c.value < 0) add("value can't be negative");
+        if (c.grow <= 0) add("grow must be more than 0");
+        if (c.pick <= 0) add("pick must be more than 0");
+        if (c.weight <= 0) add("weight must be more than 0, or it's never planted");
+        if (c.tier < 0) add("tier can't be negative");
+        if (!croplook::isLook(c.look)) add("unknown look '" + c.look + "'");
+        if (!croplook::isValidColor(c.color)) add("color must be 6 hex digits, e.g. e05040");
+        if (c.tier <= 0) startCrop = true;
+        else if (c.tier > full.cropTier)
+            add("nothing unlocks it - it needs a tech with effect Crops 'set at least' " + std::to_string(c.tier));
+    }
+    if (!list.empty() && !startCrop) out.push_back("crops: no crop has tier 0, so nothing grows at the start");
+    return out;
+}
+
+std::string toHeader(const std::vector<TechDef>& techs, const std::vector<CropDef>& cropList) {
+    std::string text = serialize(techs, cropList);
     std::ostringstream o;
     o << "// TechTreeData.h - the tech tree, compiled into the game.\n"
       << "//\n"
