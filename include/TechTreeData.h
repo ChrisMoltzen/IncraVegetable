@@ -27,7 +27,7 @@ crop carrot
   grow 1.6
   pick 1.25
   weight 35
-  tier 1
+  tier 2
   look carrot
 end
 
@@ -37,8 +37,18 @@ crop pumpkin
   grow 2.6
   pick 1.6
   weight 20
-  tier 2
+  tier 3
   look pumpkin
+end
+
+crop turnip
+  name Turnip
+  value 38
+  grow 3.4
+  pick 1.9
+  weight 15
+  tier 1
+  look round
 end
 
 tech barn
@@ -47,7 +57,7 @@ tech barn
   max 1
   cost 4
   growth 1
-  pos 0 -1
+  pos 0 -1.5
 end
 
 tech patch
@@ -396,10 +406,10 @@ tech seeds
   effect maxCrops add 1
 end
 
-tech seeds_2
-  name More Seeds 2
 )TECHTREE",
-R"TECHTREE(  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
+R"TECHTREE(tech seeds_2
+  name More Seeds 2
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
   cost 9
   growth 1
@@ -800,9 +810,9 @@ tech daylength_10
   growth 1
   pos 0 9
   icon daylength
-  requires daylength_9 1
 )TECHTREE",
-R"TECHTREE(  effect dayLength add 2
+R"TECHTREE(  requires daylength_9 1
+  effect dayLength add 2
 end
 
 tech daylength_11
@@ -1220,11 +1230,11 @@ tech headstart_5
   pos 1 9
   icon headstart
   requires headstart_4 1
-  effect headStart add 0.2
+)TECHTREE",
+R"TECHTREE(  effect headStart add 0.2
 end
 
-)TECHTREE",
-R"TECHTREE(tech growspeed
+tech growspeed
   name Fertile Soil 1
   desc Richer compost. Vegetables grow 12% faster per level.
   max 1
@@ -1481,7 +1491,7 @@ tech carrots
   growth 1
   pos -4 3
   requires growspeed_2 1
-  effect cropTier atleast 1
+  effect cropTier atleast 2
 end
 
 tech pumpkins
@@ -1493,7 +1503,7 @@ tech pumpkins
   pos 9 4
   requires carrots 1
   requires value_3 1
-  effect cropTier atleast 2
+  effect cropTier atleast 3
 end
 
 tech autopick
@@ -1646,10 +1656,10 @@ tech autopickcount_2
   cost 550
   growth 1
   pos 6 6
-  icon autopickcount
-  requires autopickcount 1
 )TECHTREE",
-R"TECHTREE(  effect autoPickCount add 1
+R"TECHTREE(  icon autopickcount
+  requires autopickcount 1
+  effect autoPickCount add 1
 end
 
 tech autopickcount_3
@@ -2005,6 +2015,18 @@ tech farmerpick_8
   icon farmerpick
   requires farmerpick_7 1
   effect farmerPickTime multiply 0.85
+end
+
+tech new_tech
+  name New Tech
+  desc Describe what this upgrade does.
+  max 5
+  cost 1
+  growth 1.8
+  pos 3 -1.5
+  icon crop_turnip
+  requires barn 1
+  effect cropTier add 1
 end
 
 )TECHTREE",
