@@ -320,7 +320,10 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         const SDL_FRect base{cx - kTile * 0.5f, cy - kTile * 0.5f, kTile, kTile}; // the tile at zoom 1
         SDL_FRect outer{rc.x - bw, rc.y - bw, rc.w + 2 * bw, rc.h + 2 * bw};
         if (shape == "square" && !customFill && art::has(artName)) {
-            art::drawVariant(r, artName, i == hovered ? "_hover" : "", outer); // your tile art (square, usual colours)
+            // Your tile art (square, usual colours), 9-sliced: the corners and edges keep their shape
+            // and scale with the zoom, and only the middle stretches.
+            art::SliceScale zoomed(z);
+            art::drawVariant(r, artName, i == hovered ? "_hover" : "", outer);
         } else {
             tileshape::fill(r, shape, SDL_FRect{rc.x + 3 * z, rc.y + 5 * z, rc.w, rc.h}, SDL_Color{0, 0, 0, 90}); // shadow
             tileshape::draw(r, shape, outer, fill, border, bw);
@@ -484,8 +487,11 @@ void TechTreeScreen::drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc,
 }
 
 void TechTreeScreen::drawNodeBuiltin(SDL_Renderer* r, const SDL_FRect& outer, SDL_Color fill, SDL_Color border) {
-    draw::fillRoundRect(r, outer.x, outer.y, outer.w, outer.h, 14, border);
-    draw::fillRoundRect(r, outer.x + 3, outer.y + 3, outer.w - 6, outer.h - 6, 11, fill);
+    // Corners and border keep their size however big the tile is (like 9-slice art), and follow the zoom.
+    const float k = art::sliceScale();
+    const float radius = std::min(14.f * k, std::min(outer.w, outer.h) * 0.5f), b = std::max(1.f, 3.f * k);
+    draw::fillRoundRect(r, outer.x, outer.y, outer.w, outer.h, radius, border);
+    draw::fillRoundRect(r, outer.x + b, outer.y + b, outer.w - 2 * b, outer.h - 2 * b, std::max(0.f, radius - b), fill);
 }
 
 void TechTreeScreen::drawTooltipBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {

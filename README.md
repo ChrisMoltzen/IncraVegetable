@@ -89,7 +89,7 @@ Things to know:
 
 - Your images don't have to match the template size; they're scaled to fit. Keep the same shape (proportions) for best results.
 - Your `tree/node*` tile art is used for square tiles with the usual colours; techs with their own shape or colour are drawn in that shape and colour instead.
-- Buttons, panels, upgrade tiles and the pop-up are **9-slice**: their corners keep their shape and the middle stretches, so one image fits every size. You can set the corner size in `assets/art.txt`.
+- Buttons, panels, upgrade tiles and the pop-up are **9-slice**: their corners keep their shape and the middle stretches, so one image fits every size. You can set the corner size in `assets/art.txt`. Upgrade tiles are drawn this way at every zoom level of The Barn: zooming out shrinks the corners and edges along with the tile, so they never stretch or bunch up. Hover images (e.g. `tree/node_hover`) are 9-sliced like their base image.
 - Making pixel art? Put `filter nearest` in `assets/art.txt` so it stays crisp.
 - Draw `fx/particle` and `ui/font` in white; the game colours them.
 - **The day/night dial** works like a watch's moon-phase window: `ui/dial_sky` is the *whole* round sky disc (day half on top with the sun at the top, night half below with the moon at the bottom), and the game turns it so the sun rises on the left and sets on the right; only the top half shows. `ui/dial_frame` goes over it, with a see-through half-circle window. Without a sky image, the built-in dial also warms the sky at dawn and dusk and brings the stars out at sunset.
