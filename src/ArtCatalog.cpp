@@ -107,6 +107,16 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          "The rectangular garden bed the vegetables grow in. Stretched to fit, always 1.6x wider than tall. Plants "
          "sit inside the middle ~90%, so leave a border of soil or edging around them",
          false, [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawBedBuiltin(r, rc, 1234u); }});
+    // Fence around the bed. Tiles are about two-thirds of a plant across and get stretched a little
+    // (never more than ~10%) so the sides meet at the corners; they join up edge to edge.
+    add({"farm/fence_h", 64, 64, "Fence tile along the top and bottom of the bed (joins left and right)", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawFenceBuiltin(r, rc, Farm::FencePiece::Horizontal); }});
+    add({"farm/fence_v", 64, 64, "Fence tile down the left and right sides of the bed (joins top and bottom)", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawFenceBuiltin(r, rc, Farm::FencePiece::Vertical); }});
+    add({"farm/fence_corner", 64, 64, "Fence corner post (all four corners of the fence)", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawFenceBuiltin(r, rc, Farm::FencePiece::Corner); }});
+    add({"farm/fence_gate", 64, 64, "Gate in the middle of the bottom fence (joins left and right like fence_h)", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawFenceBuiltin(r, rc, Farm::FencePiece::Gate); }});
     add({"farm/soil", 128, 128, "Mound of soil under each vegetable (sits in the lower part of the plant's square)", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawSoilBuiltin(r, rc, false); }});
     add({"farm/soil_hover", 128, 128, "Mound under the plant the pointer is on (optional)", false,

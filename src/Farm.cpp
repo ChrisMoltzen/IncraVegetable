@@ -24,6 +24,8 @@ constexpr float kBedAspect = 1.6f;     // small beds are 1.6 times wider than ta
 constexpr float kSpreadGap = 1.0f;     // normally plants don't overlap at all...
 constexpr float kMinGap = 0.9f;        // ...and never by more than 10% (centres 0.9 plant-widths apart)
 constexpr float kBedMargin = 0.2f;    // soil around the outermost plants, in plant-widths
+constexpr float kFenceTile = 46.f;     // fence tiles, in world pixels (a plant is kMaxPlantPx)
+constexpr float kFenceGap = 14.f;      // grass between the bed and the fence, in world pixels
 
 // Scatters points inside a rectangle (half-width hw, half-height hh) so no
 // two are closer than minDist (Bridson's Poisson-disc sampling). Looks
@@ -202,7 +204,9 @@ void Farm::plant(Uint32 seed) {
         if (L.pts.empty()) L.pts.assign(capacity, SDL_FPoint{0.f, 0.f}); // can't happen in practice
         L.rx = bedRX;
         L.ry = bedRX / aspect;
-        L.scale = std::min({1.f, kMaxBedRX / L.rx, kMaxBedRY / L.ry}); // camera zoom that fits the whole bed
+        // Camera zoom that fits the whole bed and the fence around it.
+        const float fence = kFenceGap + kFenceTile;
+        L.scale = std::min({1.f, kMaxBedRX / (L.rx + fence), kMaxBedRY / (L.ry + fence)});
         return L;
     };
 
@@ -220,6 +224,8 @@ void Farm::plant(Uint32 seed) {
     bedRY_ = L.ry * L.scale;
     bedX_ = kBedCenterX;
     bedY_ = kBedCenterY;
+    fenceTile_ = kFenceTile * L.scale;
+    fenceGap_ = kFenceGap * L.scale;
     spots_.resize(capacity);
     for (int i = 0; i < capacity; ++i) spots_[i] = {bedX_ + L.pts[i].x * L.scale, bedY_ + L.pts[i].y * L.scale};
 
@@ -782,6 +788,68 @@ void Farm::drawBedBuiltin(SDL_Renderer* r, const SDL_FRect& rc, Uint32 seed) {
     }
 }
 
+// Built-in fence tiles: weathered wooden posts and two rails, seen from above
+// like the bed. Each tile joins up with its neighbours at the edges.
+namespace {
+const SDL_Color kFenceWood{164, 128, 86, 255}, kFenceDark{112, 84, 54, 255}, kFenceLight{196, 162, 116, 255};
+void fencePost(SDL_Renderer* r, float cx, float cy, float s) {
+    draw::fillRoundRect(r, cx - s * 0.5f + s * 0.08f, cy - s * 0.5f + s * 0.12f, s, s, s * 0.2f, SDL_Color{0, 0, 0, 50}); // shadow
+    draw::fillRoundRect(r, cx - s * 0.5f, cy - s * 0.5f, s, s, s * 0.2f, kFenceDark);
+    draw::fillRoundRect(r, cx - s * 0.36f, cy - s * 0.36f, s * 0.72f, s * 0.72f, s * 0.14f, kFenceWood);
+    draw::fillRoundRect(r, cx - s * 0.2f, cy - s * 0.26f, s * 0.36f, s * 0.14f, s * 0.07f, kFenceLight);
+}
+// Two rails across the tile: horizontal (along the top and bottom) or vertical (down the sides).
+void fenceRails(SDL_Renderer* r, const SDL_FRect& rc, bool horizontal) {
+    const float t = std::max(2.f, std::min(rc.w, rc.h) * 0.14f);
+    for (float f : {0.36f, 0.64f}) {
+        if (horizontal) {
+            float y = rc.y + rc.h * f - t * 0.5f;
+            draw::fillRect(r, rc.x, y + t * 0.4f, rc.w, t, SDL_Color{0, 0, 0, 45});
+            draw::fillRect(r, rc.x, y, rc.w, t, kFenceWood);
+            draw::fillRect(r, rc.x, y, rc.w, std::max(1.f, t * 0.3f), kFenceLight);
+        } else {
+            float x = rc.x + rc.w * f - t * 0.5f;
+            draw::fillRect(r, x + t * 0.4f, rc.y, t, rc.h, SDL_Color{0, 0, 0, 45});
+            draw::fillRect(r, x, rc.y, t, rc.h, kFenceWood);
+            draw::fillRect(r, x, rc.y, std::max(1.f, t * 0.3f), rc.h, kFenceLight);
+        }
+    }
+}
+} // namespace
+
+void Farm::drawFenceBuiltin(SDL_Renderer* r, const SDL_FRect& rc, FencePiece piece) {
+    const float s = std::min(rc.w, rc.h);
+    const float cx = rc.x + rc.w * 0.5f, cy = rc.y + rc.h * 0.5f;
+    switch (piece) {
+    case FencePiece::Horizontal:
+        fenceRails(r, rc, true);
+        fencePost(r, cx, cy, s * 0.42f);
+        break;
+    case FencePiece::Vertical:
+        fenceRails(r, rc, false);
+        fencePost(r, cx, cy, s * 0.42f);
+        break;
+    case FencePiece::Corner:
+        // One picture for all four corners, so just a big post (the rails come from the neighbours).
+        fencePost(r, cx, cy, s * 0.7f);
+        break;
+    case FencePiece::Gate: {
+        // Hinge posts at each side, a lighter gate between them with a diagonal brace.
+        const float t = std::max(2.f, s * 0.16f);
+        SDL_FRect g{rc.x + rc.w * 0.16f, rc.y + rc.h * 0.24f, rc.w * 0.68f, rc.h * 0.52f};
+        draw::fillRect(r, g.x, g.y + t * 0.5f, g.w, g.h, SDL_Color{0, 0, 0, 45});
+        draw::fillRect(r, g.x, g.y, g.w, t, kFenceLight);                 // top rail
+        draw::fillRect(r, g.x, g.y + g.h - t, g.w, t, kFenceLight);       // bottom rail
+        draw::fillRect(r, g.x + g.w - t, g.y, t, g.h, kFenceLight);       // latch side
+        draw::thickLine(r, g.x + t * 0.5f, g.y + g.h - t * 0.5f, g.x + g.w - t, g.y + t, t * 0.9f, kFenceWood); // brace
+        draw::fillRect(r, g.x + g.w - t * 1.6f, cy - t * 0.3f, t * 0.6f, t * 0.6f, kFenceDark); // latch
+        fencePost(r, rc.x + rc.w * 0.1f, cy, s * 0.42f);
+        fencePost(r, rc.x + rc.w * 0.9f, cy, s * 0.42f);
+        break;
+    }
+    }
+}
+
 void Farm::drawCropBuiltin(SDL_Renderer* r, Crop crop, float cx, float cy, float s) {
     croplook::draw(r, cropDef(crop).look, cropColor(crop), cx, cy, s);
 }
@@ -818,7 +886,34 @@ void Farm::render(SDL_Renderer* r) const {
     SDL_RenderTexture(r, zoomTex_, nullptr, &dst);
 }
 
+// The fence around the bed: a ring of square-ish tiles. Corners are posts,
+// the long sides are fence runs, and the middle of the bottom side is a gate.
+void Farm::drawFence(SDL_Renderer* r) const {
+    if (fenceTile_ <= 0.f) return;
+    const float m = fenceGap_ + fenceTile_;
+    const SDL_FRect o{bedX_ - bedRX_ - m, bedY_ - bedRY_ - m, (bedRX_ + m) * 2.f, (bedRY_ + m) * 2.f};
+    // Whole tiles along each side, stretched a touch so they meet exactly at the corners.
+    const int nx = std::max(3, static_cast<int>(std::lround(o.w / fenceTile_)));
+    const int ny = std::max(3, static_cast<int>(std::lround(o.h / fenceTile_)));
+    const float tw = o.w / nx, th = o.h / ny;
+    const int gate = nx / 2;
+    auto tile = [&](int i, int j) { return SDL_FRect{o.x + i * tw, o.y + j * th, tw, th}; };
+    for (int i = 0; i < nx; ++i) {
+        for (int j : {0, ny - 1}) {
+            bool corner = i == 0 || i == nx - 1;
+            const char* name = corner ? "farm/fence_corner" : (j == ny - 1 && i == gate) ? "farm/fence_gate" : "farm/fence_h";
+            art::draw(r, name, tile(i, j));
+        }
+    }
+    for (int j = 1; j < ny - 1; ++j) {
+        art::draw(r, "farm/fence_v", tile(0, j));
+        art::draw(r, "farm/fence_v", tile(nx - 1, j));
+    }
+}
+
 void Farm::renderScene(SDL_Renderer* r) const {
+    drawFence(r);
+
     // The bed.
     SDL_FRect bed{bedX_ - bedRX_, bedY_ - bedRY_, bedRX_ * 2.f, bedRY_ * 2.f};
     if (art::has("farm/bed")) {
