@@ -5,11 +5,14 @@ RPATH = -rpath /Library/Frameworks
 FRAMEWORK = -F/Library/Frameworks
 FRAMEWORK_BIN = -framework sdl3
 INCLUDE_DIRS = -Iinclude
+# Load art from this project's assets/ folder first, wherever the game is run
+# from, so an old copy (e.g. build/assets) can't hide your latest art.
+ASSETS_DEF = -DINCRA_SOURCE_ASSETS_DIR=\"$(CURDIR)/assets\"
 
 SRC = $(wildcard src/*.cpp)
 
 default:
-	clang++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20
+	clang++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(ASSETS_DEF) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20
 
 # Tech tree editor: make editor, then run build/TechTreeEditor
 EDITOR_SRC = $(wildcard tools/TechTreeEditor/src/*.cpp) src/TechData.cpp
@@ -38,7 +41,7 @@ WIN_LIBS = -static -L$(SDL_DIR)/lib/x64 -Wl,-Bdynamic -lSDL3 -Wl,-Bstatic
 WIN_COPY_DLL = powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(OUTPUT_DIR)/'"
 
 win:
-	g++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(WIN_LIBS) -std=c++20
+	g++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(WIN_LIBS) -std=c++20
 	$(WIN_COPY_DLL)
 
 editor-win:

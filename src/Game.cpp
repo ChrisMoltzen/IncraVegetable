@@ -808,6 +808,7 @@ std::vector<std::string> Game::debugInfo() const {
         lines.push_back("Artwork: no assets folder found (built-in art only)");
     } else {
         lines.push_back(draw::strf("Artwork: %d image(s) loaded - F5 reloads", art::loadedCount()));
+        lines.push_back("  from " + art::assetDir());
         for (const auto& f : art::unknownFiles()) lines.push_back("  Unused (name typo?): " + f);
     }
     if (char* pref = SDL_GetPrefPath("IncraVegetable", "IncraVegetable")) {
