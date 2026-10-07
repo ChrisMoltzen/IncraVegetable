@@ -167,13 +167,16 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
     // ---------------- HUD ----------------
     add({"ui/hud_logo", 336, 30, "Game name in the top-left of the farm screen", false, drawHudLogoBuiltin});
     add({"ui/coin", 64, 64, "Coin icon", false, ui::drawCoinBuiltin});
-    add({"ui/timer_back", 406, 36, "Behind the day timer bar", false, [](SDL_Renderer* r, const SDL_FRect& rc) {
-             draw::fillRoundRect(r, rc.x, rc.y, rc.w, rc.h, 16, SDL_Color{10, 14, 10, 255});
-         }});
-    add({"ui/timer_fill", 400, 30, "Day timer bar when full. It's cropped from the right as the day runs out", false,
-         [](SDL_Renderer* r, const SDL_FRect& rc) {
-             draw::fillRoundRect(r, rc.x, rc.y, rc.w, rc.h, 14, SDL_Color{110, 210, 90, 255});
-         }});
+    add({"ui/dial_sky", 256, 256,
+         "Day/night dial: the WHOLE sky disc. Day half on top with the sun at the top middle, night half below with "
+         "the moon at the bottom middle. The game turns it so the sun rises on the left and sets on the right; only "
+         "the top half shows",
+         false, ui::drawDialSkyBuiltin});
+    add({"ui/dial_frame", 280, 150,
+         "Day/night dial: frame drawn over the sky disc. Leave the half-circle window see-through (it fills the frame's "
+         "width minus about 6% each side, with the horizon about 79% of the way down); the bottom strip hides the sun "
+         "as it sets",
+         false, ui::drawDialFrameBuiltin});
     add({"ui/pick_bar_back", 128, 16, "Behind the picking progress bar under a vegetable", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawPickBarBuiltin(r, rc, false); }});
     add({"ui/pick_bar_fill", 128, 16, "Picking progress bar when full (cropped while picking)", false,
