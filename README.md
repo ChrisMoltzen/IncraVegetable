@@ -81,13 +81,13 @@ What you can replace:
 - **HUD**: logo, coin, the day/night dial, picking bar, pause and debug buttons
 - **Menus**: main menu background and logo, save-slot screen background, pop-up panel, summary header, volume sliders
 - **Buttons**: four colours, each with optional hover / pressed / disabled versions
-- **Tech tree**: background, top bar, upgrade boxes (four states), tooltip, and an icon for each upgrade
+- **Tech tree**: background, top bar, upgrade tiles (four states), the hover pop-up, and an icon for each upgrade (`tree/icons/<id>`, 64 x 64, drawn in the middle of its tile; every shipped upgrade has a built-in picture, and any new one shows its initials until you draw it)
 - **Font**: an optional bitmap font that replaces the built-in pixel font
 
 Things to know:
 
 - Your images don't have to match the template size; they're scaled to fit. Keep the same shape (proportions) for best results.
-- Buttons, panels, upgrade boxes and the tooltip are **9-slice**: their corners keep their shape and the middle stretches, so one image fits every size. You can set the corner size in `assets/art.txt`.
+- Buttons, panels, upgrade tiles and the pop-up are **9-slice**: their corners keep their shape and the middle stretches, so one image fits every size. You can set the corner size in `assets/art.txt`.
 - Making pixel art? Put `filter nearest` in `assets/art.txt` so it stays crisp.
 - Draw `fx/particle` and `ui/font` in white; the game colours them.
 - **The day/night dial** works like a watch's moon-phase window: `ui/dial_sky` is the *whole* round sky disc (day half on top with the sun at the top, night half below with the moon at the bottom), and the game turns it so the sun rises on the left and sets on the right; only the top half shows. `ui/dial_frame` goes over it, with a see-through half-circle window. Without a sky image, the built-in dial also warms the sky at dawn and dusk and brings the stars out at sunset.
@@ -166,6 +166,8 @@ Save and settings files live in your user data folder:
 | Farm Crew | +1 farmer per level (up to 5) | Farmhand |
 | Comfy Boots | Farmers walk 20% faster per level | Farmhand |
 | Sharp Shears | Farmers pick 15% faster per level | Farmhand |
+
+Each upgrade is a square tile showing just its icon; a thin bar along the bottom fills as you buy levels, and the frame shows its state (green and pulsing = you can buy it, gold = maxed, dark = locked). **Hover** a tile (or tap it once on a touch screen) for everything else: name, level and max level, description, what it does now, at the next level and at max (worked out from all your upgrades), what it still needs, and the price. Click (or tap again) to buy.
 
 Nodes stay hidden until one of their prerequisites has been bought, so the tree reveals itself as you play.
 

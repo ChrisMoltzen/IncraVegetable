@@ -65,25 +65,25 @@ is brightened or darkened automatically.
 | `menu/slots_background.png` | 1280 x 720 |  | Background of the New Game / Load Game slot screen |
 | `tree/background.png` | 1280 x 720 |  | Tech tree background |
 | `tree/header_bar.png` | 1280 x 64 |  | Strip along the top of the tech tree |
-| `tree/node.png` | 236 x 78 | yes | Upgrade you can't afford yet |
-| `tree/node_affordable.png` | 236 x 78 | yes | Upgrade you can buy now |
-| `tree/node_locked.png` | 236 x 78 | yes | Upgrade whose requirements aren't met |
-| `tree/node_maxed.png` | 236 x 78 | yes | Fully upgraded |
-| `tree/icons/patch.png` | 64 x 64 |  | Icon for the 'Bigger Patch' upgrade (optional - shown on the left of its box) |
-| `tree/icons/seeds.png` | 64 x 64 |  | Icon for the 'More Seeds' upgrade (optional - shown on the left of its box) |
-| `tree/icons/daylength.png` | 64 x 64 |  | Icon for the 'Longer Days' upgrade (optional - shown on the left of its box) |
-| `tree/icons/pickspeed.png` | 64 x 64 |  | Icon for the 'Quick Hands' upgrade (optional - shown on the left of its box) |
-| `tree/icons/headstart.png` | 64 x 64 |  | Icon for the 'Head Start' upgrade (optional - shown on the left of its box) |
-| `tree/icons/growspeed.png` | 64 x 64 |  | Icon for the 'Fertile Soil' upgrade (optional - shown on the left of its box) |
-| `tree/icons/value.png` | 64 x 64 |  | Icon for the 'Prize Produce' upgrade (optional - shown on the left of its box) |
-| `tree/icons/reach.png` | 64 x 64 |  | Icon for the 'Wide Reach' upgrade (optional - shown on the left of its box) |
-| `tree/icons/carrots.png` | 64 x 64 |  | Icon for the 'Carrots' upgrade (optional - shown on the left of its box) |
-| `tree/icons/pumpkins.png` | 64 x 64 |  | Icon for the 'Pumpkins' upgrade (optional - shown on the left of its box) |
-| `tree/icons/autopick.png` | 64 x 64 |  | Icon for the 'Helping Hand' upgrade (optional - shown on the left of its box) |
-| `tree/icons/autopickchance.png` | 64 x 64 |  | Icon for the 'Lucky Streak' upgrade (optional - shown on the left of its box) |
-| `tree/icons/autopickcount.png` | 64 x 64 |  | Icon for the 'Bumper Bunch' upgrade (optional - shown on the left of its box) |
-| `tree/icons/autopickradius.png` | 64 x 64 |  | Icon for the 'Spreading Roots' upgrade (optional - shown on the left of its box) |
-| `tree/icons/farmhand.png` | 64 x 64 |  | Icon for the 'Farmhand' upgrade (optional - shown on the left of its box) |
-| `tree/icons/farmcrew.png` | 64 x 64 |  | Icon for the 'Farm Crew' upgrade (optional - shown on the left of its box) |
-| `tree/icons/farmerspeed.png` | 64 x 64 |  | Icon for the 'Comfy Boots' upgrade (optional - shown on the left of its box) |
-| `tree/icons/farmerpick.png` | 64 x 64 |  | Icon for the 'Sharp Shears' upgrade (optional - shown on the left of its box) |
+| `tree/node.png` | 96 x 96 | yes | Upgrade you can't afford yet |
+| `tree/node_affordable.png` | 96 x 96 | yes | Upgrade you can buy now |
+| `tree/node_locked.png` | 96 x 96 | yes | Upgrade whose requirements aren't met |
+| `tree/node_maxed.png` | 96 x 96 | yes | Fully upgraded |
+| `tree/icons/patch.png` | 64 x 64 |  | Icon for the 'Bigger Patch' upgrade, in the middle of its tile |
+| `tree/icons/seeds.png` | 64 x 64 |  | Icon for the 'More Seeds' upgrade, in the middle of its tile |
+| `tree/icons/daylength.png` | 64 x 64 |  | Icon for the 'Longer Days' upgrade, in the middle of its tile |
+| `tree/icons/pickspeed.png` | 64 x 64 |  | Icon for the 'Quick Hands' upgrade, in the middle of its tile |
+| `tree/icons/headstart.png` | 64 x 64 |  | Icon for the 'Head Start' upgrade, in the middle of its tile |
+| `tree/icons/growspeed.png` | 64 x 64 |  | Icon for the 'Fertile Soil' upgrade, in the middle of its tile |
+| `tree/icons/value.png` | 64 x 64 |  | Icon for the 'Prize Produce' upgrade, in the middle of its tile |
+| `tree/icons/reach.png` | 64 x 64 |  | Icon for the 'Wide Reach' upgrade, in the middle of its tile |
+| `tree/icons/carrots.png` | 64 x 64 |  | Icon for the 'Carrots' upgrade, in the middle of its tile |
+| `tree/icons/pumpkins.png` | 64 x 64 |  | Icon for the 'Pumpkins' upgrade, in the middle of its tile |
+| `tree/icons/autopick.png` | 64 x 64 |  | Icon for the 'Helping Hand' upgrade, in the middle of its tile |
+| `tree/icons/autopickchance.png` | 64 x 64 |  | Icon for the 'Lucky Streak' upgrade, in the middle of its tile |
+| `tree/icons/autopickcount.png` | 64 x 64 |  | Icon for the 'Bumper Bunch' upgrade, in the middle of its tile |
+| `tree/icons/autopickradius.png` | 64 x 64 |  | Icon for the 'Spreading Roots' upgrade, in the middle of its tile |
+| `tree/icons/farmhand.png` | 64 x 64 |  | Icon for the 'Farmhand' upgrade, in the middle of its tile |
+| `tree/icons/farmcrew.png` | 64 x 64 |  | Icon for the 'Farm Crew' upgrade, in the middle of its tile |
+| `tree/icons/farmerspeed.png` | 64 x 64 |  | Icon for the 'Comfy Boots' upgrade, in the middle of its tile |
+| `tree/icons/farmerpick.png` | 64 x 64 |  | Icon for the 'Sharp Shears' upgrade, in the middle of its tile |

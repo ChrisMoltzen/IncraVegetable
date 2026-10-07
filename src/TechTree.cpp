@@ -29,6 +29,16 @@ TechTree::TechTree() {
         n.gridY = def.gridY;
         n.apply = [def](Stats& s, int lv) { techdata::applyEffects(def, s, lv); };
         n.describe = [def](int lv) { return techdata::describe(def, lv); };
+        std::vector<int> touched;
+        for (const auto& e : def.effects) {
+            int idx = techdata::statIndex(e.stat);
+            if (idx >= 0 && std::find(touched.begin(), touched.end(), idx) == touched.end()) touched.push_back(idx);
+        }
+        n.describeStats = [touched](const Stats& s) {
+            std::string out;
+            for (int idx : touched) out += (out.empty() ? "" : ", ") + techdata::formatStat(idx, s);
+            return out.empty() ? std::string("no effect") : out;
+        };
         addNode(std::move(n));
     }
 }
@@ -73,10 +83,13 @@ bool TechTree::tryBuy(size_t index, double& coins) {
     return true;
 }
 
-Stats TechTree::computeStats() const {
+Stats TechTree::computeStats() const { return computeStatsWith(TechNode{}, 0); }
+
+Stats TechTree::computeStatsWith(const TechNode& node, int level) const {
     Stats s;
     for (const auto& n : nodes_) {
-        if (n.level > 0 && n.apply) n.apply(s, n.level);
+        int lv = &n == &node ? level : n.level;
+        if (lv > 0 && n.apply) n.apply(s, lv);
     }
     s.headStart = std::clamp(s.headStart, 0.f, 1.f);
     return s;

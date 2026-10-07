@@ -70,20 +70,6 @@ void drawFontTemplate(SDL_Renderer* r, const SDL_FRect& rc) {
     SDL_SetRenderScale(r, 1.f, 1.f);
 }
 
-void drawIconTemplate(SDL_Renderer* r, const SDL_FRect& rc, const std::string& title) {
-    draw::fillRoundRect(r, rc.x + 2, rc.y + 2, rc.w - 4, rc.h - 4, rc.w * 0.2f, SDL_Color{70, 110, 160, 255});
-    std::string initials;
-    bool next = true;
-    for (char c : title) {
-        if (next && std::isalpha(static_cast<unsigned char>(c))) initials += static_cast<char>(std::toupper(c));
-        next = c == ' ';
-    }
-    initials = initials.substr(0, 2);
-    float scale = rc.w / 32.f;
-    draw::text(r, rc.x + rc.w * 0.5f, rc.y + rc.h * 0.5f - 4 * scale, initials, scale, SDL_Color{255, 255, 255, 255},
-               draw::Align::Center);
-}
-
 void addButtonStyle(ui::Style style, const char* what) {
     std::string base = ui::artName(style);
     struct V {
@@ -104,7 +90,7 @@ void addButtonStyle(ui::Style style, const char* what) {
 }
 
 void addNodeStyle(const char* name, SDL_Color fill, SDL_Color border, const char* what) {
-    add({name, 236, 78, what, true, [fill, border](SDL_Renderer* r, const SDL_FRect& rc) {
+    add({name, 96, 96, what, true, [fill, border](SDL_Renderer* r, const SDL_FRect& rc) {
              TechTreeScreen::drawNodeBuiltin(r, rc, fill, border);
          }});
 }
@@ -225,9 +211,9 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
     addNodeStyle("tree/node_maxed", {85, 68, 25, 255}, {255, 205, 70, 255}, "Fully upgraded");
     // "_hover" versions of the tree nodes are optional; without them the node is brightened.
     for (const auto& [id, title] : techNodes) {
-        std::string t = title;
-        add({"tree/icons/" + id, 64, 64, "Icon for the '" + title + "' upgrade (optional - shown on the left of its box)",
-             false, nullptr, [t](SDL_Renderer* r, const SDL_FRect& rc) { drawIconTemplate(r, rc, t); }});
+        std::string i = id, t = title;
+        add({"tree/icons/" + id, 64, 64, "Icon for the '" + title + "' upgrade, in the middle of its tile",
+             false, [i, t](SDL_Renderer* r, const SDL_FRect& rc) { TechTreeScreen::drawIconBuiltin(r, rc, i, t); }});
     }
 }
 

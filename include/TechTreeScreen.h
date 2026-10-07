@@ -4,6 +4,7 @@
 #include "TechTree.h"
 
 #include <SDL3/SDL.h>
+#include <string>
 #include <vector>
 
 class TechTreeScreen {
@@ -19,6 +20,9 @@ public:
     // Built-in art, used when there's no image in assets/ (see ArtCatalog.cpp).
     static void drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc, float panX, float panY);
     static void drawNodeBuiltin(SDL_Renderer* r, const SDL_FRect& outer, SDL_Color fill, SDL_Color border);
+    // Picture for a tech's tile when there's no assets/tree/icons/<id>.png.
+    // The shipped techs have their own; any other tech gets its initials.
+    static void drawIconBuiltin(SDL_Renderer* r, const SDL_FRect& rc, const std::string& id, const std::string& name);
     static void drawTooltipBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
     static void drawHeaderBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
 
@@ -28,6 +32,7 @@ private:
     int nodeAt(const TechTree& tree, float x, float y) const;
     void renderTooltip(SDL_Renderer* r, const TechTree& tree, const TechNode& n, double coins) const;
 
+    float originX_ = 640.f, originY_ = 300.f; // screen position of grid (0,0): set so the tree is centred
     float camX_ = 0.f, camY_ = 0.f;
     float mouseX_ = 0.f, mouseY_ = 0.f;
     bool pressing_ = false, dragged_ = false;
