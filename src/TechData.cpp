@@ -1,6 +1,7 @@
 #include "TechData.h"
 
 #include "CropLooks.h"
+#include "TileShapes.h"
 
 #include <algorithm>
 #include <cctype>
@@ -346,6 +347,12 @@ ParseResult parse(const std::string& text) {
         else if (key == "icon") {
             cur->icon = rest;
             if (!isValidId(rest)) err("icon must be letters, numbers or _");
+        } else if (key == "shape") {
+            cur->shape = rest;
+            if (!tileshape::isShape(rest)) err("unknown shape '" + rest + "' (square, circle, triangle, pentagon)");
+        } else if (key == "color" || key == "lockedcolor") {
+            (key == "color" ? cur->color : cur->lockedColor) = rest;
+            if (!tileshape::isValidHex(rest)) err(key + " must be 6 hex digits, e.g. 47613f");
         }
         else if (key == "desc") cur->description = rest;
         else if (key == "max") {
@@ -407,6 +414,9 @@ std::string serialize(const std::vector<TechDef>& techs, const std::vector<CropD
         o << "  growth " << num(t.costGrowth) << "\n";
         o << "  pos " << num(t.gridX) << " " << num(t.gridY) << "\n";
         if (!t.icon.empty() && t.icon != t.id) o << "  icon " << clean(t.icon) << "\n";
+        if (!t.shape.empty() && t.shape != "square") o << "  shape " << clean(t.shape) << "\n";
+        if (!clean(t.color).empty()) o << "  color " << clean(t.color) << "\n";
+        if (!clean(t.lockedColor).empty()) o << "  lockedcolor " << clean(t.lockedColor) << "\n";
         for (const auto& q : t.needs) o << "  requires " << clean(q.id) << " " << q.level << "\n";
         for (const auto& e : t.effects)
             o << "  effect " << clean(e.stat) << " " << opKey(e.op) << " " << num(e.amount) << "\n";
@@ -458,6 +468,9 @@ std::vector<std::string> validate(const std::vector<TechDef>& techs, const std::
         auto add = [&](const std::string& msg) { found.push_back({id, msg}); };
         if (!isValidId(id)) add("id must be letters, numbers or _ (no spaces)");
         if (!t.icon.empty() && !isValidId(t.icon)) add("icon must be letters, numbers or _");
+        if (!tileshape::isShape(t.shape)) add("unknown shape '" + t.shape + "'");
+        if (!tileshape::isValidHex(t.color)) add("colour must be 6 hex digits, e.g. 47613f");
+        if (!tileshape::isValidHex(t.lockedColor)) add("locked colour must be 6 hex digits, e.g. 2e3530");
         if (trim(t.name).empty()) add("has no name");
         if (t.maxLevel < 1) add("max level must be at least 1");
         if (t.baseCost < 0) add("cost can't be negative");

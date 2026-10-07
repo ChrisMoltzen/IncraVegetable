@@ -47,6 +47,9 @@ struct TechNode {
     std::string name;
     std::string description;
     std::string icon; // art name under tree/icons/ (the tech's id unless the tree picks another)
+    std::string shape;       // tile shape ("" = square)
+    std::string color;       // tile colour once unlocked (hex, "" = the usual)
+    std::string lockedColor; // tile colour while locked (hex, "" = the usual)
     int maxLevel = 1;
     double baseCost = 10;     // cost of level 1
     double costGrowth = 1.5;  // each level costs this many times more than the last

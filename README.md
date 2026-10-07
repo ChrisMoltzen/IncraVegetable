@@ -87,6 +87,7 @@ What you can replace:
 Things to know:
 
 - Your images don't have to match the template size; they're scaled to fit. Keep the same shape (proportions) for best results.
+- Your `tree/node*` tile art is used for square tiles with the usual colours; techs with their own shape or colour are drawn in that shape and colour instead.
 - Buttons, panels, upgrade tiles and the pop-up are **9-slice**: their corners keep their shape and the middle stretches, so one image fits every size. You can set the corner size in `assets/art.txt`.
 - Making pixel art? Put `filter nearest` in `assets/art.txt` so it stays crisp.
 - Draw `fx/particle` and `ui/font` in white; the game colours them.
@@ -198,6 +199,8 @@ Run it from the project folder (or pass the path to `TechTreeData.h`). It opens 
 - **Panel (right):** everything about the selected tech.
   - **ID:** letters, numbers and `_` only. Don't rename a tech after players have saves, because saves store levels by id. If you rename one anyway, the techs that require it are updated for you.
   - **Name** and **Description:** shown in the game's tooltip.
+  - **Shape:** square (the default), circle, triangle or pentagon. The tile takes this shape on the tech tree.
+  - **Unlocked** and **Locked** colours: the tile's colour once it can be bought (and after), and while its requirements aren't met. Pick a swatch (from the game's muted palette), type a hex code, or **Usual** for the standard colours. The preview shows both. The tile's frame still shows its state: pulsing green when you can afford it, gold when maxed.
   - **Icon:** click **Change...** to choose from every built-in picture and your own images in `assets/tree/icons/` (64 x 64 PNGs; the file name is the icon name, so `tractor.png` is the icon "tractor"). **Default** uses the icon named after the tech's id. Click **Rescan** in the picker after adding images while the editor is open. Saved as `icon <name>` in the tech tree file.
   - **Max level**, **Cost** of level 1, and **Cost growth** (each level costs this many times the last).
   - **Position** in columns and rows.

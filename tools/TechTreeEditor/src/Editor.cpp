@@ -1,6 +1,7 @@
 #include "Editor.h"
 
 #include "CropLooks.h"
+#include "TileShapes.h"
 
 #include <algorithm>
 #include <cctype>
@@ -686,13 +687,15 @@ void Editor::drawCanvas() {
         bool hover = inside(in_.mx, in_.my, rc) && inside(in_.mx, in_.my, c);
         SDL_Color border = selected ? col::accent : hasProblem[i] ? col::bad : hover ? SDL_Color{180, 186, 190, 255} : SDL_Color{110, 120, 128, 255};
         SDL_Color fill = t.needs.empty() ? SDL_Color{34, 62, 40, 255} : SDL_Color{44, 50, 56, 255};
-        fillRound(r_, {rc.x + 3, rc.y + 5, rc.w, rc.h}, 12 * zoom_, SDL_Color{0, 0, 0, 90});
+        // The tile in its shape and unlocked colour, as in the game.
+        const std::string shape = t.shape.empty() ? std::string("square") : t.shape;
+        SDL_Color own;
+        if (tileshape::parseHex(t.color, own)) fill = own;
         float b = selected ? 4.f : 3.f;
-        fillRound(r_, {rc.x - b, rc.y - b, rc.w + 2 * b, rc.h + 2 * b}, 14 * zoom_, border);
-        fillRound(r_, rc, 11 * zoom_, fill);
+        tileshape::fill(r_, shape, {rc.x + 3, rc.y + 5, rc.w, rc.h}, SDL_Color{0, 0, 0, 90});
+        tileshape::draw(r_, shape, {rc.x - b, rc.y - b, rc.w + 2 * b, rc.h + 2 * b}, fill, border, b);
         // The icon, as in the game; name (and id) underneath.
-        float is = 60.f * zoom_;
-        drawIcon(techdata::iconOf(t), {rc.x + (rc.w - is) / 2, rc.y + (rc.h - is) / 2, is, is}, t.name);
+        drawIcon(techdata::iconOf(t), tileshape::iconRect(shape, rc, 60.f * zoom_), t.name);
 
         std::string name = t.name.empty() ? "(no name)" : t.name;
         float labelW = rc.w * 1.25f; // neighbours can be under a column apart, so keep names short
@@ -849,6 +852,86 @@ void Editor::drawTechPanel(float x, float& y, float w) {
         }
     }
     y += fh + 16;
+
+    // Shape of the tile, and its colours when unlocked and while locked.
+    label("Shape");
+    {
+        const auto& shapes = tileshape::shapes();
+        const std::string cur = t.shape.empty() ? std::string("square") : t.shape;
+        SDL_Color previewFill{71, 97, 63, 255};
+        tileshape::parseHex(t.color, previewFill);
+        float bw = std::min(80.f, (fw - 8.f * (shapes.size() - 1)) / shapes.size());
+        for (size_t k = 0; k < shapes.size(); ++k) {
+            SDL_FRect b{fx + k * (bw + 8), y - 6, bw, 70};
+            bool on = shapes[k] == cur;
+            if (ui_.button("f_shape" + std::to_string(k), b, "", true, on) && !on) {
+                pushUndo();
+                T().shape = shapes[k] == "square" ? "" : shapes[k];
+            }
+            tileshape::draw(r_, shapes[k], {b.x + bw / 2 - 20, b.y + 6, 40, 40}, previewFill, SDL_Color{150, 156, 160, 255}, 2.f);
+            text(r_, b.x + bw / 2, b.y + 54, shapes[k], 1.f, on ? col::text : col::dim, Align::Center);
+        }
+    }
+    y += 76;
+
+    // A colour row: swatches from the game's muted palette, a hex code, and "Usual".
+    auto colourRow = [&](const char* name, const std::string& value, bool lockedRow) {
+        label(name);
+        static const char* swatches[] = {"47613f", "627f50", "344a5c", "50708a", "5a4a66",
+                                         "7d3a35", "8a4b2c", "a88a3c", "5a4031", "2e3530"};
+        const float sw = 24.f;
+        for (int k = 0; k < 10; ++k) {
+            SDL_FRect b{fx + k * (sw + 5), y + 7, sw, sw};
+            SDL_Color c;
+            tileshape::parseHex(swatches[k], c);
+            bool cur = value == swatches[k];
+            if (ui_.hovered(b) && in_.released && !cur) {
+                pushUndo();
+                (lockedRow ? T().lockedColor : T().color) = swatches[k];
+            }
+            fillRound(r_, {b.x - 2, b.y - 2, b.w + 4, b.h + 4}, 6, cur ? col::accent : (ui_.hovered(b) ? col::text : col::panelLine));
+            fillRound(r_, b, 5, c);
+        }
+        y += sw + 16; // hex code and "Usual" on the line below the swatches
+        ui_.textField(lockedRow ? "f_lcol" : "f_col", {fx, y, 140, fh}, value,
+                      [this, T, lockedRow](const std::string& v) {
+                          std::string hex;
+                          for (char ch : v)
+                              if (ch != '#' && !std::isspace(static_cast<unsigned char>(ch)))
+                                  hex += static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+                          if (!tileshape::isValidHex(hex)) return toast("A colour is 6 hex digits, e.g. 47613f", true);
+                          pushUndo();
+                          (lockedRow ? T().lockedColor : T().color) = hex;
+                      },
+                      false, "usual");
+        if (ui_.button(lockedRow ? "f_lcolu" : "f_colu", {fx + 150, y, 90, fh}, "Usual", !value.empty(), false, 1.25f)) {
+            pushUndo();
+            (lockedRow ? T().lockedColor : T().color).clear();
+        }
+        y += fh + 8;
+    };
+    colourRow("Unlocked", t.color, false);
+    colourRow("Locked", t.lockedColor, true);
+
+    // Preview: how the tile looks locked, and once it's unlocked.
+    {
+        const std::string shape = t.shape.empty() ? std::string("square") : t.shape;
+        SDL_Color unlockedFill{44, 50, 56, 255}, lockedFill{32, 33, 37, 255};
+        tileshape::parseHex(t.color, unlockedFill);
+        tileshape::parseHex(t.lockedColor, lockedFill);
+        text(r_, x, y + 30, "Preview", 1.5f, col::dim);
+        for (int k = 0; k < 2; ++k) {
+            SDL_FRect tile{fx + k * 120.f, y + 4, 72, 72};
+            SDL_Color f = k == 0 ? lockedFill : unlockedFill;
+            tileshape::fill(r_, shape, {tile.x + 3, tile.y + 5, tile.w, tile.h}, SDL_Color{0, 0, 0, 90});
+            tileshape::draw(r_, shape, tile, f, k == 0 ? SDL_Color{70, 72, 78, 255} : SDL_Color{130, 220, 120, 255}, 3.f);
+            SDL_FRect ic = tileshape::iconRect(shape, tile, 50);
+            drawIcon(techdata::iconOf(t), ic, t.name);
+            if (k == 0) fillRound(r_, {ic.x - 2, ic.y - 2, ic.w + 4, ic.h + 4}, 8, alpha(f, 165)); // faded, as in the game
+            text(r_, tile.x + tile.w / 2 + 8, tile.y + tile.h + 8, k == 0 ? "locked" : "can buy", 1.f, col::dim, Align::Center);
+        }
+        y += 104;
+    }
 
     label("Description");
     ui_.textField("f_desc", {fx, y, fw, 112}, t.description,
