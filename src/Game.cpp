@@ -599,7 +599,7 @@ void Game::playHarvestSounds() {
     int played = 0;
     for (Crop c : picked) {
         if (played++ >= 3) break; // Wide Reach can pick lots at once; don't deafen anyone
-        float pitch = c == Crop::Lettuce ? 1.f : (c == Crop::Carrot ? 0.86f : 0.72f);
+        float pitch = std::max(0.6f, 1.f - 0.14f * static_cast<float>(c)); // later crops sound deeper
         audio_.play(Sfx::Pick, pitch * jitter(rng_));
         audio_.play(Sfx::Coin, jitter(rng_), 0.45f);
     }
@@ -720,10 +720,9 @@ void Game::renderSummary() {
     float ty = y + 100;
     draw::text(renderer_, x + 50, ty, draw::strf("Vegetables picked: %d", farm_.pickedToday()), 2.f, ink);
     ty += 30;
-    const Crop crops[] = {Crop::Lettuce, Crop::Carrot, Crop::Pumpkin};
-    for (Crop c : crops) {
+    for (Crop c = 0; c < cropCount(); ++c) {
         if (farm_.pickedOf(c) == 0) continue;
-        draw::text(renderer_, x + 80, ty, draw::strf("%s x%d", cropInfo(c).name, farm_.pickedOf(c)), 1.5f,
+        draw::text(renderer_, x + 80, ty, draw::strf("%s x%d", cropDef(c).name.c_str(), farm_.pickedOf(c)), 1.5f,
                    SDL_Color{120, 95, 70, 255});
         ty += 22;
     }

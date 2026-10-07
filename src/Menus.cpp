@@ -92,7 +92,7 @@ void MainMenu::renderBackground(SDL_Renderer* r) const {
         {540.f, 56.f, 22.f, SDL_Color{112, 74, 46, 255}},
         {640.f, 84.f, 34.f, SDL_Color{100, 66, 40, 255}},
     };
-    const Crop pattern[] = {Crop::Lettuce, Crop::Carrot, Crop::Lettuce, Crop::Pumpkin, Crop::Carrot, Crop::Lettuce};
+    const Crop pattern[] = {0, 1, 0, 2, 1, 0}; // (wrapped to however many crops there are)
     for (int ri = 0; ri < 3; ++ri) {
         const Row& row = rows[ri];
         float spacing = row.size * 1.5f;
@@ -103,7 +103,7 @@ void MainMenu::renderBackground(SDL_Renderer* r) const {
             float x = k * spacing - offset + spacing * 0.5f;
             int idx = ((k + first + ri * 2) % 6 + 6) % 6;
             float bob = std::sin(clock_ * 2.f + k * 1.3f + ri) * row.size * 0.03f;
-            Farm::drawCrop(r, pattern[idx], x, row.y + bob, row.size);
+            Farm::drawCrop(r, pattern[idx] % std::max(1, cropCount()), x, row.y + bob, row.size);
         }
     }
 }

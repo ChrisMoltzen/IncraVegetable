@@ -11,6 +11,36 @@ R"TECHTREE(# IncraVegetable tech tree. Made with TechTreeEditor (tools/TechTreeE
 # Format: see include/TechData.h
 version 1
 
+crop lettuce
+  name Lettuce
+  value 1
+  grow 1
+  pick 1
+  weight 45
+  tier 0
+  look lettuce
+end
+
+crop carrot
+  name Carrot
+  value 4
+  grow 1.6
+  pick 1.25
+  weight 35
+  tier 1
+  look carrot
+end
+
+crop pumpkin
+  name Pumpkin
+  value 15
+  grow 2.6
+  pick 1.6
+  weight 20
+  tier 2
+  look pumpkin
+end
+
 tech patch
   name Bigger Patch
   desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).

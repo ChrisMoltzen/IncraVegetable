@@ -74,7 +74,7 @@ Every picture in the game can be replaced with your own images, one piece at a t
 
 What you can replace:
 
-- **Crops**: ripe lettuce, carrot and pumpkin, a growing sprout (one shared, or one per crop)
+- **Crops**: each crop ripe (`crops/<id>`, e.g. `crops/lettuce`) and growing (`crops/<id>_sprout`, optional; otherwise the shared `crops/sprout`). Crops you add in the editor work the same way, and look like their built-in look and colour until you draw them
 - **Farm**: background, the garden bed, the soil mound under each plant (and under the pointer), top bar
 - **Farmers**: `farm/farmer` (standing), plus optional `farm/farmer_walk1` / `farm/farmer_walk2` (walking steps) and `farm/farmer_pick` (bending to pick). Only `farm/farmer` is needed: missing poses use it, bobbing as it walks
 - **Effects**: pick particles, the Wide Reach circle
@@ -205,7 +205,13 @@ Run it from the project folder (or pass the path to `TechTreeData.h`). It opens 
   - **Effects:** click the first button to pick a stat from a list (each with a line saying what it does), the second to choose how it changes (Shift+click goes backwards), then type the amount. Each effect shows in words what it does at level 1 and at max level.
   - With nothing selected, the panel shows **With everything bought**: every stat at the start and with the whole tree bought. It also warns when *Crops at once* and the patch's room don't match up (crops can never be more than the patch has room for).
   - **Preview:** the cost of every level and what the tech gives at each level.
-  - **Problems:** missing requirements, loops that make techs impossible to buy, duplicate ids, techs on the same spot, techs with no effects.
+  - **Problems:** missing requirements, loops that make techs impossible to buy, duplicate ids, techs on the same spot, techs with no effects, and crops that nothing unlocks.
+- **Crops:** with no tech selected, the panel lists every crop. **+ Add crop** makes a new one (a step up from your best crop: worth more, slower, unlocked one Crops level later); click a crop to edit it:
+  - **ID** (letters, numbers and `_`; it's also the art name, `assets/crops/<id>.png`) and **Name**.
+  - **Value** in coins, **Grow time** and **Pick time** (times lettuce's), and **How often** it's planted compared with the other unlocked crops (the panel shows what share that works out to).
+  - **Unlocks at** a level of the **Crops** stat (0 = from the start). The panel names the techs that unlock it; if none do, **+ Make an unlock tech** adds one (Crops "set at least" that level, needing the tech for the level before, with the crop as its icon).
+  - **Look** (lettuce, carrot, pumpkin or round fruit) and **Colour** (a swatch, a hex code, or **Usual**), used until you draw the crop. The preview shows exactly what the game will draw.
+  - Any crop can be a tech's icon: it's in the icon picker as `crop_<id>`.
 - **Keys:** Ctrl+S save, Ctrl+Z / Ctrl+Y undo / redo, Ctrl+D duplicate, Delete removes the selected tech, arrow keys nudge it. On a Mac, Cmd works too.
 
 After saving, run `make` again to rebuild the game with the new tree.

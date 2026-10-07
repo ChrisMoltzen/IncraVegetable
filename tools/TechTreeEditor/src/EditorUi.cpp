@@ -241,7 +241,7 @@ void Ui::textField(const std::string& idStr, const SDL_FRect& rc, const std::str
 
 void Ui::numberField(const std::string& id, const SDL_FRect& rc, double value, std::function<void(double)> onCommit,
                      bool integer) {
-    std::string shown = integer ? gfx::strf("%d", static_cast<int>(std::lround(value))) : gfx::strf("%.10g", value);
+    std::string shown = integer ? gfx::strf("%d", static_cast<int>(std::lround(value))) : gfx::strf("%.7g", value); // 7 digits: enough for a float, without 1.899999976
     textField(id, rc, shown, [this, onCommit, integer](const std::string& s) {
         char* end = nullptr;
         double v = std::strtod(s.c_str(), &end);

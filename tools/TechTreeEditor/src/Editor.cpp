@@ -1,5 +1,7 @@
 #include "Editor.h"
 
+#include "CropLooks.h"
+
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -52,6 +54,8 @@ bool Editor::init(int argc, char** argv) {
 void Editor::shutdown() {
     for (auto& [name, tex] : iconTex_) SDL_DestroyTexture(tex);
     iconTex_.clear();
+    for (auto& [name, tex] : cropTex_) SDL_DestroyTexture(tex);
+    cropTex_.clear();
     if (r_) SDL_DestroyRenderer(r_);
     if (win_) SDL_DestroyWindow(win_);
     SDL_Quit();
@@ -89,6 +93,20 @@ std::string Editor::projectRoot() const {
 void Editor::loadIcons() {
     for (auto& [name, tex] : iconTex_) SDL_DestroyTexture(tex);
     iconTex_.clear();
+    for (auto& [name, tex] : cropTex_) SDL_DestroyTexture(tex);
+    cropTex_.clear();
+    {
+        // Crop artwork, so crops (and crop icons) look as they will in the game.
+        const std::string dir = projectRoot() + "/assets/crops/";
+        int n = 0;
+        if (char** files = SDL_GlobDirectory(dir.c_str(), "*.png", 0, &n)) {
+            for (int k = 0; k < n; ++k) {
+                std::string f = files[k], stem = f.substr(0, f.size() - 4);
+                if (SDL_Texture* t = loadImage(r_, dir + f)) cropTex_[stem] = t;
+            }
+            SDL_free(files);
+        }
+    }
     customIcons_.clear();
     const std::string root = projectRoot();
     const std::string mine = root + "/assets/tree/icons/", templates = root + "/art_templates/tree/icons/";
@@ -128,6 +146,10 @@ void Editor::drawIcon(const std::string& name, const SDL_FRect& rc, const std::s
         SDL_RenderTexture(r_, it->second, nullptr, &rc);
         return;
     }
+    if (name.rfind("crop_", 0) == 0) { // a crop used as an icon
+        for (int c = 0; c < static_cast<int>(crops_.size()); ++c)
+            if (crops_[c].id == name.substr(5)) return drawCrop(c, rc.x + rc.w / 2, rc.y + rc.h / 2, rc.w * 0.88f);
+    }
     fillRound(r_, {rc.x + rc.w * 0.04f, rc.y + rc.h * 0.04f, rc.w * 0.92f, rc.h * 0.92f}, rc.w * 0.2f, SDL_Color{70, 110, 160, 255});
     std::string initials;
     bool next = true;
@@ -155,8 +177,11 @@ bool Editor::load(const std::string& path) {
     }
     techdata::ParseResult res = techdata::parse(text);
     techs_ = std::move(res.techs);
+    crops_ = res.crops.empty() ? techdata::defaultCrops() : std::move(res.crops);
+    techdata::setCrops(crops_);
     fileErrors_ = std::move(res.errors);
     sel_ = -1;
+    crop_ = -1;
     undo_.clear();
     redo_.clear();
     dirty_ = false;
@@ -169,7 +194,7 @@ bool Editor::load(const std::string& path) {
 
 bool Editor::save() {
     ui_.commitFocus();
-    std::string header = techdata::toHeader(techs_);
+    std::string header = techdata::toHeader(techs_, crops_);
     std::string tmp = path_ + ".tmp";
     bool ok = SDL_SaveFile(tmp.c_str(), header.data(), header.size());
     if (ok && !SDL_RenamePath(tmp.c_str(), path_.c_str())) {
@@ -182,7 +207,7 @@ bool Editor::save() {
     }
     dirty_ = false;
     fileErrors_.clear();
-    size_t problems = techdata::validate(techs_).size();
+    size_t problems = techdata::validate(techs_).size() + techdata::validateCrops(crops_, techs_).size();
     toast(problems ? strf("Saved - but %d problem(s) need fixing", static_cast<int>(problems))
                    : std::string("Saved. Rebuild the game to use the new tree."),
           problems != 0);
@@ -194,7 +219,7 @@ bool Editor::save() {
 // ===========================================================================
 
 void Editor::pushUndo() {
-    undo_.push_back({techs_, sel_});
+    undo_.push_back({techs_, sel_, crops_, crop_});
     if (undo_.size() > kMaxUndo) undo_.erase(undo_.begin());
     redo_.clear();
     dirty_ = true;
@@ -202,18 +227,22 @@ void Editor::pushUndo() {
 
 void Editor::undo() {
     if (undo_.empty()) return toast("Nothing to undo");
-    redo_.push_back({techs_, sel_});
+    redo_.push_back({techs_, sel_, crops_, crop_});
     techs_ = std::move(undo_.back().techs);
     sel_ = std::min(undo_.back().sel, static_cast<int>(techs_.size()) - 1);
+    crops_ = std::move(undo_.back().crops);
+    crop_ = std::min(undo_.back().crop, static_cast<int>(crops_.size()) - 1);
     undo_.pop_back();
     dirty_ = true;
 }
 
 void Editor::redo() {
     if (redo_.empty()) return toast("Nothing to redo");
-    undo_.push_back({techs_, sel_});
+    undo_.push_back({techs_, sel_, crops_, crop_});
     techs_ = std::move(redo_.back().techs);
     sel_ = std::min(redo_.back().sel, static_cast<int>(techs_.size()) - 1);
+    crops_ = std::move(redo_.back().crops);
+    crop_ = std::min(redo_.back().crop, static_cast<int>(crops_.size()) - 1);
     redo_.pop_back();
     dirty_ = true;
 }
@@ -545,6 +574,8 @@ void Editor::canvasInput() {
 // ===========================================================================
 
 void Editor::frame() {
+    techdata::setCrops(crops_); // descriptions of the Crops stat use the crops as they are now
+    const Modal modalAtStart = modal_;
     SDL_GetWindowSize(win_, &winW_, &winH_);
     in_.mod = SDL_GetModState();
     ui_.beginFrame(in_, r_, win_);
@@ -572,7 +603,13 @@ void Editor::frame() {
         text(r_, box.x + w / 2, box.y + 11, fit(toast_, 1.75f, w - 20), 1.75f, alpha(col::text, a), Align::Center);
     }
 
-    if (modal_ != Modal::None) drawModal();
+    if (modal_ != Modal::None) {
+        // A pop-up opened by this frame's click mustn't also take that click
+        // (it would pick whatever option is under the pointer and close).
+        ui_.setBlocked(modal_ != modalAtStart);
+        drawModal();
+        ui_.setBlocked(false);
+    }
 
     ui_.endFrame();
     in_.clearFrame();
@@ -731,8 +768,14 @@ void Editor::drawPanel() {
 
     ui_.setClip(&p);
     float x = p.x + 20, w = p.w - 40, y = p.y + 18 - panelScroll_, top = y;
-    if (sel_ >= 0 && sel_ < static_cast<int>(techs_.size())) drawTechPanel(x, y, w);
-    else drawTreePanel(x, y, w);
+    if (sel_ >= 0 && sel_ < static_cast<int>(techs_.size())) {
+        crop_ = -1; // selecting a tech closes the crop panel
+        drawTechPanel(x, y, w);
+    } else if (crop_ >= 0 && crop_ < static_cast<int>(crops_.size())) {
+        drawCropPanel(x, y, w);
+    } else {
+        drawTreePanel(x, y, w);
+    }
     panelContentH_ = y - top;
     ui_.setClip(nullptr);
 
@@ -990,6 +1033,361 @@ void Editor::drawTechPanel(float x, float& y, float w) {
     y += 20;
 }
 
+// ===========================================================================
+// Crops
+// ===========================================================================
+
+std::string Editor::uniqueCropId(const std::string& base) const {
+    auto taken = [this](const std::string& id) {
+        for (const auto& c : crops_)
+            if (c.id == id) return true;
+        return false;
+    };
+    if (!taken(base)) return base;
+    for (int n = 2;; ++n)
+        if (!taken(base + std::to_string(n))) return base + std::to_string(n);
+}
+
+int Editor::addCrop() {
+    pushUndo();
+    techdata::CropDef c;
+    double value = 1.0;
+    float grow = 1.f, pick = 1.f;
+    int tier = 0;
+    for (const auto& o : crops_) {
+        value = std::max(value, o.value);
+        grow = std::max(grow, o.grow);
+        pick = std::max(pick, o.pick);
+        tier = std::max(tier, o.tier);
+    }
+    // A step up from the best crop so far: worth more, slower, unlocked later.
+    c.id = uniqueCropId("crop");
+    c.name = "New crop";
+    c.value = std::round(value * 2.5);
+    c.grow = std::round((grow + 0.8f) * 10.f) / 10.f;
+    c.pick = std::round((pick + 0.3f) * 10.f) / 10.f;
+    c.weight = 15.f;
+    c.tier = crops_.empty() ? 0 : tier + 1;
+    c.look = "round";
+    crops_.push_back(c);
+    crop_ = static_cast<int>(crops_.size()) - 1;
+    sel_ = -1;
+    panelScroll_ = 0;
+    return crop_;
+}
+
+void Editor::deleteCrop(int index) {
+    if (index < 0 || index >= static_cast<int>(crops_.size())) return;
+    if (crops_.size() <= 1) return toast("The game needs at least one crop", true);
+    pushUndo();
+    std::string gone = crops_[index].name;
+    crops_.erase(crops_.begin() + index);
+    crop_ = -1;
+    toast("Deleted crop " + gone);
+}
+
+bool Editor::renameCrop(int index, const std::string& raw) {
+    std::string id;
+    for (char ch : raw)
+        if (!std::isspace(static_cast<unsigned char>(ch))) id += ch;
+    if (index < 0 || index >= static_cast<int>(crops_.size()) || id == crops_[index].id) return false;
+    if (!techdata::isValidId(id)) {
+        toast("Crop ids are letters, numbers and _ only", true);
+        return false;
+    }
+    for (const auto& c : crops_)
+        if (c.id == id) {
+            toast("There's already a crop called '" + id + "'", true);
+            return false;
+        }
+    pushUndo();
+    // Techs using this crop as their icon follow it.
+    for (auto& t : techs_)
+        if (t.icon == "crop_" + crops_[index].id) t.icon = "crop_" + id;
+    crops_[index].id = id;
+    return true;
+}
+
+std::vector<std::string> Editor::techsUnlocking(int tier) const {
+    std::vector<std::string> names;
+    for (const auto& t : techs_) {
+        Stats s;
+        techdata::applyEffects(t, s, std::max(1, t.maxLevel));
+        if (s.cropTier >= tier && tier > 0) names.push_back(t.name.empty() ? t.id : t.name);
+    }
+    return names;
+}
+
+// A tech that unlocks this crop: Crops "set at least" its tier, needing the
+// tech that unlocks the tier before it, with the crop as its icon.
+void Editor::makeUnlockTech(int ci) {
+    if (ci < 0 || ci >= static_cast<int>(crops_.size())) return;
+    const techdata::CropDef c = crops_[ci];
+    pushUndo();
+    TechDef t;
+    t.id = uniqueId(c.id);
+    t.name = c.name;
+    t.description = "Unlocks " + c.name + ". Sells for " + number(c.value) + " coins each.";
+    t.maxLevel = 1;
+    t.baseCost = std::max(10.0, std::round(c.value * 100.0));
+    t.costGrowth = 1.0;
+    t.icon = "crop_" + c.id;
+    t.effects.push_back(Effect{"cropTier", Op::AtLeast, static_cast<float>(c.tier)});
+    // Requires whichever tech unlocks the tier below (if any), and sits under it.
+    float gx = 0.f, gy = 0.f;
+    int prev = -1;
+    for (int i = 0; i < static_cast<int>(techs_.size()); ++i) {
+        Stats s;
+        techdata::applyEffects(techs_[i], s, std::max(1, techs_[i].maxLevel));
+        if (s.cropTier >= c.tier - 1 && s.cropTier < c.tier && c.tier > 1) prev = i;
+    }
+    if (prev >= 0) {
+        t.needs.push_back({techs_[prev].id, 1});
+        gx = techs_[prev].gridX;
+        gy = techs_[prev].gridY + 1.f;
+    } else {
+        for (const auto& o : techs_) gy = std::max(gy, o.gridY + 1.f);
+    }
+    freeSpotNear(gx, gy, -1);
+    t.gridX = gx;
+    t.gridY = gy;
+    techs_.push_back(t);
+    sel_ = static_cast<int>(techs_.size()) - 1;
+    crop_ = -1;
+    panelScroll_ = 0;
+    toast("Added the tech '" + t.name + "' - it unlocks " + c.name);
+}
+
+void Editor::drawCrop(int ci, float cx, float cy, float size) {
+    if (ci < 0 || ci >= static_cast<int>(crops_.size())) return;
+    const auto& c = crops_[ci];
+    auto it = cropTex_.find(c.id);
+    if (it != cropTex_.end()) {
+        SDL_FRect rc{cx - size / 2, cy - size / 2, size, size};
+        SDL_RenderTexture(r_, it->second, nullptr, &rc);
+    } else {
+        croplook::draw(r_, c.look, croplook::parseColor(c.color, c.look), cx, cy, size);
+    }
+}
+
+void Editor::drawCropsSection(float x, float& y, float w) {
+    heading(r_, x, y, w, strf("Crops (%d)", static_cast<int>(crops_.size())));
+    if (ui_.button("c_add", {x + w - 150, y - 40, 150, 30}, "+ Add crop", true, false, 1.5f)) {
+        addCrop();
+        return;
+    }
+    std::vector<int> order(crops_.size());
+    for (int i = 0; i < static_cast<int>(order.size()); ++i) order[i] = i;
+    std::stable_sort(order.begin(), order.end(), [this](int a, int b) { return crops_[a].tier < crops_[b].tier; });
+    for (int i : order) {
+        const auto& c = crops_[i];
+        SDL_FRect row{x, y, w, 44};
+        if (ui_.button("c_row" + std::to_string(i), row, "", true, false)) {
+            crop_ = i;
+            sel_ = -1;
+            panelScroll_ = 0;
+            return;
+        }
+        drawCrop(i, x + 24, y + 22, 38);
+        text(r_, x + 52, y + 8, fit(c.name, 1.75f, w - 60 - 200), 1.75f, col::text);
+        text(r_, x + 52, y + 27, c.tier <= 0 ? std::string("from the start") : strf("Crops level %d", c.tier), 1.25f, col::dim);
+        text(r_, x + w - 12, y + 14, number(c.value) + " coins", 1.5f, col::gold, Align::Right);
+        y += 48;
+    }
+    y += 6;
+}
+
+void Editor::drawCropPanel(float x, float& y, float w) {
+    const int i = crop_;
+    auto C = [this, i]() -> techdata::CropDef& { return crops_[i]; };
+    techdata::CropDef& c = C();
+    const float lw = 176.f, fh = 38.f, fx = x + lw, fw = w - lw;
+
+    text(r_, x, y, "CROP", 1.5f, col::dim);
+    if (ui_.button("cp_back", {x + w - 360, y - 6, 110, 32}, "< Tree", true, false, 1.5f)) {
+        crop_ = -1;
+        return;
+    }
+    if (ui_.button("cp_dup", {x + w - 238, y - 6, 120, 32}, "Duplicate", true, false, 1.5f)) {
+        pushUndo();
+        techdata::CropDef copy = c;
+        copy.id = uniqueCropId(c.id);
+        copy.name = c.name + " copy";
+        crops_.push_back(copy);
+        crop_ = static_cast<int>(crops_.size()) - 1;
+        return;
+    }
+    if (ui_.button("cp_del", {x + w - 110, y - 6, 110, 32}, "Delete", crops_.size() > 1, false, 1.5f)) {
+        deleteCrop(i);
+        return;
+    }
+    y += 34;
+
+    // Preview: ripe crop and its sprout.
+    fillRound(r_, {x, y, w, 130}, 10, SDL_Color{92, 66, 44, 255});
+    drawCrop(i, x + 80, y + 64, 110);
+    croplook::drawSprout(r_, {x + 160, y + 30, 80, 80});
+    bool image = cropTex_.count(c.id) != 0;
+    text(r_, x + 260, y + 30, image ? "Your image:" : "Built-in look", 1.5f, col::text);
+    text(r_, x + 260, y + 52, fit(image ? "assets/crops/" + c.id + ".png" : "Draw assets/crops/" + c.id + ".png", 1.25f, w - 270),
+         1.25f, col::dim);
+    if (!image) text(r_, x + 260, y + 70, fit("to replace it.", 1.25f, w - 270), 1.25f, col::dim);
+    y += 142;
+
+    auto label = [&](const char* s) { text(r_, x, y + (fh - 12) / 2, s, 1.5f, col::dim); };
+
+    label("ID");
+    ui_.textField("c_id", {fx, y, fw, fh}, c.id, [this, i](const std::string& v) { renameCrop(i, v); });
+    y += fh + 10;
+
+    label("Name");
+    ui_.textField("c_name", {fx, y, fw, fh}, c.name, [this, C](const std::string& v) {
+        pushUndo();
+        C().name = v;
+    });
+    y += fh + 10;
+
+    label("Value");
+    ui_.numberField("c_value", {fx, y, 140, fh}, c.value, [this, C](double v) {
+        pushUndo();
+        C().value = std::max(0.0, v);
+    });
+    text(r_, fx + 152, y + 13, "coins each", 1.5f, col::faint);
+    y += fh + 10;
+
+    label("Grow time");
+    ui_.numberField("c_grow", {fx, y, 120, fh}, c.grow, [this, C](double v) {
+        if (v <= 0) return toast("Grow time must be more than 0", true);
+        pushUndo();
+        C().grow = static_cast<float>(v);
+    });
+    text(r_, fx + 132, y + 13, "x lettuce", 1.5f, col::faint);
+    y += fh + 10;
+
+    label("Pick time");
+    ui_.numberField("c_pick", {fx, y, 120, fh}, c.pick, [this, C](double v) {
+        if (v <= 0) return toast("Pick time must be more than 0", true);
+        pushUndo();
+        C().pick = static_cast<float>(v);
+    });
+    text(r_, fx + 132, y + 13, "x lettuce", 1.5f, col::faint);
+    y += fh + 10;
+
+    label("How often");
+    ui_.numberField("c_weight", {fx, y, 120, fh}, c.weight, [this, C](double v) {
+        if (v <= 0) return toast("Must be more than 0, or it's never planted", true);
+        pushUndo();
+        C().weight = static_cast<float>(v);
+    });
+    {
+        float total = 0.f;
+        for (const auto& o : crops_)
+            if (o.tier <= c.tier) total += std::max(0.f, o.weight);
+        text(r_, fx + 132, y + 13, fit(strf("%.0f%% of plants once it unlocks", total > 0 ? 100.f * c.weight / total : 0.f), 1.25f, fw - 132),
+             1.25f, col::faint);
+    }
+    y += fh + 10;
+
+    label("Unlocks at");
+    ui_.numberField("c_tier", {fx, y, 120, fh}, c.tier, [this, C](double v) {
+        pushUndo();
+        C().tier = std::max(0, static_cast<int>(v));
+    }, true);
+    text(r_, fx + 132, y + 13, "Crops level", 1.5f, col::faint);
+    y += fh + 6;
+    if (c.tier <= 0) {
+        text(r_, fx, y, "Planted from the start.", 1.25f, col::good);
+        y += 24;
+    } else {
+        auto who = techsUnlocking(c.tier);
+        if (who.empty()) {
+            text(r_, fx, y, "Nothing unlocks it yet!", 1.25f, col::bad);
+            if (ui_.button("c_unlock", {fx + fw - 230, y - 6, 230, 30}, "+ Make an unlock tech", true, true, 1.25f)) {
+                makeUnlockTech(i);
+                return;
+            }
+            y += 30;
+        } else {
+            std::string list;
+            for (const auto& n : who) list += (list.empty() ? "" : ", ") + n;
+            text(r_, fx, y, fit("Unlocked by: " + list, 1.25f, fw), 1.25f, col::good);
+            y += 24;
+        }
+    }
+    y += 6;
+
+    // Look: one button per built-in drawing, showing it in this crop's colour.
+    label("Look");
+    {
+        const auto& looks = croplook::looks();
+        float bw = std::min(90.f, (fw - 8.f * (looks.size() - 1)) / looks.size());
+        for (size_t k = 0; k < looks.size(); ++k) {
+            SDL_FRect b{fx + k * (bw + 8), y - 6, bw, 74};
+            bool cur = c.look == looks[k];
+            if (ui_.button("c_look" + std::to_string(k), b, "", true, cur)) {
+                if (!cur) {
+                    pushUndo();
+                    // Keep a colour the user picked; otherwise follow the new look's usual colour.
+                    C().look = looks[k];
+                }
+            }
+            croplook::draw(r_, looks[k], croplook::parseColor(c.color, looks[k]), b.x + bw / 2, b.y + 30, 44);
+            text(r_, b.x + bw / 2, b.y + 58, looks[k], 1.f, cur ? col::text : col::dim, Align::Center);
+        }
+    }
+    y += 80;
+
+    // Colour: swatches, the hex code, and "usual" for the look's own colour.
+    label("Colour");
+    {
+        static const char* swatches[] = {"d6403a", "e07a2a", "e8c040", "7cb84a", "3f8a3c", "8a4fb0",
+                                         "c8507a", "8a5a34", "f0e6c8", "5a6cc8"};
+        const float sw = 26.f;
+        for (int k = 0; k < 10; ++k) {
+            SDL_FRect b{fx + k * (sw + 6), y + 4, sw, sw};
+            SDL_Color col = croplook::parseColor(swatches[k], c.look);
+            bool cur = c.color == swatches[k];
+            if (ui_.hovered(b) && in_.released && !cur) {
+                pushUndo();
+                C().color = swatches[k];
+            }
+            fillRound(r_, {b.x - 2, b.y - 2, b.w + 4, b.h + 4}, 6, cur ? col::accent : (ui_.hovered(b) ? col::text : col::panelLine));
+            fillRound(r_, b, 5, col);
+        }
+    }
+    y += 42;
+    ui_.textField("c_color", {fx, y, 140, fh}, c.color, [this, C](const std::string& v) {
+        std::string hex;
+        for (char ch : v)
+            if (ch != '#' && !std::isspace(static_cast<unsigned char>(ch))) hex += static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+        if (!croplook::isValidColor(hex)) return toast("A colour is 6 hex digits, e.g. e05040", true);
+        pushUndo();
+        C().color = hex;
+    }, false, "usual");
+    if (ui_.button("c_usual", {fx + 150, y, 110, fh}, "Usual", !c.color.empty(), false, 1.5f)) {
+        pushUndo();
+        C().color.clear();
+    }
+    y += fh + 10;
+
+    // Problems with this crop.
+    auto problems = techdata::validateCrops(crops_, techs_);
+    std::vector<std::string> mine;
+    for (const auto& p : problems)
+        if (p.rfind("crop " + c.id + ":", 0) == 0) mine.push_back(p.substr(p.find(':') + 2));
+    heading(r_, x, y, w, mine.empty() ? "Problems: none" : "Problems");
+    for (const auto& p : mine)
+        for (const auto& ln : wrap(p, static_cast<size_t>(w / 12))) {
+            text(r_, x, y, ln, 1.5f, col::bad);
+            y += 20;
+        }
+    if (mine.empty()) {
+        text(r_, x, y, "Looks good.", 1.5f, col::good);
+        y += 26;
+    }
+    y += 20;
+}
+
 void Editor::drawTreePanel(float x, float& y, float w) {
     text(r_, x, y, "TECH TREE", 1.5f, col::dim);
     y += 26;
@@ -998,9 +1396,11 @@ void Editor::drawTreePanel(float x, float& y, float w) {
     text(r_, x, y, "Click a tech to edit it.", 1.75f, col::dim);
     y += 34;
 
+    drawCropsSection(x, y, w);
     drawTreeTotals(x, y, w);
 
     auto problems = techdata::validate(techs_);
+    for (const auto& p : techdata::validateCrops(crops_, techs_)) problems.push_back(p);
     heading(r_, x, y, w, problems.empty() && fileErrors_.empty() ? "Problems: none" : "Problems");
     for (const auto& fe : fileErrors_) {
         for (const auto& ln : wrap("File: " + fe, static_cast<size_t>(w / 12))) {
@@ -1011,10 +1411,20 @@ void Editor::drawTreePanel(float x, float& y, float w) {
     for (size_t k = 0; k < problems.size(); ++k) {
         // Click a problem to jump to that tech.
         std::string id = problems[k].substr(0, problems[k].find(':'));
-        int j = indexOf(id);
-        if (ui_.button("pr" + std::to_string(k), {x, y, w, 30}, fit(problems[k], 1.5f, w - 16), true, false, 1.5f) && j >= 0) {
-            sel_ = j;
-            return;
+        int j = indexOf(id), c = -1;
+        if (id.rfind("crop ", 0) == 0)
+            for (int q = 0; q < static_cast<int>(crops_.size()); ++q)
+                if (crops_[q].id == id.substr(5)) c = q;
+        if (ui_.button("pr" + std::to_string(k), {x, y, w, 30}, fit(problems[k], 1.5f, w - 16), true, false, 1.5f)) {
+            if (c >= 0) {
+                crop_ = c;
+                panelScroll_ = 0;
+                return;
+            }
+            if (j >= 0) {
+                sel_ = j;
+                return;
+            }
         }
         y += 34;
     }
@@ -1156,9 +1566,10 @@ void Editor::drawIconPicker() {
     opts.push_back({"", t.id, "Default"});
     for (const auto& b : techdata::builtinIcons())
         if (b.key != t.id) opts.push_back({b.key, b.key, b.label});
+    for (const auto& c : crops_) opts.push_back({"crop_" + c.id, "crop_" + c.id, c.name});
     for (const auto& c : customIcons_)
         if (c != t.id) opts.push_back({c, c, c});
-    const size_t firstCustom = 1 + techdata::builtinIcons().size() - (techdata::isBuiltinIcon(t.id) ? 1 : 0);
+    const size_t firstCustom = 1 + techdata::builtinIcons().size() - (techdata::isBuiltinIcon(t.id) ? 1 : 0); // crops, then yours
 
     const float cellW = 104.f, cellH = 104.f, icon = 60.f;
     float w = std::min(winW_ - 40.f, 16.f + cellW * 10.f + 16.f);

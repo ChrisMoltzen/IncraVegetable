@@ -113,10 +113,9 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawSoilBuiltin(r, rc, true); }});
 
     // ---------------- Crops ----------------
-    const Crop crops[] = {Crop::Lettuce, Crop::Carrot, Crop::Pumpkin};
-    for (Crop c : crops) {
+    for (Crop c = 0; c < cropCount(); ++c) {
         std::string name = cropArtName(c);
-        std::string label = cropInfo(c).name;
+        std::string label = cropDef(c).name;
         add({name, 128, 128, "Ripe " + label + ", filling the square one plant takes up (neighbours may overlap it by up to 10%)", false,
              [c](SDL_Renderer* r, const SDL_FRect& rc) {
                  Farm::drawCropBuiltin(r, c, rc.x + rc.w * 0.5f, rc.y + rc.h * 0.5f, rc.w);
@@ -126,9 +125,9 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          "Growing plant, drawn small when just planted and full size just before it ripens. Keep the stem's base about "
          "2/3 of the way down",
          false, Farm::drawSproutBuiltin});
-    for (Crop c : crops) {
-        std::string label = cropInfo(c).name;
-        add({std::string(cropArtName(c)) + "_sprout", 128, 128,
+    for (Crop c = 0; c < cropCount(); ++c) {
+        std::string label = cropDef(c).name;
+        add({cropArtName(c) + "_sprout", 128, 128,
              "Growing " + label + " (optional - otherwise crops/sprout is used)", false, Farm::drawSproutBuiltin});
     }
 
@@ -221,6 +220,12 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
         add({"tree/icons/" + key, 64, 64,
              "Tech icon '" + key + "' (" + b.label + ")" + (usedBy.empty() ? "" : " - used by " + usedBy),
              false, [key](SDL_Renderer* r, const SDL_FRect& rc) { TechTreeScreen::drawIconBuiltin(r, rc, key, key); }});
+    }
+    // Every crop can be a tech icon too ("crop_<id>"), drawn like the crop itself.
+    for (Crop c = 0; c < cropCount(); ++c) {
+        std::string id = cropDef(c).id, label = cropDef(c).name;
+        add({"tree/icons/crop_" + id, 64, 64, "Tech icon 'crop_" + id + "' (the " + label + " crop)", false,
+             [id](SDL_Renderer* r, const SDL_FRect& rc) { TechTreeScreen::drawIconBuiltin(r, rc, "crop_" + id, id); }});
     }
     for (const auto& [icon, title] : techNodes) {
         std::string i = icon, t = title;

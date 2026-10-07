@@ -1,9 +1,12 @@
 #include "Farm.h"
 
 #include "Art.h"
+#include "CropLooks.h"
 #include "Draw.h"
 
 #include <algorithm>
+#include <cctype>
+#include <cstdlib>
 #include <cmath>
 #include <sstream>
 
@@ -77,25 +80,24 @@ std::vector<SDL_FPoint> scatterInRect(float hw, float hh, float minDist, std::mt
     return pts;
 }
 
-const CropInfo kCrops[] = {
-    {"Lettuce", 1.0, 1.0f, 1.0f},
-    {"Carrot", 4.0, 1.6f, 1.25f},
-    {"Pumpkin", 15.0, 2.6f, 1.6f},
-};
-
 const SDL_Color kSoil{112, 74, 46, 255};
 const SDL_Color kSoilDark{88, 56, 34, 255};
 const SDL_Color kSoilHover{135, 92, 58, 255};
-const SDL_Color kLeaf{70, 160, 60, 255};
-const SDL_Color kLeafDark{44, 120, 44, 255};
-const SDL_Color kLeafLight{140, 210, 100, 255};
-const SDL_Color kOrange{240, 130, 30, 255};
-const SDL_Color kOrangeDark{200, 95, 20, 255};
-const SDL_Color kPumpkin{235, 120, 25, 255};
-const SDL_Color kPumpkinDark{190, 85, 15, 255};
 } // namespace
 
-const CropInfo& cropInfo(Crop c) { return kCrops[static_cast<int>(c)]; }
+int cropCount() { return static_cast<int>(techdata::crops().size()); }
+
+const techdata::CropDef& cropDef(Crop c) {
+    const auto& list = techdata::crops();
+    return list[c >= 0 && c < static_cast<int>(list.size()) ? c : 0];
+}
+
+std::string cropArtName(Crop c) { return "crops/" + cropDef(c).id; }
+
+SDL_Color cropColor(Crop c) {
+    const auto& d = cropDef(c);
+    return croplook::parseColor(d.color, d.look);
+}
 
 int Farm::plantCount(const Stats& stats) {
     int room = std::max(1, stats.patchSize) * std::max(1, stats.patchSize);
@@ -134,7 +136,7 @@ void Farm::startDay(const Stats& stats, std::mt19937& rng) {
     clock_ = 0.f;
     earnedToday_ = 0.0;
     pickedToday_ = 0;
-    pickedByCrop_[0] = pickedByCrop_[1] = pickedByCrop_[2] = 0;
+    pickedByCrop_.assign(cropCount(), 0);
 }
 
 void Farm::plant(Uint32 seed) {
@@ -261,10 +263,13 @@ void Farm::moveToFreeSpot(int index, std::mt19937& rng) {
 std::string Farm::serialize() const {
     std::ostringstream out;
     out.precision(9);
-    out << "farm " << n_ << " " << timeLeft_ << " " << earnedToday_ << " " << pickedToday_ << " "
-        << pickedByCrop_[0] << " " << pickedByCrop_[1] << " " << pickedByCrop_[2] << " " << seed_ << "\n";
+    // "0 0 0" is where older versions kept per-crop counts; they're now id=count after the seed.
+    out << "farm " << n_ << " " << timeLeft_ << " " << earnedToday_ << " " << pickedToday_ << " 0 0 0 " << seed_;
+    for (int c = 0; c < static_cast<int>(pickedByCrop_.size()); ++c)
+        if (pickedByCrop_[c] > 0) out << " " << cropDef(c).id << "=" << pickedByCrop_[c];
+    out << "\n";
     for (const Tile& t : tiles_) {
-        out << "tile " << static_cast<int>(t.crop) << " " << t.growth << " " << t.pick << " " << t.spot << "\n";
+        out << "tile " << cropDef(t.crop).id << " " << t.growth << " " << t.pick << " " << t.spot << "\n";
     }
     return out.str();
 }
@@ -280,6 +285,18 @@ bool Farm::restore(const std::vector<std::string>& lines, const Stats& stats) {
     if (!head || key != "farm" || n != stats.patchSize) return false;
     Uint32 seed = 1;
     if (!(head >> seed)) seed = 1; // saves from before the garden layout have no seed
+    std::vector<int> byCrop(cropCount(), 0);
+    bool namedCounts = false;
+    for (std::string tok; head >> tok;) { // per-crop counts: carrot=12
+        size_t eq = tok.find('=');
+        int c = eq == std::string::npos ? -1 : techdata::cropIndex(tok.substr(0, eq));
+        if (c >= 0) byCrop[c] = std::atoi(tok.c_str() + eq + 1);
+        namedCounts = true;
+    }
+    if (!namedCounts) { // older saves: counts for lettuce, carrot, pumpkin
+        const int old[3] = {p0, p1, p2};
+        for (int c = 0; c < 3 && c < cropCount(); ++c) byCrop[c] = old[c];
+    }
     // One tile line per growing vegetable. If the number of crops changed
     // since the save (e.g. the tech tree was rebalanced), start a fresh day.
     const int count = static_cast<int>(lines.size()) - 1;
@@ -289,11 +306,15 @@ bool Farm::restore(const std::vector<std::string>& lines, const Stats& stats) {
     std::vector<int> savedSpots(count, -1);
     for (int i = 0; i < count; ++i) {
         std::istringstream ss(lines[1 + i]);
-        int crop = 0;
-        ss >> key >> crop >> tiles[i].growth >> tiles[i].pick;
-        if (!ss || key != "tile" || crop < 0 || crop > stats.cropTier) return false;
+        std::string cropTok;
+        ss >> key >> cropTok >> tiles[i].growth >> tiles[i].pick;
+        // The crop by id (older saves used a number). A crop that's gone, or isn't
+        // unlocked any more, means the tree changed: start a fresh day instead.
+        int crop = !cropTok.empty() && std::isdigit(static_cast<unsigned char>(cropTok[0])) ? std::atoi(cropTok.c_str())
+                                                                                              : techdata::cropIndex(cropTok);
+        if (!ss || key != "tile" || crop < 0 || crop >= cropCount() || cropDef(crop).tier > stats.cropTier) return false;
         if (!(ss >> savedSpots[i])) savedSpots[i] = -1; // older saves don't record spots
-        tiles[i].crop = static_cast<Crop>(crop);
+        tiles[i].crop = crop;
         tiles[i].growth = std::clamp(tiles[i].growth, 0.f, 1.f);
         tiles[i].pick = std::clamp(tiles[i].pick, 0.f, 0.99f);
         tiles[i].wobble = static_cast<float>(i) * 1.7f;
@@ -327,9 +348,7 @@ bool Farm::restore(const std::vector<std::string>& lines, const Stats& stats) {
     timeLeft_ = std::clamp(timeLeft, 0.f, stats.dayLength);
     earnedToday_ = earned;
     pickedToday_ = picked;
-    pickedByCrop_[0] = p0;
-    pickedByCrop_[1] = p1;
-    pickedByCrop_[2] = p2;
+    pickedByCrop_ = byCrop;
     return true;
 }
 
@@ -340,11 +359,12 @@ void Farm::applyStats(const Stats& stats, std::mt19937& rng) {
     if (resized) {
         double earned = earnedToday_;
         int picked = pickedToday_;
-        int byCrop[3] = {pickedByCrop_[0], pickedByCrop_[1], pickedByCrop_[2]};
+        std::vector<int> byCrop = pickedByCrop_;
         startDay(stats, rng); // replants a patch of the new size
         earnedToday_ = earned;
         pickedToday_ = picked;
-        for (int i = 0; i < 3; ++i) pickedByCrop_[i] = byCrop[i];
+        pickedByCrop_ = byCrop;
+        pickedByCrop_.resize(cropCount(), 0);
     } else {
         stats_ = stats;
         // More (or fewer) crops at once: sprout new ones in empty spots, or pull some up.
@@ -366,7 +386,7 @@ void Farm::applyStats(const Stats& stats, std::mt19937& rng) {
         syncFarmers(rng);
         // Crops that are no longer unlocked get replanted.
         for (auto& t : tiles_) {
-            if (static_cast<int>(t.crop) > stats.cropTier) {
+            if (cropDef(t.crop).tier > stats.cropTier) {
                 t.crop = randomCrop(rng);
                 t.growth = 0.f;
                 t.pick = 0.f;
@@ -389,13 +409,22 @@ std::vector<Crop> Farm::takeHarvests() {
 }
 
 Crop Farm::randomCrop(std::mt19937& rng) const {
-    std::uniform_int_distribution<int> roll(0, 99);
-    int r = roll(rng);
-    switch (stats_.cropTier) {
-    case 0: return Crop::Lettuce;
-    case 1: return r < 60 ? Crop::Lettuce : Crop::Carrot;
-    default: return r < 45 ? Crop::Lettuce : (r < 80 ? Crop::Carrot : Crop::Pumpkin);
+    // Any unlocked crop, more or less often by its weight.
+    const auto& list = techdata::crops();
+    float total = 0.f;
+    for (const auto& c : list)
+        if (c.tier <= stats_.cropTier) total += std::max(0.f, c.weight);
+    if (total <= 0.f) return 0;
+    std::uniform_real_distribution<float> roll(0.f, total);
+    float r = roll(rng);
+    int last = 0;
+    for (int i = 0; i < static_cast<int>(list.size()); ++i) {
+        if (list[i].tier > stats_.cropTier || list[i].weight <= 0.f) continue;
+        last = i;
+        r -= list[i].weight;
+        if (r < 0.f) return i;
     }
+    return last;
 }
 
 SDL_FRect Farm::plantRect(int index) const {
@@ -453,14 +482,14 @@ void Farm::update(float dt, float mouseX, float mouseY, bool mouseInside, double
         if (!timerFrozen_) timeLeft_ = std::max(0.f, timeLeft_ - dt);
         for (int i = 0; i < static_cast<int>(tiles_.size()); ++i) {
             Tile& t = tiles_[i];
-            const CropInfo& info = cropInfo(t.crop);
+            const techdata::CropDef& info = cropDef(t.crop);
             t.pop = std::max(0.f, t.pop - dt * 3.f);
             if (t.growth < 1.f) {
-                t.growth = std::min(1.f, t.growth + dt / (stats_.growTime * info.growMult));
+                t.growth = std::min(1.f, t.growth + dt / (stats_.growTime * info.grow));
                 continue;
             }
             if (mouseInside && tileInReach(i, mouseX, mouseY)) {
-                t.pick += dt / (stats_.pickTime * info.pickMult);
+                t.pick += dt / (stats_.pickTime * info.pick);
                 if (t.pick >= 1.f) harvest(i, coins, rng);
             } else {
                 // Progress drains away if you move off before finishing.
@@ -571,8 +600,8 @@ void Farm::updateFarmers(float dt, double& coins, std::mt19937& rng) {
             }
             if (f.picking) {
                 f.walking = false;
-                const CropInfo& info = cropInfo(tiles_[f.target].crop);
-                f.work += dt / (std::max(0.001f, stats_.farmerPickTime) * info.pickMult);
+                const techdata::CropDef& info = cropDef(tiles_[f.target].crop);
+                f.work += dt / (std::max(0.001f, stats_.farmerPickTime) * info.pick);
                 if (f.work >= 1.f) {
                     int t = f.target;
                     f.target = -1;
@@ -622,17 +651,18 @@ float Farm::autoPickRange() const {
 
 void Farm::harvest(int index, double& coins, std::mt19937& rng, PickedBy by) {
     Tile& t = tiles_[index];
-    const CropInfo& info = cropInfo(t.crop);
+    const techdata::CropDef& info = cropDef(t.crop);
     double gain = info.value * stats_.valueMult;
     coins += gain;
     earnedToday_ += gain;
     ++pickedToday_;
-    ++pickedByCrop_[static_cast<int>(t.crop)];
+    if (static_cast<int>(pickedByCrop_.size()) < cropCount()) pickedByCrop_.resize(cropCount(), 0);
+    ++pickedByCrop_[t.crop];
     harvests_.push_back(t.crop);
 
     float cx = t.x, cy = t.y;
 
-    SDL_Color burst = t.crop == Crop::Lettuce ? kLeafLight : (t.crop == Crop::Carrot ? kOrange : kPumpkin);
+    SDL_Color burst = cropColor(t.crop);
     std::uniform_real_distribution<float> unit(0.f, 1.f);
     for (int k = 0; k < 10; ++k) {
         float a = unit(rng) * 6.2832f;
@@ -680,14 +710,6 @@ void Farm::harvest(int index, double& coins, std::mt19937& rng, PickedBy by) {
     }
 }
 
-const char* cropArtName(Crop c) {
-    switch (c) {
-    case Crop::Lettuce: return "crops/lettuce";
-    case Crop::Carrot: return "crops/carrot";
-    case Crop::Pumpkin: return "crops/pumpkin";
-    }
-    return "crops/lettuce";
-}
 
 void Farm::drawVegetable(SDL_Renderer* r, const Tile& t, float cx, float cy, float s) const {
     std::string name = cropArtName(t.crop);
@@ -706,21 +728,16 @@ void Farm::drawVegetable(SDL_Renderer* r, const Tile& t, float cx, float cy, flo
 }
 
 void Farm::drawCrop(SDL_Renderer* r, Crop crop, float cx, float cy, float s) {
-    art::draw(r, cropArtName(crop), SDL_FRect{cx - s * 0.5f, cy - s * 0.5f, s, s});
+    std::string name = cropArtName(crop);
+    if (art::has(name)) art::draw(r, name, SDL_FRect{cx - s * 0.5f, cy - s * 0.5f, s, s});
+    else drawCropBuiltin(r, crop, cx, cy, s); // (also covers crops added after the art list was made)
 }
 
 // ---------------------------------------------------------------------------
 // Built-in art (used when there's no image in assets/, and for the templates)
 // ---------------------------------------------------------------------------
 
-void Farm::drawSproutBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
-    float s = rc.w, cx = rc.x + rc.w * 0.5f;
-    float h = s * 0.32f;
-    float base = rc.y + rc.h * 0.68f;
-    draw::thickLine(r, cx, base, cx, base - h, std::max(2.f, s * 0.04f), kLeafDark);
-    draw::fillEllipse(r, cx - h * 0.45f, base - h * 0.85f, h * 0.45f, h * 0.22f, kLeaf);
-    draw::fillEllipse(r, cx + h * 0.45f, base - h * 0.95f, h * 0.45f, h * 0.22f, kLeafLight);
-}
+void Farm::drawSproutBuiltin(SDL_Renderer* r, const SDL_FRect& rc) { croplook::drawSprout(r, rc); }
 
 // A small mound of loose soil under a plant (drawn in the plant's square).
 void Farm::drawSoilBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool hovered) {
@@ -766,37 +783,7 @@ void Farm::drawBedBuiltin(SDL_Renderer* r, const SDL_FRect& rc, Uint32 seed) {
 }
 
 void Farm::drawCropBuiltin(SDL_Renderer* r, Crop crop, float cx, float cy, float s) {
-    switch (crop) {
-    case Crop::Lettuce:
-        draw::fillCircle(r, cx, cy + s * 0.04f, s * 0.30f, kLeafDark);
-        draw::fillCircle(r, cx - s * 0.12f, cy, s * 0.18f, kLeaf);
-        draw::fillCircle(r, cx + s * 0.12f, cy, s * 0.18f, kLeaf);
-        draw::fillCircle(r, cx, cy - s * 0.08f, s * 0.18f, kLeaf);
-        draw::fillCircle(r, cx, cy + s * 0.01f, s * 0.11f, kLeafLight);
-        break;
-    case Crop::Carrot: {
-        float line = std::max(2.f, s * 0.026f);
-        // Leafy top...
-        draw::fillEllipse(r, cx - s * 0.10f, cy - s * 0.24f, s * 0.06f, s * 0.16f, kLeafDark);
-        draw::fillEllipse(r, cx + s * 0.10f, cy - s * 0.24f, s * 0.06f, s * 0.16f, kLeafDark);
-        draw::fillEllipse(r, cx, cy - s * 0.28f, s * 0.06f, s * 0.18f, kLeaf);
-        // ...and the orange root.
-        draw::fillTriangle(r, {cx - s * 0.15f, cy - s * 0.10f}, {cx + s * 0.15f, cy - s * 0.10f},
-                           {cx, cy + s * 0.34f}, kOrange);
-        draw::fillEllipse(r, cx, cy - s * 0.10f, s * 0.15f, s * 0.06f, kOrange);
-        draw::thickLine(r, cx - s * 0.08f, cy + s * 0.02f, cx - s * 0.01f, cy + s * 0.02f, line, kOrangeDark);
-        draw::thickLine(r, cx + s * 0.02f, cy + s * 0.12f, cx + s * 0.07f, cy + s * 0.12f, line, kOrangeDark);
-        break;
-    }
-    case Crop::Pumpkin:
-        draw::fillEllipse(r, cx, cy + s * 0.06f, s * 0.36f, s * 0.27f, kPumpkinDark);
-        draw::fillEllipse(r, cx - s * 0.14f, cy + s * 0.06f, s * 0.17f, s * 0.25f, kPumpkin);
-        draw::fillEllipse(r, cx + s * 0.14f, cy + s * 0.06f, s * 0.17f, s * 0.25f, kPumpkin);
-        draw::fillEllipse(r, cx, cy + s * 0.06f, s * 0.13f, s * 0.27f, SDL_Color{250, 145, 45, 255});
-        draw::fillRect(r, cx - s * 0.03f, cy - s * 0.30f, s * 0.06f, s * 0.12f, SDL_Color{110, 80, 30, 255});
-        draw::fillEllipse(r, cx + s * 0.11f, cy - s * 0.24f, s * 0.09f, s * 0.04f, kLeaf);
-        break;
-    }
+    croplook::draw(r, cropDef(crop).look, cropColor(crop), cx, cy, s);
 }
 
 void Farm::drawPickBarBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool fill) {
@@ -891,7 +878,7 @@ void Farm::renderScene(SDL_Renderer* r) const {
             if (t.pick > 0.f)
                 draw::textShadow(r, t.x, t.y, draw::strf("pick %d%%", static_cast<int>(t.pick * 100)), 1.f,
                                  SDL_Color{255, 230, 90, 255}, draw::Align::Center);
-            std::string name = cropInfo(t.crop).name;
+            std::string name = cropDef(t.crop).name;
             if (draw::textWidth(name, 1.f) > plantSize_ - 6) name = name.substr(0, 1); // small plants: just the initial
             draw::text(r, t.x, t.y + 10, name, 1.f, SDL_Color{255, 255, 255, 200}, draw::Align::Center);
         }

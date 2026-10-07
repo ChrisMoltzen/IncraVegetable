@@ -1,6 +1,7 @@
 #include "TechTreeScreen.h"
 
 #include "Art.h"
+#include "CropLooks.h"
 #include "Draw.h"
 #include "Farm.h"
 #include "UI.h"
@@ -389,7 +390,7 @@ void TechTreeScreen::drawIconBuiltin(SDL_Renderer* r, const SDL_FRect& rc, const
     } else if (id == "seeds") {
         draw::fillRoundRect(r, X(14), Y(10), 36 * u, 46 * u, 4 * u, SDL_Color{222, 196, 140, 255});
         draw::fillRect(r, X(14), Y(10), 36 * u, 6 * u, SDL_Color{190, 160, 100, 255});
-        Farm::drawCropBuiltin(r, Crop::Lettuce, X(32), Y(34), 26 * u);
+        croplook::draw(r, "lettuce", croplook::defaultColor("lettuce"), X(32), Y(34), 26 * u);
         for (int k = 0; k < 3; ++k) draw::fillEllipse(r, X(46.f + k * 4.f), Y(54.f - k * 3.f), 2.2f * u, 1.5f * u, SDL_Color{150, 110, 60, 255});
     } else if (id == "daylength") {
         sunAt(32, 32, 13);
@@ -397,7 +398,7 @@ void TechTreeScreen::drawIconBuiltin(SDL_Renderer* r, const SDL_FRect& rc, const
         sunAt(32, 40, 12);
         draw::fillRect(r, X(4), Y(40), 56 * u, 18 * u, SDL_Color{90, 130, 70, 255});
     } else if (id == "pickspeed") {
-        Farm::drawCropBuiltin(r, Crop::Lettuce, X(38), Y(34), 34 * u);
+        croplook::draw(r, "lettuce", croplook::defaultColor("lettuce"), X(38), Y(34), 34 * u);
         speedLines(10, 22);
     } else if (id == "growspeed") {
         draw::fillEllipse(r, X(32), Y(52), 20 * u, 6 * u, soil);
@@ -413,11 +414,11 @@ void TechTreeScreen::drawIconBuiltin(SDL_Renderer* r, const SDL_FRect& rc, const
         dashedRing(32, 32, 24, white);
         draw::fillTriangle(r, {X(28), Y(22)}, {X(28), Y(44)}, {X(42), Y(36)}, white); // pointer
     } else if (id == "carrots") {
-        Farm::drawCropBuiltin(r, Crop::Carrot, X(32), Y(32), 52 * u);
+        croplook::draw(r, "carrot", croplook::defaultColor("carrot"), X(32), Y(32), 52 * u);
     } else if (id == "pumpkins") {
-        Farm::drawCropBuiltin(r, Crop::Pumpkin, X(32), Y(34), 52 * u);
+        croplook::draw(r, "pumpkin", croplook::defaultColor("pumpkin"), X(32), Y(34), 52 * u);
     } else if (id == "autopick") {
-        Farm::drawCropBuiltin(r, Crop::Lettuce, X(28), Y(36), 36 * u);
+        croplook::draw(r, "lettuce", croplook::defaultColor("lettuce"), X(28), Y(36), 36 * u);
         draw::fillTriangle(r, {X(50), Y(6)}, {X(46), Y(18)}, {X(54), Y(18)}, sunCore); // sparkle
         draw::fillTriangle(r, {X(50), Y(30)}, {X(46), Y(18)}, {X(54), Y(18)}, sunCore);
         draw::fillTriangle(r, {X(38), Y(18)}, {X(50), Y(14)}, {X(50), Y(22)}, sunCore);
@@ -429,12 +430,12 @@ void TechTreeScreen::drawIconBuiltin(SDL_Renderer* r, const SDL_FRect& rc, const
         }
         draw::thickLine(r, X(32), Y(30), X(40), Y(58), 3.5f * u, leafDark);
     } else if (id == "autopickcount") {
-        Farm::drawCropBuiltin(r, Crop::Lettuce, X(20), Y(24), 26 * u);
-        Farm::drawCropBuiltin(r, Crop::Lettuce, X(44), Y(24), 26 * u);
-        Farm::drawCropBuiltin(r, Crop::Lettuce, X(32), Y(44), 26 * u);
+        croplook::draw(r, "lettuce", croplook::defaultColor("lettuce"), X(20), Y(24), 26 * u);
+        croplook::draw(r, "lettuce", croplook::defaultColor("lettuce"), X(44), Y(24), 26 * u);
+        croplook::draw(r, "lettuce", croplook::defaultColor("lettuce"), X(32), Y(44), 26 * u);
     } else if (id == "autopickradius") {
         dashedRing(32, 32, 26, leaf);
-        Farm::drawCropBuiltin(r, Crop::Lettuce, X(32), Y(32), 28 * u);
+        croplook::draw(r, "lettuce", croplook::defaultColor("lettuce"), X(32), Y(32), 28 * u);
     } else if (id == "farmhand") {
         Farm::drawFarmerBuiltin(r, R(0, 2, 64, 64), 0);
     } else if (id == "farmcrew") {
@@ -455,6 +456,9 @@ void TechTreeScreen::drawIconBuiltin(SDL_Renderer* r, const SDL_FRect& rc, const
         draw::fillCircle(r, X(47), Y(50), 7 * u, red);
         draw::fillCircle(r, X(17), Y(50), 4 * u, SDL_Color{44, 50, 56, 255});
         draw::fillCircle(r, X(47), Y(50), 4 * u, SDL_Color{44, 50, 56, 255});
+    } else if (id.rfind("crop_", 0) == 0 && techdata::cropIndex(id.substr(5)) >= 0) {
+        // A crop as an icon: its artwork if there is any, else its built-in look.
+        Farm::drawCrop(r, techdata::cropIndex(id.substr(5)), X(32), Y(32), 56 * u);
     } else {
         drawInitialsIcon(r, rc, name);
     }

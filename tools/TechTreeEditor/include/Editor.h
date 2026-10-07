@@ -61,6 +61,16 @@ private:
     void drawPanel();
     void drawTechPanel(float x, float& y, float w);
     void drawTreePanel(float x, float& y, float w);
+    // Crops: listed on the tree panel; click one to edit it in the crop panel.
+    void drawCropsSection(float x, float& y, float w);
+    void drawCropPanel(float x, float& y, float w);
+    void drawCrop(int crop, float cx, float cy, float size); // its image if there is one, else its built-in look
+    int addCrop();
+    void deleteCrop(int index);
+    bool renameCrop(int index, const std::string& newId);
+    void makeUnlockTech(int crop);
+    std::vector<std::string> techsUnlocking(int tier) const; // names of techs that raise Crops to >= tier
+    std::string uniqueCropId(const std::string& base) const;
     void drawModal();
     void drawStatPicker();
     void drawIconPicker();
@@ -83,6 +93,9 @@ private:
 
     std::vector<TechDef> techs_;
     int sel_ = -1;
+    std::vector<techdata::CropDef> crops_;
+    int crop_ = -1; // crop being edited (-1 = none)
+    std::unordered_map<std::string, SDL_Texture*> cropTex_; // assets/crops/<id>.png
     std::string path_;
     bool dirty_ = false;
     std::vector<std::string> fileErrors_;
@@ -90,6 +103,8 @@ private:
     struct Snapshot {
         std::vector<TechDef> techs;
         int sel;
+        std::vector<techdata::CropDef> crops;
+        int crop;
     };
     std::vector<Snapshot> undo_, redo_;
 

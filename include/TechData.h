@@ -21,6 +21,21 @@
 //     effect patchSize add 1        <- stat, operation, amount (any number of these lines)
 //   end
 //
+// Crops are in the same file, before the techs:
+//
+//   crop carrot                     <- id: letters, numbers and _ only
+//     name Carrot
+//     value 4                       <- coins per crop (before Coin value upgrades)
+//     grow 1.6                      <- grow time = this x the Grow time stat
+//     pick 1.25                     <- pick time = this x the Pick time stat
+//     weight 35                     <- how often it's planted, compared with the other unlocked crops
+//     tier 1                        <- planted once the Crops stat reaches this (0 = from the start)
+//     look carrot                   <- built-in drawing: lettuce, carrot, pumpkin or round
+//     color e07020                  <- optional colour for the built-in drawing (hex)
+//   end
+//
+// Art: assets/crops/<id>.png (ripe) and assets/crops/<id>_sprout.png replace the built-in look.
+//
 // Operations, for a tech at level L:
 //   add       stat += amount x L                    e.g. day length + 5 seconds per level
 //   percent   stat x (1 + amount/100 x L)           e.g. +25% coins per level
@@ -93,17 +108,42 @@ double costAt(const TechDef& t, int owned);
 
 // ---- Reading and writing -----------------------------------------------------
 
+// ---- Crops -------------------------------------------------------------------
+
+struct CropDef {
+    std::string id;
+    std::string name;
+    double value = 1.0; // coins
+    float grow = 1.f;   // x the Grow time stat
+    float pick = 1.f;   // x the Pick time stat
+    float weight = 10.f;
+    int tier = 0;       // needs the Crops stat at least this
+    std::string look = "round";
+    std::string color;  // hex, "" = the look's usual colour
+};
+
+// The crops the game plants. The game sets these from the tree file; the
+// editor sets them as you edit (the Crops stat's description uses them).
+// If nothing was set, it's lettuce, carrot and pumpkin.
+void setCrops(const std::vector<CropDef>& crops);
+const std::vector<CropDef>& crops();
+const std::vector<CropDef>& defaultCrops();
+int cropIndex(const std::string& id); // -1 if unknown
+
 struct ParseResult {
     std::vector<TechDef> techs;
+    std::vector<CropDef> crops;      // empty if the file has none (use defaultCrops())
     std::vector<std::string> errors; // "line 12: unknown stat 'speed'"
 };
 ParseResult parse(const std::string& text);
-std::string serialize(const std::vector<TechDef>& techs);
+std::string serialize(const std::vector<TechDef>& techs, const std::vector<CropDef>& crops = {});
 
 // Problems that would make the tree misbehave (duplicate ids, missing
 // requirements, loops, ...). Empty = all good. If `forTech` is not empty, only
 // problems about that tech are returned.
 std::vector<std::string> validate(const std::vector<TechDef>& techs, const std::string& forTech = "");
+// Problems with the crops ("crop <id>: ..."), e.g. one no tech ever unlocks.
+std::vector<std::string> validateCrops(const std::vector<CropDef>& crops, const std::vector<TechDef>& techs);
 
 bool isValidId(const std::string& id);
 
@@ -122,7 +162,7 @@ bool isBuiltinIcon(const std::string& name);
 
 // TechTreeData.h is a C++ header holding the text above in raw string
 // literals. These convert between the two.
-std::string toHeader(const std::vector<TechDef>& techs);
+std::string toHeader(const std::vector<TechDef>& techs, const std::vector<CropDef>& crops = {});
 bool fromHeader(const std::string& header, std::string& textOut);
 std::string joinChunks(const char* const* chunks); // for the compiled-in copy
 

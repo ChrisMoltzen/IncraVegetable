@@ -13,7 +13,9 @@ TechTree::TechTree() {
     // TechTreeEditor tool and compiled into the game.
     techdata::ParseResult parsed = techdata::parse(techdata::joinChunks(kTechTreeData));
     for (const auto& e : parsed.errors) SDL_Log("Tech tree: %s", e.c_str());
+    if (!parsed.crops.empty()) techdata::setCrops(parsed.crops); // (none in the file: lettuce, carrot, pumpkin)
     for (const auto& p : techdata::validate(parsed.techs)) SDL_Log("Tech tree problem: %s", p.c_str());
+    for (const auto& p : techdata::validateCrops(techdata::crops(), parsed.techs)) SDL_Log("Tech tree problem: %s", p.c_str());
 
     for (const techdata::TechDef& def : parsed.techs) {
         if (find(def.id)) continue; // duplicate id - keep the first one
