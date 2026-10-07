@@ -10,11 +10,14 @@
 namespace {
 constexpr float kPi = 3.14159265f;
 constexpr float kBedCenterX = 640.f;
-constexpr float kBedCenterY = 398.f;
-constexpr float kMaxBedRX = 590.f;     // the bed never gets wider than 2 x this...
-constexpr float kMaxBedRY = 296.f;     // ...or taller than 2 x this
-constexpr float kMaxPlantPx = 72.f;    // plants never get bigger than this
-constexpr float kBedAspect = 1.6f;     // the bed is a rectangle 1.6 times wider than tall
+constexpr float kBedCenterY = 366.f;
+// The camera zooms out so the bed always fits in this space (between the
+// HUD at the top and the End Day button at the bottom).
+constexpr float kMaxBedRX = 590.f;     // the bed is never shown wider than 2 x this...
+constexpr float kMaxBedRY = 280.f;     // ...or taller than 2 x this
+constexpr float kMaxPlantPx = 72.f;    // a plant's size in the world (on screen when the camera isn't zoomed out)
+constexpr float kZoomSeconds = 1.4f;   // camera zoom when the patch has changed size since yesterday
+constexpr float kBedAspect = 1.6f;     // small beds are 1.6 times wider than tall; big ones stretch to fill the screen
 constexpr float kSpreadGap = 1.0f;     // normally plants don't overlap at all...
 constexpr float kMinGap = 0.9f;        // ...and never by more than 10% (centres 0.9 plant-widths apart)
 constexpr float kBedMargin = 0.2f;    // soil around the outermost plants, in plant-widths
@@ -100,10 +103,19 @@ int Farm::plantCount(const Stats& stats) {
 }
 
 void Farm::startDay(const Stats& stats, std::mt19937& rng) {
+    const float oldPlantSize = tiles_.empty() ? 0.f : plantSize_;
     stats_ = stats;
     n_ = std::max(1, stats.patchSize);
     tiles_.assign(plantCount(stats), Tile{});
     plant(static_cast<Uint32>(rng()));
+    // If the camera had to zoom out (or in) since yesterday, start at
+    // yesterday's zoom and glide to the new one.
+    if (oldPlantSize > 0.f && std::fabs(oldPlantSize - plantSize_) > 0.5f) {
+        zoomFrom_ = oldPlantSize / plantSize_;
+        zoomT_ = 0.f;
+    } else {
+        zoomT_ = 1.f;
+    }
 
     std::uniform_real_distribution<float> unit(0.f, 1.f);
     for (auto& t : tiles_) {
@@ -134,6 +146,9 @@ void Farm::plant(Uint32 seed) {
     // vegetable can move to when it regrows.
     const int room = n_ * n_;
     const int capacity = room + std::max(2, (room + 3) / 4);
+    // Big beds take the screen's shape (wider), so the camera needn't zoom out as far.
+    const float aspect = kBedAspect + (kMaxBedRX / kMaxBedRY - kBedAspect) * std::clamp((room - 25.f) / 75.f, 0.f, 1.f);
+    const int layouts = capacity > 200 ? 2 : 6; // big beds: fewer tries, so the day starts without a pause
 
     struct Layout {
         std::vector<SDL_FPoint> pts;
@@ -143,14 +158,14 @@ void Farm::plant(Uint32 seed) {
     auto layoutWith = [&](float gap) {
         std::mt19937 g(seed); // same seed = same layout, so saved games come back identical
         Layout L;
-        // Start with plants as big as will comfortably fit, then make the bed
-        // bigger until every plant has a spot.
-        L.d = std::min(kMaxPlantPx, std::sqrt(kPi * kMaxBedRX * kMaxBedRY / (capacity * 2.1f)));
+        // Start with a bed that should just about fit, then make it bigger
+        // until every plant has a spot.
+        L.d = kMaxPlantPx; // plants are always the same size in the world; the camera zooms out instead
         float bedRX = 1e9f;
-        float area = capacity * 1.1f * L.d * L.d * gap * gap;
+        float area = capacity * 1.45f * L.d * L.d * gap * gap; // about what a scatter needs, so it rarely has to retry
         // Scatter a few times and keep the most compact layout.
-        for (int tries = 0, found = 0; tries < 80 && found < 6; ++tries) {
-            float hh = std::sqrt(area / (4.f * kBedAspect)), hw = hh * kBedAspect;
+        for (int tries = 0, found = 0; tries < 80 && found < layouts; ++tries) {
+            float hh = std::sqrt(area / (4.f * aspect)), hw = hh * aspect;
             std::vector<SDL_FPoint> cand = scatterInRect(hw, hh, L.d * gap, g);
             if (static_cast<int>(cand.size()) < capacity) {
                 area *= 1.06f; // not enough room yet - grow the bed a little
@@ -174,7 +189,7 @@ void Farm::plant(Uint32 seed) {
             // Smallest rectangle of the right shape that holds every plant with some soil around it.
             float need = 0.f; // half-width
             for (const auto& p : cand) {
-                need = std::max({need, std::fabs(p.x) + edge, (std::fabs(p.y) + edge) * kBedAspect});
+                need = std::max({need, std::fabs(p.x) + edge, (std::fabs(p.y) + edge) * aspect});
             }
             need /= 0.93f; // room for the bed's rim
             if (need < bedRX) {
@@ -184,8 +199,8 @@ void Farm::plant(Uint32 seed) {
         }
         if (L.pts.empty()) L.pts.assign(capacity, SDL_FPoint{0.f, 0.f}); // can't happen in practice
         L.rx = bedRX;
-        L.ry = bedRX / kBedAspect;
-        L.scale = std::min({1.f, kMaxBedRX / L.rx, kMaxBedRY / L.ry});
+        L.ry = bedRX / aspect;
+        L.scale = std::min({1.f, kMaxBedRX / L.rx, kMaxBedRY / L.ry}); // camera zoom that fits the whole bed
         return L;
     };
 
@@ -302,6 +317,7 @@ bool Farm::restore(const std::vector<std::string>& lines, const Stats& stats) {
         for (int i = 0; i < count; ++i) placeOn(i, savedSpots[i]);
         sortDrawOrder();
     }
+    zoomT_ = 1.f;
     farmers_.clear(); // farmers aren't saved: they start again from the edge of the bed
     std::mt19937 frng(seed);
     syncFarmers(frng);
@@ -413,7 +429,20 @@ bool Farm::tileInReach(int index, float mx, float my) const {
     return dx * dx + dy * dy <= radius * radius;
 }
 
+float Farm::viewZoom() const {
+    if (zoomT_ >= 1.f) return 1.f;
+    float t = zoomT_ * zoomT_ * (3.f - 2.f * zoomT_); // ease in and out
+    return zoomFrom_ + (1.f - zoomFrom_) * t;
+}
+
 void Farm::update(float dt, float mouseX, float mouseY, bool mouseInside, double& coins, std::mt19937& rng) {
+    zoomT_ = std::min(1.f, zoomT_ + dt / kZoomSeconds);
+    // While the camera is still zooming, map the pointer into the bed's own coordinates.
+    const float z = viewZoom();
+    if (z != 1.f) {
+        mouseX = bedX_ + (mouseX - bedX_) / z;
+        mouseY = bedY_ + (mouseY - bedY_) / z;
+    }
     mouseX_ = mouseX;
     mouseY_ = mouseY;
     mouseInside_ = mouseInside;
@@ -782,6 +811,27 @@ void Farm::drawReachBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
 }
 
 void Farm::render(SDL_Renderer* r) const {
+    const float z = viewZoom();
+    if (z == 1.f) return renderScene(r);
+    // Camera mid-zoom: draw the bed to an off-screen image and show it scaled
+    // around the middle of the bed.
+    if (!zoomTex_ || zoomTexRenderer_ != r) {
+        zoomTex_ = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 1280, 720);
+        zoomTexRenderer_ = r;
+        if (zoomTex_) SDL_SetTextureBlendMode(zoomTex_, SDL_BLENDMODE_BLEND_PREMULTIPLIED);
+    }
+    if (!zoomTex_) return renderScene(r);
+    SDL_Texture* previous = SDL_GetRenderTarget(r);
+    SDL_SetRenderTarget(r, zoomTex_);
+    SDL_SetRenderDrawColor(r, 0, 0, 0, 0);
+    SDL_RenderClear(r);
+    renderScene(r);
+    SDL_SetRenderTarget(r, previous);
+    SDL_FRect dst{bedX_ - bedX_ * z, bedY_ - bedY_ * z, 1280.f * z, 720.f * z};
+    SDL_RenderTexture(r, zoomTex_, nullptr, &dst);
+}
+
+void Farm::renderScene(SDL_Renderer* r) const {
     // The bed.
     SDL_FRect bed{bedX_ - bedRX_, bedY_ - bedRY_, bedRX_ * 2.f, bedRY_ * 2.f};
     if (art::has("farm/bed")) {

@@ -161,6 +161,7 @@ void Game::startDay() {
 }
 
 void Game::endDay() {
+    farm_.setTimeLeft(0.f); // ended early: stop the clock so nothing more is picked behind the summary
     lifetimeCoins_ += farm_.earnedToday();
     ++day_;
     state_ = State::DaySummary;
@@ -296,6 +297,26 @@ bool Game::handlePauseButton(const SDL_Event& e) {
     return false;
 }
 
+// The End Day button sits in the bottom-right corner while farming, so you
+// don't have to wait for the timer. Returns true if the event was used by it.
+bool Game::handleEndDayButton(const SDL_Event& e) {
+    if (state_ != State::Farming) return false;
+    if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT &&
+        draw::pointInRect(e.button.x, e.button.y, endDayButton_)) {
+        endDayButtonDown_ = true;
+        return true;
+    }
+    if (isMouseUp(e) && endDayButtonDown_) {
+        endDayButtonDown_ = false;
+        if (draw::pointInRect(e.button.x, e.button.y, endDayButton_)) {
+            audio_.play(Sfx::Click);
+            endDay();
+        }
+        return true;
+    }
+    return false;
+}
+
 void Game::handleEvent(SDL_Event& e) {
     SDL_ConvertEventToRenderCoordinates(renderer_, &e);
 
@@ -367,6 +388,7 @@ void Game::handleEvent(SDL_Event& e) {
     }
     if (handleDebugInput(e)) return;
     if (handlePauseButton(e)) return;
+    if (handleEndDayButton(e)) return;
 
     switch (state_) {
     case State::MainMenu: {
@@ -646,6 +668,16 @@ void Game::renderPlayScene(State s) {
     if (s == State::Farming || s == State::TechTree) {
         bool hover = !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, pauseButton_);
         ui::drawPauseIcon(renderer_, pauseButton_, hover && state_ == s);
+    }
+    if (s == State::Farming) {
+        bool live = state_ == s; // not while paused
+        bool hover = live && !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, endDayButton_);
+        ui::Button b;
+        b.rect = endDayButton_;
+        b.label = "End Day";
+        b.style = ui::Style::Secondary;
+        b.textScale = 2.f;
+        ui::drawButton(renderer_, b, hover, live && endDayButtonDown_ && hover);
     }
 }
 

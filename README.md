@@ -137,6 +137,7 @@ Save and settings files live in your user data folder:
 | Where | Mouse / keyboard | Touch |
 |---|---|---|
 | Farm | Hover over a ripe vegetable until its bar fills | Hold a finger on it (drag across the patch) |
+| Farm | **End Day** button, bottom-right: finish the day early | Tap **End Day** |
 | Day summary | Click **Tech Tree** (or Space / Enter) | Tap **Tech Tree** |
 | Tech tree | Click to buy, drag to pan, Home to recentre, **Start Day** (or Space / Enter) | Tap to inspect, tap again to buy, drag to pan |
 | Anywhere in play | Esc or the pause button | Pause button |
@@ -146,11 +147,11 @@ Save and settings files live in your user data folder:
 
 | Upgrade | Effect | Requires |
 |---|---|---|
-| Bigger Patch | Room for more vegetables (9 up to 100) | — |
-| More Seeds | About 25% more crops growing at once per level (4 up to 114, capped by the patch's room) | — |
-| Longer Days | +5 seconds per day | — |
+| Bigger Patch | Adds a row and a column: from 2 x 2 (room for 4) up to 30 x 30 (900), 28 levels | — |
+| More Seeds | About 25% more crops growing at once per level (4 up to 1,059 over 25 levels, capped by the patch's room) | — |
+| Longer Days | +2 seconds per day: from 12 s up to 72 s, 30 levels | — |
 | Quick Hands | Pick 18% faster per level | — |
-| Head Start | 20% of the patch is ripe at dawn per level | Longer Days 2 |
+| Head Start | 20% of the patch is ripe at dawn per level | Longer Days 5 |
 | Fertile Soil | Grow 12% faster per level | Bigger Patch 1 |
 | Prize Produce | +25% coins per level | Quick Hands 1 |
 | Wide Reach | Pick everything in a circle around the pointer | Quick Hands 3 |
@@ -166,6 +167,8 @@ Save and settings files live in your user data folder:
 | Sharp Shears | Farmers pick 15% faster per level | Farmhand |
 
 Nodes stay hidden until one of their prerequisites has been bought, so the tree reveals itself as you play.
+
+**The camera** zooms out as the patch grows: plants are always the same size in the world, and the view pulls back just far enough to fit the whole bed on screen (a 30 x 30 patch is shown at about a quarter of the size of the starting one). On the first day after the patch grows, the camera starts at yesterday's view and glides out.
 
 **Auto-pick** (Helping Hand and its upgrades): every time you pick a crop yourself, the chance is rolled once. If it succeeds, the nearest ripe crops within the radius are picked too, up to the crop count, with a green sparkle trail and an "Auto-pick!" pop-up. Crops picked this way never set off another auto-pick. The debug screen's *Show plant info* draws the auto-pick range around the plant under the pointer.
 

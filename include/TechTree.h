@@ -18,9 +18,9 @@
 // Every number the upgrades can change. Defaults are the values at the
 // very start of the game, before anything has been bought.
 struct Stats {
-    int patchSize = 3;        // the patch has room for patchSize x patchSize plants
+    int patchSize = 2;        // the patch has room for patchSize x patchSize plants
     int maxCrops = 4;         // vegetables growing at any one time (never more than the patch has room for)
-    float dayLength = 20.f;   // seconds of picking per day
+    float dayLength = 12.f;   // seconds of picking per day
     float pickTime = 1.0f;    // seconds of hovering needed to pick a vegetable
     float growTime = 3.0f;    // seconds for a lettuce to grow (other crops are multiples)
     float valueMult = 1.0f;   // multiplier on coins from every vegetable

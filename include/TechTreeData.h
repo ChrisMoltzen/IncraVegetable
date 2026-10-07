@@ -13,10 +13,10 @@ version 1
 
 tech patch
   name Bigger Patch
-  desc Dig out a bigger patch with room for more vegetables.
-  max 7
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
+  max 28
   cost 10
-  growth 2.1
+  growth 1.45
   pos 0 0
   effect patchSize add 1
 end
@@ -24,7 +24,7 @@ end
 tech seeds
   name More Seeds
   desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
-  max 15
+  max 25
   cost 6
   growth 1.5
   pos 2 0
@@ -33,12 +33,12 @@ end
 
 tech daylength
   name Longer Days
-  desc Wake up earlier. Each level adds 5 seconds to every day.
-  max 10
-  cost 8
-  growth 1.65
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
+  max 30
+  cost 6
+  growth 1.28
   pos -1 0
-  effect dayLength add 5
+  effect dayLength add 2
 end
 
 tech pickspeed
@@ -58,7 +58,7 @@ tech headstart
   cost 60
   growth 2
   pos -1 1
-  requires daylength 2
+  requires daylength 5
   effect headStart add 0.2
 end
 
