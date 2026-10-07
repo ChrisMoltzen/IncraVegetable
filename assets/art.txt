@@ -3,7 +3,7 @@
 # How images are scaled:
 #   linear  = smooth (painted / hand-drawn art)
 #   nearest = crisp, blocky pixels (pixel art)
-filter linear
+filter nearest
 
 # You can also set it for one image:
 # filter crops/lettuce nearest
