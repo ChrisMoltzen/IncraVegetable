@@ -105,6 +105,31 @@ void Game::newGame(int slot) {
     saveGame();
 }
 
+// Sets a tech's level from a save line. Unknown ids are ignored, so old saves
+// keep working as the tree changes. Also carries saves across a stacking tech
+// being split into one tech per level ("value" level 3 <-> "value",
+// "value_2", "value_3"), in either direction.
+void Game::loadTechLevel(const std::string& id, int level) {
+    if (level <= 0) return;
+    if (TechNode* n = tree_.find(id)) {
+        n->level = std::max(n->level, std::clamp(level, 0, n->maxLevel));
+        // Saved before the split: level L of the old tech = id, id_2 .. id_L.
+        for (int k = 2; k <= level; ++k)
+            if (TechNode* part = tree_.find(id + "_" + std::to_string(k)); part && part->maxLevel == 1)
+                part->level = 1;
+        return;
+    }
+    // Saved after the split but loaded into a tree where it's one stacking tech:
+    // "value_3" = "value" at level 3.
+    auto us = id.rfind('_');
+    if (us == std::string::npos || us + 1 >= id.size()) return;
+    std::string base = id.substr(0, us), num = id.substr(us + 1);
+    if (num.find_first_not_of("0123456789") != std::string::npos || num.size() > 4) return;
+    int k = std::stoi(num);
+    if (TechNode* n = tree_.find(base); n && n->maxLevel > 1)
+        n->level = std::max(n->level, std::min(k, n->maxLevel));
+}
+
 bool Game::loadGame(int slot) {
     std::string contents;
     if (!saves_.readSlot(slot, contents)) return false;
@@ -130,8 +155,7 @@ bool Game::loadGame(int slot) {
             std::string id;
             int level = 0;
             ss >> id >> level;
-            // Unknown ids are ignored, so old saves keep working as the tree changes.
-            if (TechNode* n = tree_.find(id)) n->level = std::clamp(level, 0, n->maxLevel);
+            loadTechLevel(id, level);
         } else if (key == "farm" || key == "tile") {
             farmLines.push_back(line);
         }
