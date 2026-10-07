@@ -60,6 +60,8 @@ public:
     static void drawSproutBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
     static void drawSoilBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool hovered); // mound under a plant
     static void drawBedBuiltin(SDL_Renderer* r, const SDL_FRect& rc, Uint32 seed);
+    enum class FencePiece { Horizontal, Vertical, Corner, Gate };
+    static void drawFenceBuiltin(SDL_Renderer* r, const SDL_FRect& rc, FencePiece piece); // one fence tile
     static void drawPickBarBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool fill);
     static void drawReachBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
     // pose: 0 standing, 1 and 2 walking steps, 3 picking. Feet at the bottom middle of rc.
@@ -124,6 +126,7 @@ private:
     float viewZoom() const; // extra scale while the camera glides to a new zoom (1 = settled)
     Crop randomCrop(std::mt19937& rng) const;
     SDL_FRect plantRect(int index) const; // square the plant is drawn in
+    void drawFence(SDL_Renderer* r) const;
     int plantAt(float x, float y) const;  // nearest plant under the pointer, or -1
     float pickRadius() const;
     bool tileInReach(int index, float mx, float my) const;
@@ -151,6 +154,7 @@ private:
     float plantSize_ = 70.f;               // diameter of one plant
     float bedX_ = 640.f, bedY_ = 398.f;    // centre of the bed
     float bedRX_ = 100.f, bedRY_ = 60.f;   // half-width / half-height of the bed
+    float fenceTile_ = 0.f, fenceGap_ = 0.f; // fence tile size and the grass between it and the bed, on screen
     Uint32 seed_ = 1;                      // decides the bed's shape and where plants go
     std::vector<SDL_FPoint> spots_;        // every place a plant can grow (more than there are plants)
     std::vector<int> drawOrder_;           // plants sorted top to bottom, so nearer ones overlap

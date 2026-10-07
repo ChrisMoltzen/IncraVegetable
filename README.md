@@ -76,12 +76,13 @@ What you can replace:
 
 - **Crops**: each crop ripe (`crops/<id>`, e.g. `crops/lettuce`) and growing (`crops/<id>_sprout`, optional; otherwise the shared `crops/sprout`). Crops you add in the editor work the same way, and look like their built-in look and colour until you draw them
 - **Farm**: background, the garden bed, the soil mound under each plant (and under the pointer), top bar
+- **Fence** around the bed, in 64 x 64 tiles: `farm/fence_h` (top and bottom runs, joining left and right), `farm/fence_v` (the sides, joining top and bottom), `farm/fence_corner` (all four corners) and `farm/fence_gate` (the middle of the bottom side). Tiles are stretched slightly so the sides meet at the corners, and shrink with the camera as the bed grows
 - **Farmers**: `farm/farmer` (standing), plus optional `farm/farmer_walk1` / `farm/farmer_walk2` (walking steps) and `farm/farmer_pick` (bending to pick). Only `farm/farmer` is needed: missing poses use it, bobbing as it walks
 - **Effects**: pick particles, the Wide Reach circle
 - **HUD**: logo, coin, the day/night dial, picking bar, pause and debug buttons
 - **Menus**: main menu background and logo, save-slot screen background, pop-up panel, summary header, volume sliders
 - **Buttons**: four colours, each with optional hover / pressed / disabled versions
-- **Tech tree**: background, top bar, upgrade tiles (four states), the hover pop-up, and an icon for each upgrade (`tree/icons/<name>`, 64 x 64, drawn in the middle of its tile; each tech uses the icon named after its id unless you pick another in the editor. There are 18 built-in pictures; a file named like one of them, e.g. `tree/icons/carrots.png`, repaints it, and any other name is a new icon you can choose)
+- **Tech tree**: background, top bar, upgrade tiles (four states), the hover pop-up, and an icon for each upgrade (`tree/icons/<name>`, 64 x 64, drawn in the middle of its tile; each tech uses the icon named after its id unless you pick another in the editor. There are 19 built-in pictures; a file named like one of them, e.g. `tree/icons/carrots.png`, repaints it, and any other name is a new icon you can choose)
 - **Font**: an optional bitmap font that replaces the built-in pixel font
 
 Things to know:
