@@ -68,6 +68,21 @@ bool drawTinted(SDL_Renderer* r, const std::string& name, const SDL_FRect& dst, 
 // Draws the left `fraction` (0..1) of the image, for bars. Returns false if there's no image.
 bool drawFill(SDL_Renderer* r, const std::string& name, const SDL_FRect& dst, float fraction);
 
+// 9-slice corners are drawn this many times their usual size while one of
+// these is alive (e.g. the tech tree's zoom), so a zoomed-out tile shrinks as
+// a whole instead of keeping full-size corners around a tiny middle.
+class SliceScale {
+public:
+    explicit SliceScale(float scale);
+    ~SliceScale();
+    SliceScale(const SliceScale&) = delete;
+    SliceScale& operator=(const SliceScale&) = delete;
+
+private:
+    float previous_;
+};
+float sliceScale(); // the current multiplier (1 normally); built-in drawings can follow it too
+
 // Options from assets/art.txt, e.g. "menu_crop_rows off".
 bool option(const std::string& key, bool defaultValue);
 

@@ -61,6 +61,7 @@ struct State {
     SDL_ScaleMode defaultFilter = SDL_SCALEMODE_LINEAR;
     std::map<std::string, SDL_ScaleMode> filters;
     std::map<std::string, Slice> slices;
+    float sliceScale = 1.f; // see SliceScale
     std::map<std::string, bool> options;
     std::vector<std::string> unknownFiles;
 };
@@ -172,7 +173,16 @@ SDL_Texture* loadTexture(const std::string& name) {
 
 const Info* infoFor(const std::string& name) {
     auto it = S().index.find(name);
-    return it == S().index.end() ? nullptr : &S().catalog[it->second];
+    if (it != S().index.end()) return &S().catalog[it->second];
+    // A state image (e.g. tree/node_hover) is drawn like its base image.
+    for (const char* v : {"_hover", "_pressed", "_disabled"}) {
+        const std::string suffix(v);
+        if (name.size() > suffix.size() && name.compare(name.size() - suffix.size(), suffix.size(), suffix) == 0) {
+            auto base = S().index.find(name.substr(0, name.size() - suffix.size()));
+            if (base != S().index.end()) return &S().catalog[base->second];
+        }
+    }
+    return nullptr;
 }
 
 void renderTexture(SDL_Renderer* r, const std::string& name, SDL_Texture* tex, const SDL_FRect& dst) {
@@ -182,6 +192,8 @@ void renderTexture(SDL_Renderer* r, const std::string& name, SDL_Texture* tex, c
         SDL_GetTextureSize(tex, &tw, &th);
         Slice sl;
         if (auto it = S().slices.find(name); it != S().slices.end()) sl = it->second;
+        else if (auto base = S().slices.find(info->name); base != S().slices.end()) sl = base->second; // state image
+        sl.scale *= S().sliceScale;
         float corner = sl.corner > 0 ? sl.corner : std::floor(std::min(tw, th) / 4.f);
         corner = std::min({corner, tw / 2.f - 1.f, th / 2.f - 1.f});
         // Shrink the corners if the box is too small to fit them.
@@ -193,6 +205,14 @@ void renderTexture(SDL_Renderer* r, const std::string& name, SDL_Texture* tex, c
     }
     SDL_RenderTexture(r, tex, nullptr, &dst);
 }
+
+} // namespace
+
+SliceScale::SliceScale(float scale) : previous_(S().sliceScale) { S().sliceScale = previous_ * scale; }
+SliceScale::~SliceScale() { S().sliceScale = previous_; }
+float sliceScale() { return S().sliceScale; }
+
+namespace {
 
 void drawFallback(SDL_Renderer* r, const std::string& name, const SDL_FRect& dst) {
     if (const Info* info = infoFor(name); info && info->fallback) info->fallback(r, dst);
