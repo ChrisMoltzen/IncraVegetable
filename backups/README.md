@@ -6,7 +6,7 @@ tech (max level above 1) was split into one tech per level. To go back to it:
     cp backups/TechTreeData-before-split.h include/TechTreeData.h
     make
 
-(or `git checkout tech-tree-before-split -- include/TechTreeData.h`).
+(or `git checkout 1515511 -- include/TechTreeData.h`, the last commit before the split).
 
 Saves carry over in both directions: the game reads an old "value 3" as
 Prize Produce 1-3 bought, and a split-tree "value_3" as Prize Produce level 3.
