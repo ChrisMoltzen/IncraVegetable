@@ -40,7 +40,8 @@ TechTree::TechTree() {
             int idx = techdata::statIndex(e.stat);
             if (idx >= 0 && std::find(touched.begin(), touched.end(), idx) == touched.end()) touched.push_back(idx);
         }
-        n.describeStats = [touched](const Stats& s) {
+        // Techs with no effects (they only unlock others, like The Barn) leave this empty.
+        if (!touched.empty()) n.describeStats = [touched](const Stats& s) {
             std::string out;
             for (int idx : touched) out += (out.empty() ? "" : ", ") + techdata::formatStat(idx, s);
             return out.empty() ? std::string("no effect") : out;

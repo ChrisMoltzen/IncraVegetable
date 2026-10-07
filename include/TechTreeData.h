@@ -41,6 +41,15 @@ crop pumpkin
   look pumpkin
 end
 
+tech barn
+  name The Barn
+  desc Unlocks the barn.
+  max 1
+  cost 4
+  growth 1
+  pos 0 -1
+end
+
 tech patch
   name Bigger Patch 1
   desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
@@ -48,6 +57,7 @@ tech patch
   cost 10
   growth 1
   pos -2 0
+  requires barn 1
   effect patchSize add 1
 end
 
@@ -382,12 +392,14 @@ tech seeds
   cost 6
   growth 1
   pos -1 0
+  requires barn 1
   effect maxCrops add 1
 end
 
 tech seeds_2
   name More Seeds 2
-  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
+)TECHTREE",
+R"TECHTREE(  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
   cost 9
   growth 1
@@ -397,8 +409,7 @@ tech seeds_2
   effect maxCrops add 1
 end
 
-)TECHTREE",
-R"TECHTREE(tech seeds_3
+tech seeds_3
   name More Seeds 3
   desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
@@ -681,6 +692,7 @@ tech daylength
   cost 6
   growth 1
   pos 0 0
+  requires barn 1
   effect dayLength add 2
 end
 
@@ -789,7 +801,8 @@ tech daylength_10
   pos 0 9
   icon daylength
   requires daylength_9 1
-  effect dayLength add 2
+)TECHTREE",
+R"TECHTREE(  effect dayLength add 2
 end
 
 tech daylength_11
@@ -801,8 +814,7 @@ tech daylength_11
   pos 0 10
   icon daylength
   requires daylength_10 1
-)TECHTREE",
-R"TECHTREE(  effect dayLength add 2
+  effect dayLength add 2
 end
 
 tech daylength_12
@@ -1040,6 +1052,7 @@ tech pickspeed
   cost 8
   growth 1
   pos 2 0
+  requires barn 1
   effect pickTime multiply 0.82
 end
 
@@ -1210,7 +1223,8 @@ tech headstart_5
   effect headStart add 0.2
 end
 
-tech growspeed
+)TECHTREE",
+R"TECHTREE(tech growspeed
   name Fertile Soil 1
   desc Richer compost. Vegetables grow 12% faster per level.
   max 1
@@ -1223,8 +1237,7 @@ end
 
 tech growspeed_2
   name Fertile Soil 2
-)TECHTREE",
-R"TECHTREE(  desc Richer compost. Vegetables grow 12% faster per level.
+  desc Richer compost. Vegetables grow 12% faster per level.
   max 1
   cost 45
   growth 1
@@ -1635,7 +1648,8 @@ tech autopickcount_2
   pos 6 6
   icon autopickcount
   requires autopickcount 1
-  effect autoPickCount add 1
+)TECHTREE",
+R"TECHTREE(  effect autoPickCount add 1
 end
 
 tech autopickcount_3
@@ -1647,8 +1661,7 @@ tech autopickcount_3
   pos 6 7
   icon autopickcount
   requires autopickcount_2 1
-)TECHTREE",
-R"TECHTREE(  effect autoPickCount add 1
+  effect autoPickCount add 1
 end
 
 tech autopickcount_4
