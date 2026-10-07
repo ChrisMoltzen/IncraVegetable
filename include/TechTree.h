@@ -56,6 +56,9 @@ struct TechNode {
     std::function<void(Stats&, int level)> apply;
     // Short text describing the effect at a given level, e.g. "4x4 patch".
     std::function<std::string(int level)> describe;
+    // The stats this tech changes, read from a full set of Stats (so other
+    // techs that change the same stat are included), e.g. "2 farmers".
+    std::function<std::string(const Stats&)> describeStats;
 
     int level = 0; // how many levels the player owns
 };
@@ -80,6 +83,8 @@ public:
 
     // Builds the current Stats from the defaults plus every owned upgrade.
     Stats computeStats() const;
+    // The same, as if `node` were at `level` (for "next level" previews).
+    Stats computeStatsWith(const TechNode& node, int level) const;
 
     void resetLevels();
 

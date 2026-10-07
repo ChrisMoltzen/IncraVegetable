@@ -2,18 +2,22 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Farm.h"
 #include "UI.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 
 namespace {
-constexpr float kNodeW = 230.f;
-constexpr float kNodeH = 72.f;
-constexpr float kSpacingX = 270.f;
-constexpr float kSpacingY = 118.f;
-constexpr float kOriginX = 560.f; // screen position of grid (0,0) before panning
-constexpr float kOriginY = 175.f;
+// Each upgrade is a square tile with its icon; everything else is in the
+// pop-up shown on hover (or on the first tap with touch).
+constexpr float kTile = 84.f;      // tile size
+constexpr float kIcon = 60.f;      // icon size inside it
+constexpr float kSpacingX = 140.f; // one grid column / row on screen
+constexpr float kSpacingY = 112.f;
+constexpr float kTop = 64.f + 24.f;      // keep tiles below the header...
+constexpr float kBottom = 720.f - 96.f;  // ...and above the Start Day button row
 constexpr float kDragThreshold = 6.f;
 
 const SDL_Color kWhite{255, 255, 255, 255};
@@ -25,14 +29,25 @@ const SDL_Color kGrey{150, 150, 155, 255};
 
 void TechTreeScreen::open(const TechTree& tree) {
     flash_.assign(tree.nodes().size(), 0.f);
+    // Centre the whole tree (hidden techs included, so it doesn't jump as it's revealed).
+    float minX = 1e9f, maxX = -1e9f, minY = 1e9f, maxY = -1e9f;
+    for (const auto& n : tree.nodes()) {
+        minX = std::min(minX, n.gridX); maxX = std::max(maxX, n.gridX);
+        minY = std::min(minY, n.gridY); maxY = std::max(maxY, n.gridY);
+    }
+    if (minX > maxX) minX = maxX = minY = maxY = 0.f;
+    originX_ = 640.f - (minX + maxX) * 0.5f * kSpacingX;
+    originY_ = (kTop + kBottom) * 0.5f - (minY + maxY) * 0.5f * kSpacingY;
+    // Taller than the screen? Start at the top; drag to see the rest.
+    originY_ = std::min(originY_, kTop + kTile * 0.5f - minY * kSpacingY);
     pressing_ = dragged_ = false;
     selected_ = -1;
 }
 
 SDL_FRect TechTreeScreen::nodeRect(const TechNode& n) const {
-    float cx = kOriginX + camX_ + n.gridX * kSpacingX;
-    float cy = kOriginY + camY_ + n.gridY * kSpacingY;
-    return SDL_FRect{cx - kNodeW * 0.5f, cy - kNodeH * 0.5f, kNodeW, kNodeH};
+    float cx = originX_ + camX_ + n.gridX * kSpacingX;
+    float cy = originY_ + camY_ + n.gridY * kSpacingY;
+    return SDL_FRect{cx - kTile * 0.5f, cy - kTile * 0.5f, kTile, kTile};
 }
 
 // A node shows up once any of its prerequisites has been bought at least
@@ -162,18 +177,17 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
                               : affordable ? "tree/node_affordable"
                               : unlocked ? "tree/node"
                                          : "tree/node_locked";
-        SDL_Color fill, border, title;
+        SDL_Color fill, border;
         if (maxed) {
-            fill = {85, 68, 25, 255}; border = kGold; title = kGold;
+            fill = {85, 68, 25, 255}; border = kGold;
         } else if (affordable) {
             float pulse = 0.5f + 0.5f * std::sin(clock_ * 4.f);
             fill = {32, 72, 38, 255};
             border = draw::lerp(SDL_Color{80, 170, 80, 255}, SDL_Color{170, 255, 150, 255}, pulse);
-            title = kWhite;
         } else if (unlocked) {
-            fill = {44, 50, 56, 255}; border = {120, 128, 135, 255}; title = kWhite;
+            fill = {44, 50, 56, 255}; border = {120, 128, 135, 255};
         } else {
-            fill = {32, 33, 37, 255}; border = {70, 72, 78, 255}; title = kGrey;
+            fill = {32, 33, 37, 255}; border = {70, 72, 78, 255};
         }
         if (i == hovered) border = kWhite;
 
@@ -181,44 +195,26 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         if (art::has(artName)) {
             art::drawVariant(r, artName, i == hovered ? "_hover" : "", outer);
         } else {
-            draw::fillRoundRect(r, rc.x + 3, rc.y + 5, rc.w, rc.h, 12, SDL_Color{0, 0, 0, 90});
+            draw::fillRoundRect(r, rc.x + 3, rc.y + 5, rc.w, rc.h, 14, SDL_Color{0, 0, 0, 90});
             drawNodeBuiltin(r, outer, fill, border);
         }
 
-        // Optional icon on the left (assets/tree/icons/<id>.png).
-        std::string icon = "tree/icons/" + n.id;
-        float textLeft = rc.x + 12;
-        if (art::has(icon)) {
-            art::draw(r, icon, SDL_FRect{rc.x + 10, rc.y + (rc.h - 48) * 0.5f, 48, 48});
-            textLeft = rc.x + 66;
-        }
-        float avail = rc.x + rc.w - 10 - textLeft;
-        float nameScale = std::min(2.f, avail / std::max(1.f, draw::textWidth(n.name, 1.f)));
-        draw::text(r, textLeft + avail * 0.5f, rc.y + 12 + (2.f - nameScale) * 4.f, n.name, nameScale, title,
-                   draw::Align::Center);
+        // The icon (assets/tree/icons/<id>.png, or the built-in picture).
+        SDL_FRect ic{rc.x + (rc.w - kIcon) * 0.5f, rc.y + (rc.h - kIcon) * 0.5f - 3.f, kIcon, kIcon};
+        art::draw(r, "tree/icons/" + n.id, ic);
+        if (!unlocked && !maxed) draw::fillRoundRect(r, rc.x + 3, rc.y + 3, rc.w - 6, rc.h - 6, 11, SDL_Color{20, 22, 24, 150});
 
-        std::string lvl = draw::strf("Lv %d/%d", n.level, n.maxLevel);
-        draw::text(r, textLeft, rc.y + rc.h - 22, lvl, 1.5f, maxed ? kGold : kGrey);
-
-        std::string right;
-        SDL_Color rightCol = kGrey;
-        if (maxed) {
-            right = "MAX";
-            rightCol = kGold;
-        } else if (!unlocked) {
-            right = "LOCKED";
-        } else {
-            right = draw::number(tree.cost(n));
-            rightCol = coins >= tree.cost(n) ? kGreen : kRed;
+        // A thin bar along the bottom shows how many levels are bought.
+        if (n.maxLevel > 0) {
+            float bw = rc.w - 20.f, f = static_cast<float>(n.level) / static_cast<float>(n.maxLevel);
+            draw::fillRoundRect(r, rc.x + 10, rc.y + rc.h - 10, bw, 4, 2, SDL_Color{0, 0, 0, 120});
+            if (f > 0.f) draw::fillRoundRect(r, rc.x + 10, rc.y + rc.h - 10, std::max(4.f, bw * f), 4, 2, maxed ? kGold : kGreen);
         }
-        float tw = draw::textWidth(right, 1.5f);
-        draw::text(r, rc.x + rc.w - 12, rc.y + rc.h - 22, right, 1.5f, rightCol, draw::Align::Right);
-        if (!maxed && unlocked) ui::drawCoin(r, rc.x + rc.w - 26 - tw, rc.y + rc.h - 17, 6);
 
         if (i < static_cast<int>(flash_.size()) && flash_[i] > 0.f) {
             float f = flash_[i];
             draw::fillRoundRect(r, rc.x - 3 - 8 * (1 - f), rc.y - 3 - 8 * (1 - f), rc.w + 6 + 16 * (1 - f),
-                                rc.h + 6 + 16 * (1 - f), 14, SDL_Color{255, 255, 200, static_cast<Uint8>(160 * f)});
+                                rc.h + 6 + 16 * (1 - f), 16, SDL_Color{255, 255, 200, static_cast<Uint8>(160 * f)});
         }
     }
 
@@ -230,8 +226,8 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
     ui::drawCoin(r, coinX - 22, 32, 12);
     draw::textShadow(r, coinX, 21, coinText, 3.f, kGold);
     draw::text(r, 64, 690,
-               touchMode_ ? "Tap to see an upgrade, tap again to buy.  Drag to look around."
-                          : "Click to buy.  Drag to look around.  Home to recentre.",
+               touchMode_ ? "Tap an upgrade to see it, tap again to buy.  Drag to look around."
+                          : "Hover an upgrade to see it, click to buy.  Drag to look around.  Home to recentre.",
                1.5f, kGrey);
 
     // Start day button.
@@ -250,23 +246,37 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
         SDL_Color color;
     };
     std::vector<Line> lines;
-    lines.push_back({n.name, 2.f, kWhite});
-    for (const auto& w : draw::wrap(n.description, 34)) lines.push_back({w, 1.5f, SDL_Color{200, 205, 200, 255}});
+    const bool maxed = tree.isMaxed(n), unlocked = tree.prereqsMet(n);
+    lines.push_back({n.name, 2.5f, maxed ? kGold : kWhite});
+    lines.push_back({maxed ? draw::strf("Level %d / %d  -  MAX", n.level, n.maxLevel)
+                           : draw::strf("Level %d / %d", n.level, n.maxLevel),
+                     1.5f, maxed ? kGold : kGrey});
+    lines.push_back({"", 0.6f, kWhite});
+    for (const auto& w : draw::wrap(n.description, 36)) lines.push_back({w, 1.5f, SDL_Color{200, 205, 200, 255}});
     lines.push_back({"", 0.8f, kWhite});
-    if (n.describe) {
-        lines.push_back({"Now:  " + n.describe(n.level), 1.5f, SDL_Color{190, 220, 255, 255}});
-        if (!tree.isMaxed(n)) lines.push_back({"Next: " + n.describe(n.level + 1), 1.5f, kGreen});
+    if (n.describeStats) {
+        // Worked out from all your upgrades, so e.g. a second farmer reads "2 farmers".
+        lines.push_back({"Now:  " + n.describeStats(tree.computeStats()), 1.5f, SDL_Color{190, 220, 255, 255}});
+        if (!maxed) lines.push_back({"Next: " + n.describeStats(tree.computeStatsWith(n, n.level + 1)), 1.5f, kGreen});
+        if (n.maxLevel > 1 && n.level + 1 < n.maxLevel)
+            lines.push_back({"At max: " + n.describeStats(tree.computeStatsWith(n, n.maxLevel)), 1.5f, kGrey});
     }
     for (const auto& p : n.prereqs) {
         const TechNode* other = tree.find(p.id);
         if (other && other->level < p.level)
             lines.push_back({draw::strf("Needs %s Lv %d", other->name.c_str(), p.level), 1.5f, kRed});
     }
-    if (tree.isMaxed(n)) {
-        lines.push_back({"Fully upgraded!", 1.5f, kGold});
+    lines.push_back({"", 0.8f, kWhite});
+    if (maxed) {
+        lines.push_back({"Fully upgraded!", 2.f, kGold});
     } else {
         double c = tree.cost(n);
-        lines.push_back({"Cost: " + draw::number(c) + " coins", 1.5f, coins >= c ? kGold : kRed});
+        lines.push_back({"Price: " + draw::number(c) + " coins", 2.f, coins >= c ? kGold : kRed});
+        const char* hint = !unlocked      ? "Locked"
+                           : coins < c    ? "Not enough coins"
+                           : touchMode_   ? "Tap again to buy"
+                                          : "Click to buy";
+        lines.push_back({hint, 1.25f, unlocked && coins >= c ? kGreen : kGrey});
     }
 
     float w = 0.f, h = 0.f;
@@ -323,3 +333,130 @@ void TechTreeScreen::drawTooltipBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
 void TechTreeScreen::drawHeaderBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     draw::fillRect(r, rc.x, rc.y, rc.w, rc.h, SDL_Color{16, 20, 19, 235});
 }
+
+namespace {
+// Initials on a badge, for techs that have no picture of their own.
+void drawInitialsIcon(SDL_Renderer* r, const SDL_FRect& rc, const std::string& title) {
+    draw::fillRoundRect(r, rc.x + 2, rc.y + 2, rc.w - 4, rc.h - 4, rc.w * 0.2f, SDL_Color{70, 110, 160, 255});
+    std::string initials;
+    bool next = true;
+    for (char c : title) {
+        if (next && std::isalpha(static_cast<unsigned char>(c))) initials += static_cast<char>(std::toupper(c));
+        next = c == ' ';
+    }
+    initials = initials.substr(0, 2);
+    float scale = rc.w / 32.f;
+    draw::text(r, rc.x + rc.w * 0.5f, rc.y + rc.h * 0.5f - 4 * scale, initials, scale, SDL_Color{255, 255, 255, 255},
+               draw::Align::Center);
+}
+} // namespace
+
+// Simple pictures for the shipped techs, drawn in a 64x64 box scaled to rc.
+void TechTreeScreen::drawIconBuiltin(SDL_Renderer* r, const SDL_FRect& rc, const std::string& id, const std::string& name) {
+    const float u = rc.w / 64.f;
+    auto X = [&](float v) { return rc.x + v * u; };
+    auto Y = [&](float v) { return rc.y + v * (rc.h / 64.f); };
+    auto R = [&](float x, float y, float w, float h) { return SDL_FRect{X(x), Y(y), w * u, h * u}; };
+    const SDL_Color sun{244, 196, 88, 255}, sunCore{252, 226, 140, 255}, soil{112, 74, 46, 255}, wood{170, 120, 70, 255};
+    const SDL_Color leaf{110, 180, 80, 255}, leafDark{60, 130, 60, 255}, white{240, 240, 230, 255}, sky{120, 170, 215, 255};
+    const SDL_Color metal{190, 195, 200, 255}, red{200, 70, 58, 255};
+    auto sunAt = [&](float cx, float cy, float rad) {
+        for (int k = 0; k < 8; ++k) {
+            float a = 3.14159265f * k / 4.f;
+            draw::thickLine(r, X(cx + std::cos(a) * rad * 1.3f), Y(cy + std::sin(a) * rad * 1.3f),
+                            X(cx + std::cos(a) * rad * 1.75f), Y(cy + std::sin(a) * rad * 1.75f), 3.f * u, sun);
+        }
+        draw::fillCircle(r, X(cx), Y(cy), rad * u, sun);
+        draw::fillCircle(r, X(cx - rad * 0.15f), Y(cy - rad * 0.15f), rad * 0.62f * u, sunCore);
+    };
+    auto speedLines = [&](float x, float y) {
+        for (int k = 0; k < 3; ++k) draw::thickLine(r, X(x - 4.f * k), Y(y + 8.f * k), X(x + 10.f - 4.f * k), Y(y + 8.f * k), 3.f * u, white);
+    };
+    auto dashedRing = [&](float cx, float cy, float rad, SDL_Color c) {
+        for (int k = 0; k < 16; k += 2) {
+            float a0 = 6.2831853f * k / 16.f, a1 = 6.2831853f * (k + 1) / 16.f;
+            draw::thickLine(r, X(cx + std::cos(a0) * rad), Y(cy + std::sin(a0) * rad), X(cx + std::cos(a1) * rad),
+                            Y(cy + std::sin(a1) * rad), 3.f * u, c);
+        }
+    };
+
+    if (id == "patch") {
+        draw::fillRoundRect(r, X(6), Y(14), 52 * u, 38 * u, 6 * u, wood);
+        draw::fillRoundRect(r, X(10), Y(18), 44 * u, 30 * u, 4 * u, soil);
+        for (int k = 0; k < 4; ++k) Farm::drawSproutBuiltin(r, R(12.f + (k % 2) * 22.f, 18.f + (k / 2) * 14.f, 18, 16));
+        draw::thickLine(r, X(52), Y(6), X(52), Y(18), 3.5f * u, white);
+        draw::thickLine(r, X(46), Y(12), X(58), Y(12), 3.5f * u, white);
+    } else if (id == "seeds") {
+        draw::fillRoundRect(r, X(14), Y(10), 36 * u, 46 * u, 4 * u, SDL_Color{222, 196, 140, 255});
+        draw::fillRect(r, X(14), Y(10), 36 * u, 6 * u, SDL_Color{190, 160, 100, 255});
+        Farm::drawCropBuiltin(r, Crop::Lettuce, X(32), Y(34), 26 * u);
+        for (int k = 0; k < 3; ++k) draw::fillEllipse(r, X(46.f + k * 4.f), Y(54.f - k * 3.f), 2.2f * u, 1.5f * u, SDL_Color{150, 110, 60, 255});
+    } else if (id == "daylength") {
+        sunAt(32, 32, 13);
+    } else if (id == "headstart") {
+        sunAt(32, 40, 12);
+        draw::fillRect(r, X(4), Y(40), 56 * u, 18 * u, SDL_Color{90, 130, 70, 255});
+    } else if (id == "pickspeed") {
+        Farm::drawCropBuiltin(r, Crop::Lettuce, X(38), Y(34), 34 * u);
+        speedLines(10, 22);
+    } else if (id == "growspeed") {
+        draw::fillEllipse(r, X(32), Y(52), 20 * u, 6 * u, soil);
+        draw::thickLine(r, X(32), Y(52), X(32), Y(26), 3.5f * u, leafDark);
+        draw::fillEllipse(r, X(23), Y(30), 10 * u, 5 * u, leaf);
+        draw::fillEllipse(r, X(41), Y(24), 10 * u, 5 * u, leaf);
+        draw::fillCircle(r, X(48), Y(46), 5 * u, sky);
+        draw::fillTriangle(r, {X(43.6f), Y(44)}, {X(52.4f), Y(44)}, {X(48), Y(36)}, sky);
+    } else if (id == "value") {
+        ui::drawCoinBuiltin(r, R(8, 22, 34, 34));
+        ui::drawCoinBuiltin(r, R(24, 8, 34, 34));
+    } else if (id == "reach") {
+        dashedRing(32, 32, 24, white);
+        draw::fillTriangle(r, {X(28), Y(22)}, {X(28), Y(44)}, {X(42), Y(36)}, white); // pointer
+    } else if (id == "carrots") {
+        Farm::drawCropBuiltin(r, Crop::Carrot, X(32), Y(32), 52 * u);
+    } else if (id == "pumpkins") {
+        Farm::drawCropBuiltin(r, Crop::Pumpkin, X(32), Y(34), 52 * u);
+    } else if (id == "autopick") {
+        Farm::drawCropBuiltin(r, Crop::Lettuce, X(28), Y(36), 36 * u);
+        draw::fillTriangle(r, {X(50), Y(6)}, {X(46), Y(18)}, {X(54), Y(18)}, sunCore); // sparkle
+        draw::fillTriangle(r, {X(50), Y(30)}, {X(46), Y(18)}, {X(54), Y(18)}, sunCore);
+        draw::fillTriangle(r, {X(38), Y(18)}, {X(50), Y(14)}, {X(50), Y(22)}, sunCore);
+        draw::fillTriangle(r, {X(62), Y(18)}, {X(50), Y(14)}, {X(50), Y(22)}, sunCore);
+    } else if (id == "autopickchance") {
+        for (int k = 0; k < 4; ++k) {
+            float a = 1.5707963f * k + 0.785f;
+            draw::fillCircle(r, X(32 + std::cos(a) * 10), Y(28 + std::sin(a) * 10), 10 * u, k % 2 ? leaf : leafDark);
+        }
+        draw::thickLine(r, X(32), Y(30), X(40), Y(58), 3.5f * u, leafDark);
+    } else if (id == "autopickcount") {
+        Farm::drawCropBuiltin(r, Crop::Lettuce, X(20), Y(24), 26 * u);
+        Farm::drawCropBuiltin(r, Crop::Lettuce, X(44), Y(24), 26 * u);
+        Farm::drawCropBuiltin(r, Crop::Lettuce, X(32), Y(44), 26 * u);
+    } else if (id == "autopickradius") {
+        dashedRing(32, 32, 26, leaf);
+        Farm::drawCropBuiltin(r, Crop::Lettuce, X(32), Y(32), 28 * u);
+    } else if (id == "farmhand") {
+        Farm::drawFarmerBuiltin(r, R(0, 2, 64, 64), 0);
+    } else if (id == "farmcrew") {
+        Farm::drawFarmerBuiltin(r, R(-8, 0, 52, 52), 0);
+        Farm::drawFarmerBuiltin(r, R(20, 12, 52, 52), 0);
+    } else if (id == "farmerspeed") {
+        draw::fillRoundRect(r, X(24), Y(16), 16 * u, 30 * u, 4 * u, SDL_Color{92, 60, 36, 255});  // boot leg
+        draw::fillRoundRect(r, X(24), Y(36), 32 * u, 14 * u, 6 * u, SDL_Color{92, 60, 36, 255});  // foot
+        draw::fillRect(r, X(22), Y(48), 36 * u, 4 * u, SDL_Color{50, 34, 22, 255});              // sole
+        speedLines(8, 22);
+    } else if (id == "farmerpick") {
+        draw::thickLine(r, X(14), Y(12), X(44), Y(44), 6.f * u, metal);
+        draw::thickLine(r, X(50), Y(12), X(20), Y(44), 6.f * u, metal);
+        draw::fillCircle(r, X(32), Y(28), 3 * u, SDL_Color{90, 95, 100, 255});
+        draw::circleOutline(r, X(17), Y(50), 8 * u, red);
+        draw::circleOutline(r, X(47), Y(50), 8 * u, red);
+        draw::fillCircle(r, X(17), Y(50), 7 * u, red);
+        draw::fillCircle(r, X(47), Y(50), 7 * u, red);
+        draw::fillCircle(r, X(17), Y(50), 4 * u, SDL_Color{44, 50, 56, 255});
+        draw::fillCircle(r, X(47), Y(50), 4 * u, SDL_Color{44, 50, 56, 255});
+    } else {
+        drawInitialsIcon(r, rc, name);
+    }
+}
+
