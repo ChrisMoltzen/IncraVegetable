@@ -18,7 +18,7 @@ public:
     void render(SDL_Renderer* r, const TechTree& tree, double coins, int nextDay) const;
 
     // Built-in art, used when there's no image in assets/ (see ArtCatalog.cpp).
-    static void drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc, float panX, float panY);
+    static void drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc, float panX, float panY, float zoom = 1.f);
     static void drawNodeBuiltin(SDL_Renderer* r, const SDL_FRect& outer, SDL_Color fill, SDL_Color border);
     // Picture for a tech's tile when there's no assets/tree/icons/<id>.png.
     // The shipped techs have their own; any other tech gets its initials.
@@ -28,12 +28,25 @@ public:
 
 private:
     SDL_FRect nodeRect(const TechNode& n) const;
+    // Zoom: tiles are laid out at zoom 1, then scaled about the pivot (the
+    // middle of the screen, horizontally, and the top row of tiles).
+    SDL_FPoint toScreen(float x, float y) const;
+    void zoomAt(float sx, float sy, float newZoom); // keeps the point under (sx, sy) still
+    SDL_FRect zoomInButton() const;
+    SDL_FRect zoomOutButton() const;
     bool isVisible(const TechTree& tree, const TechNode& n) const;
     int nodeAt(const TechTree& tree, float x, float y) const;
     void renderTooltip(SDL_Renderer* r, const TechTree& tree, const TechNode& n, double coins) const;
 
     float originX_ = 640.f, originY_ = 300.f; // screen position of grid (0,0): set so the tree is centred
     float camX_ = 0.f, camY_ = 0.f;
+    float zoom_ = 1.f;
+    // Two-finger pinch (touch): the fingers down, and the spread when it started.
+    SDL_FingerID fingerA_ = 0, fingerB_ = 0;
+    SDL_FPoint fingerPosA_{}, fingerPosB_{};
+    int fingers_ = 0;
+    bool pinching_ = false;
+    int pressedZoom_ = 0; // +1 / -1 while a zoom button is held
     float mouseX_ = 0.f, mouseY_ = 0.f;
     bool pressing_ = false, dragged_ = false;
     float pressX_ = 0.f, pressY_ = 0.f;

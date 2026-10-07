@@ -21,6 +21,14 @@ constexpr float kSpacingY = 112.f;
 constexpr float kTop = 64.f + 24.f;      // keep tiles below the header...
 constexpr float kBottom = 720.f - 96.f;  // ...and above the Start Day button row
 constexpr float kDragThreshold = 6.f;
+constexpr float kMinZoom = 0.3f, kMaxZoom = 1.6f;
+constexpr float kPivotX = 640.f;
+constexpr float kPivotY = kTop + kTile * 0.5f; // the top row stays put when zooming from Home
+
+// `rc` (laid out at zoom 1) scaled by z about its own centre.
+SDL_FRect scaled(const SDL_FRect& rc, float cx, float cy, float z) {
+    return SDL_FRect{cx + (rc.x - cx) * z, cy + (rc.y - cy) * z, rc.w * z, rc.h * z};
+}
 
 const SDL_Color kWhite{255, 255, 255, 255};
 const SDL_Color kGold{255, 205, 70, 255};
@@ -45,14 +53,36 @@ void TechTreeScreen::open(const TechTree& tree) {
     // Taller than the screen? Start at the top; drag to see the rest.
     originY_ = std::max(originY_, kTop + kTile * 0.5f - minY * kSpacingY);
     pressing_ = dragged_ = false;
+    pinching_ = false;
+    fingers_ = 0;
+    pressedZoom_ = 0;
     selected_ = -1;
 }
 
-SDL_FRect TechTreeScreen::nodeRect(const TechNode& n) const {
-    float cx = originX_ + camX_ + n.gridX * kSpacingX;
-    float cy = originY_ + camY_ + n.gridY * kSpacingY;
-    return SDL_FRect{cx - kTile * 0.5f, cy - kTile * 0.5f, kTile, kTile};
+SDL_FPoint TechTreeScreen::toScreen(float x, float y) const {
+    return SDL_FPoint{kPivotX + (x - kPivotX) * zoom_ + camX_, kPivotY + (y - kPivotY) * zoom_ + camY_};
 }
+
+SDL_FRect TechTreeScreen::nodeRect(const TechNode& n) const {
+    SDL_FPoint c = toScreen(originX_ + n.gridX * kSpacingX, originY_ + n.gridY * kSpacingY);
+    const float t = kTile * zoom_;
+    return SDL_FRect{c.x - t * 0.5f, c.y - t * 0.5f, t, t};
+}
+
+void TechTreeScreen::zoomAt(float sx, float sy, float newZoom) {
+    newZoom = std::clamp(newZoom, kMinZoom, kMaxZoom);
+    // The layout point under (sx, sy) before...
+    float wx = (sx - kPivotX - camX_) / zoom_ + kPivotX;
+    float wy = (sy - kPivotY - camY_) / zoom_ + kPivotY;
+    zoom_ = newZoom;
+    // ...stays under it after.
+    camX_ = sx - kPivotX - (wx - kPivotX) * zoom_;
+    camY_ = sy - kPivotY - (wy - kPivotY) * zoom_;
+}
+
+// Small + and - buttons above Start Day, for players without a wheel or a pinch.
+SDL_FRect TechTreeScreen::zoomInButton() const { return SDL_FRect{1250.f - 52.f, 634.f - 64.f, 52.f, 52.f}; }
+SDL_FRect TechTreeScreen::zoomOutButton() const { return SDL_FRect{1250.f - 52.f - 60.f, 634.f - 64.f, 52.f, 52.f}; }
 
 // A node shows up once any of its prerequisites has been bought at least
 // once, so the tree reveals itself as you go. Roots are always visible.
@@ -75,10 +105,68 @@ int TechTreeScreen::nodeAt(const TechTree& tree, float x, float y) const {
 
 TechTreeScreen::Action TechTreeScreen::handleEvent(const SDL_Event& e, TechTree& tree, double& coins) {
     switch (e.type) {
+    case SDL_EVENT_MOUSE_WHEEL: {
+        float steps = e.wheel.y;
+        if (e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) steps = -steps;
+        if (steps != 0.f) zoomAt(e.wheel.mouse_x, e.wheel.mouse_y, zoom_ * std::pow(1.15f, steps));
+        break;
+    }
+    case SDL_EVENT_FINGER_DOWN: {
+        // Resync if a finger went up while another screen was showing.
+        int down = 0;
+        if (SDL_Finger** list = SDL_GetTouchFingers(e.tfinger.touchID, &down)) SDL_free(list);
+        if (down == 1) { // this is the only finger on the screen
+            fingers_ = 0;
+            pinching_ = false;
+        }
+        if (fingers_ == 0) {
+            fingerA_ = e.tfinger.fingerID;
+            fingerPosA_ = {e.tfinger.x, e.tfinger.y};
+            fingers_ = 1;
+        } else if (fingers_ == 1 && e.tfinger.fingerID != fingerA_) {
+            fingerB_ = e.tfinger.fingerID;
+            fingerPosB_ = {e.tfinger.x, e.tfinger.y};
+            fingers_ = 2;
+            pinching_ = true;
+            dragged_ = true; // the first finger's press is a pinch now, not a tap
+        }
+        break;
+    }
+    case SDL_EVENT_FINGER_MOTION:
+        if (fingers_ == 2 && (e.tfinger.fingerID == fingerA_ || e.tfinger.fingerID == fingerB_)) {
+            SDL_FPoint a = fingerPosA_, b = fingerPosB_;
+            float before = std::hypot(b.x - a.x, b.y - a.y);
+            if (e.tfinger.fingerID == fingerA_) fingerPosA_ = {e.tfinger.x, e.tfinger.y};
+            else fingerPosB_ = {e.tfinger.x, e.tfinger.y};
+            float after = std::hypot(fingerPosB_.x - fingerPosA_.x, fingerPosB_.y - fingerPosA_.y);
+            if (before > 1.f && after > 1.f) {
+                // Zoom about the middle of the two fingers, and move with them.
+                float mx = (fingerPosA_.x + fingerPosB_.x) * 0.5f, my = (fingerPosA_.y + fingerPosB_.y) * 0.5f;
+                float pmx = (a.x + b.x) * 0.5f, pmy = (a.y + b.y) * 0.5f;
+                zoomAt(mx, my, zoom_ * after / before);
+                camX_ += mx - pmx;
+                camY_ += my - pmy;
+            }
+        } else if (e.tfinger.fingerID == fingerA_) {
+            fingerPosA_ = {e.tfinger.x, e.tfinger.y};
+        }
+        break;
+    case SDL_EVENT_FINGER_UP:
+    case SDL_EVENT_FINGER_CANCELED:
+        if (e.tfinger.fingerID == fingerA_ && fingers_ == 2) {
+            fingerA_ = fingerB_;
+            fingerPosA_ = fingerPosB_;
+            fingers_ = 1;
+        } else if (e.tfinger.fingerID == fingerA_ || e.tfinger.fingerID == fingerB_) {
+            fingers_ = std::max(0, fingers_ - 1);
+        }
+        if (fingers_ == 0) pinching_ = false;
+        break;
     case SDL_EVENT_MOUSE_MOTION:
         mouseX_ = e.motion.x;
         mouseY_ = e.motion.y;
         touchMode_ = e.motion.which == SDL_TOUCH_MOUSEID;
+        if (pinching_) break; // the pinch moves the view
         if (pressing_) {
             if (!dragged_ && std::hypot(mouseX_ - pressX_, mouseY_ - pressY_) > kDragThreshold) dragged_ = true;
             if (dragged_) {
@@ -94,14 +182,31 @@ TechTreeScreen::Action TechTreeScreen::handleEvent(const SDL_Event& e, TechTree&
             touchMode_ = e.button.which == SDL_TOUCH_MOUSEID;
             pressX_ = e.button.x;
             pressY_ = e.button.y;
+            pressedZoom_ = 0;
+            if (e.button.button == SDL_BUTTON_LEFT) {
+                if (draw::pointInRect(e.button.x, e.button.y, zoomInButton())) pressedZoom_ = 1;
+                else if (draw::pointInRect(e.button.x, e.button.y, zoomOutButton())) pressedZoom_ = -1;
+            }
+            if (pinching_) dragged_ = true;
         }
         break;
     case SDL_EVENT_MOUSE_BUTTON_UP: {
         if (!pressing_) break;
-        bool wasDrag = dragged_;
+        bool wasDrag = dragged_ || pinching_;
+        int zoomButton = pressedZoom_;
         pressing_ = dragged_ = false;
+        pressedZoom_ = 0;
         if (wasDrag || e.button.button != SDL_BUTTON_LEFT) break;
         if (draw::pointInRect(e.button.x, e.button.y, startButton_)) return Action::StartDay;
+        // Zoom buttons zoom about the middle of the screen.
+        if (zoomButton > 0 && draw::pointInRect(e.button.x, e.button.y, zoomInButton())) {
+            zoomAt(640.f, 360.f, zoom_ * 1.25f);
+            break;
+        }
+        if (zoomButton < 0 && draw::pointInRect(e.button.x, e.button.y, zoomOutButton())) {
+            zoomAt(640.f, 360.f, zoom_ / 1.25f);
+            break;
+        }
         int idx = nodeAt(tree, e.button.x, e.button.y);
         if (idx < 0) {
             selected_ = -1;
@@ -123,7 +228,13 @@ TechTreeScreen::Action TechTreeScreen::handleEvent(const SDL_Event& e, TechTree&
     }
     case SDL_EVENT_KEY_DOWN:
         if (e.key.key == SDLK_RETURN || e.key.key == SDLK_SPACE) return Action::StartDay;
-        if (e.key.key == SDLK_HOME) camX_ = camY_ = 0.f;
+        if (e.key.key == SDLK_HOME) {
+            camX_ = camY_ = 0.f;
+            zoom_ = 1.f;
+        }
+        if (e.key.key == SDLK_EQUALS || e.key.key == SDLK_PLUS || e.key.key == SDLK_KP_PLUS)
+            zoomAt(640.f, 360.f, zoom_ * 1.25f);
+        if (e.key.key == SDLK_MINUS || e.key.key == SDLK_KP_MINUS) zoomAt(640.f, 360.f, zoom_ / 1.25f);
         break;
     default:
         break;
@@ -139,7 +250,8 @@ void TechTreeScreen::update(float dt) {
 void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins, int nextDay) const {
     // Background. The built-in one is a grid that moves when you pan.
     if (art::has("tree/background")) art::draw(r, "tree/background", SDL_FRect{0, 0, 1280, 720});
-    else drawBackgroundBuiltin(r, SDL_FRect{0, 0, 1280, 720}, camX_, camY_);
+    else drawBackgroundBuiltin(r, SDL_FRect{0, 0, 1280, 720}, camX_ + kPivotX * (1.f - zoom_),
+                               camY_ + kPivotY * (1.f - zoom_), zoom_);
 
     const auto& nodes = tree.nodes();
 
@@ -155,9 +267,9 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
             SDL_Color c = met ? SDL_Color{110, 200, 110, 255} : SDL_Color{80, 85, 90, 255};
             float x1 = fr.x + fr.w * 0.5f, y1 = fr.y + fr.h * 0.5f;
             float x2 = to.x + to.w * 0.5f, y2 = to.y + to.h * 0.5f;
-            draw::thickLine(r, x1, y1, x2, y2, 4.f, c);
+            draw::thickLine(r, x1, y1, x2, y2, std::max(2.f, 4.f * zoom_), c);
             // Show the level needed at the midpoint of the line when it isn't met yet.
-            if (!met) {
+            if (!met && zoom_ >= 0.6f) {
                 float mx = (x1 + x2) * 0.5f, my = (y1 + y2) * 0.5f;
                 std::string need = draw::strf("Lv%d", p.level);
                 draw::fillRoundRect(r, mx - 22, my - 10, 44, 20, 8, SDL_Color{50, 55, 60, 255});
@@ -203,30 +315,33 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         bool customFill = tileshape::parseHex(locked ? n.lockedColor : n.color, custom);
         if (customFill) fill = custom;
 
-        SDL_FRect outer{rc.x - 3, rc.y - 3, rc.w + 6, rc.h + 6};
+        const float z = zoom_, bw = std::max(1.5f, 3.f * z);
+        const float cx = rc.x + rc.w * 0.5f, cy = rc.y + rc.h * 0.5f;
+        const SDL_FRect base{cx - kTile * 0.5f, cy - kTile * 0.5f, kTile, kTile}; // the tile at zoom 1
+        SDL_FRect outer{rc.x - bw, rc.y - bw, rc.w + 2 * bw, rc.h + 2 * bw};
         if (shape == "square" && !customFill && art::has(artName)) {
             art::drawVariant(r, artName, i == hovered ? "_hover" : "", outer); // your tile art (square, usual colours)
         } else {
-            tileshape::fill(r, shape, SDL_FRect{rc.x + 3, rc.y + 5, rc.w, rc.h}, SDL_Color{0, 0, 0, 90}); // shadow
-            tileshape::draw(r, shape, outer, fill, border, 3.f);
+            tileshape::fill(r, shape, SDL_FRect{rc.x + 3 * z, rc.y + 5 * z, rc.w, rc.h}, SDL_Color{0, 0, 0, 90}); // shadow
+            tileshape::draw(r, shape, outer, fill, border, bw);
         }
 
         // The icon (assets/tree/icons/<id>.png, or the built-in picture). Locked: faded into the tile.
-        SDL_FRect ic = tileshape::iconRect(shape, rc, kIcon);
+        SDL_FRect ic = scaled(tileshape::iconRect(shape, base, kIcon), cx, cy, z);
         art::draw(r, "tree/icons/" + (n.icon.empty() ? n.id : n.icon), ic);
         if (locked) draw::fillRoundRect(r, ic.x - 2, ic.y - 2, ic.w + 4, ic.h + 4, 8, draw::withAlpha(fill, 165));
 
         // A thin bar near the bottom shows how many levels are bought.
         if (n.maxLevel > 0) {
-            SDL_FRect bar = tileshape::barRect(shape, rc);
+            SDL_FRect bar = scaled(tileshape::barRect(shape, base), cx, cy, z);
             float f = static_cast<float>(n.level) / static_cast<float>(n.maxLevel);
             draw::fillRoundRect(r, bar.x, bar.y, bar.w, bar.h, 2, SDL_Color{0, 0, 0, 120});
             if (f > 0.f) draw::fillRoundRect(r, bar.x, bar.y, std::max(4.f, bar.w * f), bar.h, 2, maxed ? kGold : kGreen);
         }
 
         if (i < static_cast<int>(flash_.size()) && flash_[i] > 0.f) {
-            float f = flash_[i], g = 8.f * (1.f - f);
-            tileshape::fill(r, shape, SDL_FRect{rc.x - 3 - g, rc.y - 3 - g, rc.w + 6 + 2 * g, rc.h + 6 + 2 * g},
+            float f = flash_[i], g = 8.f * z * (1.f - f);
+            tileshape::fill(r, shape, SDL_FRect{outer.x - g, outer.y - g, outer.w + 2 * g, outer.h + 2 * g},
                             SDL_Color{255, 255, 200, static_cast<Uint8>(160 * f)});
         }
     }
@@ -239,8 +354,8 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
     ui::drawCoin(r, coinX - 22, 32, 12);
     draw::textShadow(r, coinX, 21, coinText, 3.f, kGold);
     draw::text(r, 64, 690,
-               touchMode_ ? "Tap an upgrade to see it, tap again to buy.  Drag to look around."
-                          : "Hover an upgrade to see it, click to buy.  Drag to look around.  Home to recentre.",
+               touchMode_ ? "Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom."
+                          : "Hover to see, click to buy.  Drag to move, wheel to zoom, Home to reset.",
                1.5f, kGrey);
 
     // Start day button.
@@ -248,6 +363,24 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
     start.rect = startButton_;
     start.label = draw::strf("Start Day %d", nextDay);
     ui::drawButton(r, start, !touchMode_ && draw::pointInRect(mouseX_, mouseY_, startButton_), false);
+
+    // Zoom buttons.
+    for (int k = 0; k < 2; ++k) {
+        ui::Button zb;
+        zb.rect = k == 0 ? zoomOutButton() : zoomInButton();
+        zb.label = k == 0 ? "-" : "+";
+        zb.style = ui::Style::Secondary;
+        zb.textScale = 3.f;
+        zb.enabled = k == 0 ? zoom_ > kMinZoom + 0.001f : zoom_ < kMaxZoom - 0.001f;
+        bool over = !touchMode_ && draw::pointInRect(mouseX_, mouseY_, zb.rect);
+        ui::drawButton(r, zb, over, over && pressing_ && pressedZoom_ == (k == 0 ? -1 : 1));
+    }
+    {
+        std::string pct = draw::strf("%d%%", static_cast<int>(std::lround(zoom_ * 100)));
+        float mx = (zoomOutButton().x + zoomInButton().x + zoomInButton().w) * 0.5f, y = zoomInButton().y - 24;
+        draw::fillRoundRect(r, mx - 30, y, 60, 20, 8, SDL_Color{20, 24, 23, 220});
+        draw::text(r, mx, y + 6, pct, 1.25f, kGrey, draw::Align::Center);
+    }
 
     if (hovered >= 0) renderTooltip(r, tree, nodes[hovered], coins);
 }
@@ -323,10 +456,13 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
 // Built-in art (used when there's no image in assets/, and for the templates)
 // ---------------------------------------------------------------------------
 
-void TechTreeScreen::drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc, float panX, float panY) {
+void TechTreeScreen::drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc, float panX, float panY, float zoom) {
     draw::fillRect(r, rc.x, rc.y, rc.w, rc.h, SDL_Color{24, 30, 28, 255});
-    const float grid = 40.f;
+    float grid = 40.f * zoom;
+    while (grid < 16.f) grid *= 2.f; // zoomed far out: fewer lines, not a solid fill
     float ox = std::fmod(panX, grid), oy = std::fmod(panY, grid);
+    if (ox < 0) ox += grid;
+    if (oy < 0) oy += grid;
     for (float x = rc.x + ox - grid; x < rc.x + rc.w; x += grid)
         if (x >= rc.x) draw::fillRect(r, x, rc.y, 1, rc.h, SDL_Color{34, 42, 39, 255});
     for (float y = rc.y + oy - grid; y < rc.y + rc.h; y += grid)
