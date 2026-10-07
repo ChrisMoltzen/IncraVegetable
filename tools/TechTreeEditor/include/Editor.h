@@ -8,6 +8,7 @@
 #include <SDL3/SDL.h>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class Editor {
@@ -99,6 +100,11 @@ private:
     std::string path_;
     bool dirty_ = false;
     std::vector<std::string> fileErrors_;
+    // Problems with the tree, worked out once per frame (not once per tech).
+    std::vector<techdata::Problem> problems_;
+    std::vector<std::string> cropProblems_;
+    std::unordered_set<std::string> problemIds_;
+    void refreshProblems();
 
     struct Snapshot {
         std::vector<TechDef> techs;

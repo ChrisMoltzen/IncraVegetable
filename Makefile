@@ -10,15 +10,17 @@ INCLUDE_DIRS = -Iinclude
 ASSETS_DEF = -DINCRA_SOURCE_ASSETS_DIR=\"$(CURDIR)/assets\"
 
 SRC = $(wildcard src/*.cpp)
+# Optimised builds: without -O2 the game and editor run several times slower.
+OPT = -O2
 
 default:
-	clang++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(ASSETS_DEF) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20
+	clang++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(ASSETS_DEF) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
 
 # Tech tree editor: make editor, then run build/TechTreeEditor
 EDITOR_SRC = $(wildcard tools/TechTreeEditor/src/*.cpp) src/TechData.cpp src/CropLooks.cpp src/TileShapes.cpp
 
 editor:
-	clang++ $(EDITOR_SRC) -o $(OUTPUT_DIR)/TechTreeEditor -Itools/TechTreeEditor/include $(INCLUDE_DIRS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20
+	clang++ $(EDITOR_SRC) -o $(OUTPUT_DIR)/TechTreeEditor -Itools/TechTreeEditor/include $(INCLUDE_DIRS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
 
 # ---------------------------------------------------------------------------
 # Windows: 64-bit MinGW g++ (MSYS2 UCRT64) with the SDL3 Visual C++ download
@@ -41,11 +43,11 @@ WIN_LIBS = -static -L$(SDL_DIR)/lib/x64 -Wl,-Bdynamic -lSDL3 -Wl,-Bstatic
 WIN_COPY_DLL = powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(OUTPUT_DIR)/'"
 
 win:
-	g++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(WIN_LIBS) -std=c++20
+	g++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(WIN_LIBS) -std=c++20 $(OPT)
 	$(WIN_COPY_DLL)
 
 editor-win:
-	g++ $(EDITOR_SRC) -o $(OUTPUT_DIR)/TechTreeEditor.exe -Itools/TechTreeEditor/include $(WIN_INCLUDE_DIRS) $(WIN_LIBS) -std=c++20
+	g++ $(EDITOR_SRC) -o $(OUTPUT_DIR)/TechTreeEditor.exe -Itools/TechTreeEditor/include $(WIN_INCLUDE_DIRS) $(WIN_LIBS) -std=c++20 $(OPT)
 	$(WIN_COPY_DLL)
 
 .PHONY: default editor win editor-win
