@@ -63,9 +63,9 @@ const char* kDelimClose = ")TECHTREE\"";
 
 const std::vector<StatInfo>& stats() {
     static const std::vector<StatInfo> list = {
-        {"patchSize", "Patch size", "Room in the bed = size x size plants. Starts at 3 (room for 9).", true},
+        {"patchSize", "Patch size", "Room in the bed = size x size plants. Starts at 2 (room for 4).", true},
         {"maxCrops", "Crops at once", "Vegetables growing at the same time (up to the patch's room). Starts at 4.", true},
-        {"dayLength", "Day length", "Seconds of picking per day. Starts at 20.", false},
+        {"dayLength", "Day length", "Seconds of picking per day. Starts at 12.", false},
         {"pickTime", "Pick time", "Seconds of hovering needed to pick a vegetable. Starts at 1.", false},
         {"growTime", "Grow time", "Seconds for a lettuce to grow (other crops take longer). Starts at 3.", false},
         {"valueMult", "Coin value", "Multiplier on the coins from every vegetable. Starts at 1.", false},

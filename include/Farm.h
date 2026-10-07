@@ -74,6 +74,10 @@ public:
     void update(float dt, float mouseX, float mouseY, bool mouseInside, double& coins, std::mt19937& rng);
     void render(SDL_Renderer* r) const;
 
+    // Camera: plants are always kMaxPlantPx wide in the world, and the view
+    // zooms out so the whole bed fits on screen. zoom() = how far out (1 = not at all).
+    float zoom() const { return plantSize_ / 72.f; }
+
     bool dayOver() const { return timeLeft_ <= 0.f; }
     float timeLeft() const { return timeLeft_; }
     float dayLength() const { return stats_.dayLength; }
@@ -118,6 +122,8 @@ private:
     void placeOn(int index, int spot);
     void moveToFreeSpot(int index, std::mt19937& rng); // used when a picked vegetable regrows
     void sortDrawOrder();
+    void renderScene(SDL_Renderer* r) const;
+    float viewZoom() const; // extra scale while the camera glides to a new zoom (1 = settled)
     Crop randomCrop(std::mt19937& rng) const;
     SDL_FRect plantRect(int index) const; // square the plant is drawn in
     int plantAt(float x, float y) const;  // nearest plant under the pointer, or -1
@@ -137,6 +143,9 @@ private:
     Stats stats_;
     std::vector<Tile> tiles_;
     std::vector<Farmer> farmers_;
+    float zoomFrom_ = 1.f, zoomT_ = 1.f;           // camera glide at the start of a day
+    mutable SDL_Texture* zoomTex_ = nullptr;        // off-screen image used during the glide
+    mutable SDL_Renderer* zoomTexRenderer_ = nullptr; // (freed along with the renderer)
     std::vector<Particle> particles_;
     std::vector<FloatText> floatTexts_;
     std::vector<Crop> harvests_;
