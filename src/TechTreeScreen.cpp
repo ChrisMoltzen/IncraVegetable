@@ -31,9 +31,11 @@ const SDL_Color kGrey{150, 150, 155, 255};
 
 void TechTreeScreen::open(const TechTree& tree) {
     flash_.assign(tree.nodes().size(), 0.f);
-    // Centre the whole tree (hidden techs included, so it doesn't jump as it's revealed).
+    // Centre what the player can see so far (a big tree would otherwise open on
+    // an empty corner).
     float minX = 1e9f, maxX = -1e9f, minY = 1e9f, maxY = -1e9f;
     for (const auto& n : tree.nodes()) {
+        if (!isVisible(tree, n)) continue;
         minX = std::min(minX, n.gridX); maxX = std::max(maxX, n.gridX);
         minY = std::min(minY, n.gridY); maxY = std::max(maxY, n.gridY);
     }
@@ -41,7 +43,7 @@ void TechTreeScreen::open(const TechTree& tree) {
     originX_ = 640.f - (minX + maxX) * 0.5f * kSpacingX;
     originY_ = (kTop + kBottom) * 0.5f - (minY + maxY) * 0.5f * kSpacingY;
     // Taller than the screen? Start at the top; drag to see the rest.
-    originY_ = std::min(originY_, kTop + kTile * 0.5f - minY * kSpacingY);
+    originY_ = std::max(originY_, kTop + kTile * 0.5f - minY * kSpacingY);
     pressing_ = dragged_ = false;
     selected_ = -1;
 }
