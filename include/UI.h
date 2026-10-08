@@ -29,15 +29,14 @@ void drawPauseIcon(SDL_Renderer* r, const SDL_FRect& rc, bool hovered);
 void drawCoin(SDL_Renderer* r, float cx, float cy, float radius);
 
 // The day/night dial in the HUD (like a watch's moon-phase window): a sky
-// disc turns behind a half-circle window, so the sun rises on the left as
-// the day starts and sets on the right at the end, with the moon following.
+// disc turns clockwise behind a half-circle window, exactly half a turn over
+// the day: the sun starts at the top, sets on the right halfway through, and
+// when the timer runs out the moon is at the top.
 // (cx, horizonY) is the middle of the horizon, R the window's radius,
-// t how far through the day it is (0 = sunrise, 1 = sunset); from 1 to
-// kDialNightfall (1.5) the sun sinks behind the hills and the moon rises
-// into a full night sky, played out after the day ends.
-// Art: ui/dial_sky is the whole disc (day half on the right with the sun at
-// the right, night half on the left), turned by the game; ui/dial_frame goes over it.
-constexpr float kDialNightfall = 1.5f;
+// t how far through the day it is (0 = start, 1 = timer finished).
+// Art: ui/dial_sky is the whole disc (day half on top with the sun at the
+// top, night half below with the moon at the bottom), turned by the game;
+// ui/dial_frame goes over it.
 void drawDayDial(SDL_Renderer* r, float cx, float horizonY, float R, float t);
 SDL_FRect dialFrameRect(float cx, float horizonY, float R);
 

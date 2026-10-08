@@ -15,7 +15,6 @@ namespace {
 const SDL_Color kWhite = pal::Cream;
 const SDL_Color kGold = pal::Coin;
 const SDL_Color kGrey = pal::SageMist;
-constexpr float kNightfallSeconds = 1.2f; // the dial's sunset-to-night after the day ends
 
 constexpr float kAutosaveSeconds = 15.f;
 
@@ -730,11 +729,8 @@ void Game::renderHud() {
     art::draw(renderer_, "ui/hud_logo", SDL_FRect{24, 10, 336, 30});
     draw::text(renderer_, 26, 48, draw::strf("Day %d   -   Slot %d", day_, currentSlot_ + 1), 1.5f, kGrey);
 
-    // Day/night dial: the sun crosses from sunrise (left) to sunset (right) as the day runs out.
-    float dayT = farm_.dayLength() > 0 ? 1.f - std::clamp(farm_.timeLeft() / farm_.dayLength(), 0.f, 1.f) : 1.f;
-    // Once the day is over (behind the summary), play out nightfall: the sun sinks and the moon comes up.
-    if (farm_.timeLeft() <= 0.f) // (the summary's timer starts when the day ends, and stops while paused)
-        dayT = 1.f + std::min(1.f, summaryTimer_ / kNightfallSeconds) * (ui::kDialNightfall - 1.f);
+    // Day/night dial: half a turn over the day, from the sun at the top to the moon at the top.
+    const float dayT = farm_.dayLength() > 0 ? 1.f - std::clamp(farm_.timeLeft() / farm_.dayLength(), 0.f, 1.f) : 1.f;
     ui::drawDayDial(renderer_, kDialX, kDialHorizon, kDialRadius, dayT);
     draw::textShadow(renderer_, kDialX + kDialRadius + 20, 14, draw::strf("%.1fs", farm_.timeLeft()), 2.5f, kWhite);
     draw::text(renderer_, kDialX + kDialRadius + 22, 42, "until sunset", 1.f, kGrey);

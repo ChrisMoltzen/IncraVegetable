@@ -152,34 +152,23 @@ void ButtonList::render(SDL_Renderer* r) const {
 
 namespace {
 constexpr float kDialPi = 3.14159265f;
-constexpr float kDialArc = 0.88f; // share of the half-turn the disc makes, so the sun peeks over the hills at dawn and dusk
-const SDL_Color kDawn{236, 172, 132, 255}, kNoon{112, 160, 204, 255}, kDusk{212, 118, 88, 255};
+const SDL_Color kNoon{112, 160, 204, 255}, kDusk{212, 118, 88, 255};
 const SDL_Color kNight{40, 50, 84, 255}, kSun{244, 196, 88, 255}, kSunCore{252, 226, 140, 255};
 const SDL_Color kMoon{226, 226, 210, 255};
 // Star positions as (angle, distance from the middle) on the disc.
 const float kStars[][2] = {{0.35f, 0.82f}, {0.62f, 0.55f}, {0.95f, 0.88f}, {1.3f, 0.42f}, {1.55f, 0.75f},
                            {1.9f, 0.6f},   {2.2f, 0.86f},  {2.5f, 0.38f},  {2.8f, 0.7f}};
 
-SDL_Color skyAt(float t) {
-    if (t < 0.12f) return draw::lerp(kDawn, kNoon, t / 0.12f);
-    if (t < 0.78f) return kNoon;
-    if (t < 0.95f) return draw::lerp(kNoon, kDusk, (t - 0.78f) / 0.17f);
-    const SDL_Color atSunset = draw::lerp(kDusk, kNight, 0.6f);
-    if (t < 1.f) return draw::lerp(kDusk, atSunset, (t - 0.95f) / 0.05f);
-    // After sunset: all the way to night.
-    return draw::lerp(atSunset, kNight, std::min(1.f, (t - 1.f) / (kDialNightfall - 1.f)));
-}
+// How far the disc has turned (clockwise) at t: exactly half a turn over the
+// day, so it starts with the sun at the top and ends with the moon at the top.
+float dialTurn(float t) { return std::clamp(t, 0.f, 1.f) * kDialPi; }
 
-// How far the disc has turned (clockwise) at t. During the day it turns most of a
-// half-turn, so the sun still peeks over the hills at dawn and dusk; at nightfall
-// it carries on until the sun has sunk well below the horizon and the moon is up.
-float dialTurn(float t) {
-    const float sunset = 0.5f * kDialPi * kDialArc;
-    if (t <= 1.f) return (t - 0.5f) * kDialPi * kDialArc;
-    float u = std::min(1.f, (t - 1.f) / (kDialNightfall - 1.f));
-    u = u * u * (3.f - 2.f * u); // ease in and out
-    const float night = 0.75f * kDialPi; // sun 45 degrees below the right horizon, moon 45 degrees up on the left
-    return sunset + (night - sunset) * u;
+// Built-in sky colour from how high the sun is (1 = overhead, 0 = on the horizon, -1 = straight down).
+SDL_Color skyFor(float sunHeight) {
+    if (sunHeight > 0.35f) return kNoon;
+    if (sunHeight > 0.f) return draw::lerp(kDusk, kNoon, sunHeight / 0.35f);
+    if (sunHeight > -0.35f) return draw::lerp(kDusk, kNight, -sunHeight / 0.35f);
+    return kNight;
 }
 
 // Half a disc above (up = true) or below its middle line.
@@ -213,24 +202,16 @@ SDL_FRect dialFrameRect(float cx, float horizonY, float R) {
     return {cx - R - rim, horizonY - R - rim, 2.f * (R + rim), R + rim + base};
 }
 
-// Template: the whole disc, day on the right (sun at the right) and night on the left (moon at the left).
+// Template: the whole disc, day on top (sun at the top) and night below (moon at the bottom).
 void drawDialSkyBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     float cx = rc.x + rc.w * 0.5f, cy = rc.y + rc.h * 0.5f, R = std::min(rc.w, rc.h) * 0.5f;
-    auto halfSide = [&](bool right) {
-        std::vector<SDL_FPoint> pts;
-        for (int i = 0; i <= 32; ++i) {
-            float a = kDialPi * i / 32.f - kDialPi * 0.5f; // -90 to +90 degrees
-            pts.push_back({cx + (right ? 1.f : -1.f) * std::cos(a) * R, cy + std::sin(a) * R});
-        }
-        return pts;
-    };
-    draw::fillPolygon(r, cx, cy, halfSide(true), kNoon);
-    draw::fillPolygon(r, cx, cy, halfSide(false), kNight);
-    for (const auto& st : kStars) // stars on the night (left) half
-        draw::fillCircle(r, cx - std::sin(st[0]) * st[1] * R, cy - std::cos(st[0]) * st[1] * R, R * 0.025f + 1.f,
+    draw::fillPolygon(r, cx, cy, halfDisc(cx, cy, R, true), kNoon);
+    draw::fillPolygon(r, cx, cy, halfDisc(cx, cy, R, false), kNight);
+    for (const auto& st : kStars) // stars on the night (bottom) half
+        draw::fillCircle(r, cx + std::cos(st[0]) * st[1] * R, cy + std::sin(st[0]) * st[1] * R, R * 0.025f + 1.f,
                          SDL_Color{240, 236, 210, 255});
-    drawSun(r, cx + R * 0.66f, cy, R * 0.17f);
-    drawMoon(r, cx - R * 0.66f, cy, R * 0.15f, kNight);
+    drawSun(r, cx, cy - R * 0.66f, R * 0.17f);
+    drawMoon(r, cx, cy + R * 0.66f, R * 0.15f, kNight);
 }
 
 void drawDialFrameBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
@@ -267,16 +248,15 @@ void drawDialFrameBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
 }
 
 void drawDayDial(SDL_Renderer* r, float cx, float hy, float R, float t) {
-    t = std::clamp(t, 0.f, kDialNightfall);
-    const float turn = dialTurn(t); // how far the disc has turned (clockwise)
+    t = std::clamp(t, 0.f, 1.f);
+    const float turn = dialTurn(t); // how far the disc has turned (clockwise): 0 to 180 degrees
     if (SDL_Texture* tex = art::texture("ui/dial_sky")) {
         // Map the turned disc image onto the half-circle window (no clipping needed).
         std::vector<SDL_Vertex> v;
         std::vector<int> idx;
         const float c = std::cos(-turn), s = std::sin(-turn);
         auto vert = [&](float dx, float dy) {
-            float rx = dx * c - dy * s, ry = dx * s + dy * c; // turn back into the disc...
-            float ux = -ry, uy = rx; // ...whose day half is on the image's right (screen up at noon)
+            float ux = dx * c - dy * s, uy = dx * s + dy * c; // turn back into the disc (day half on top)
             return SDL_Vertex{{cx + dx, hy + dy}, {1, 1, 1, 1}, {0.5f + ux / (2.f * R), 0.5f + uy / (2.f * R)}};
         };
         v.push_back(vert(0, 0));
@@ -287,11 +267,12 @@ void drawDayDial(SDL_Renderer* r, float cx, float hy, float R, float t) {
         }
         SDL_RenderGeometry(r, tex, v.data(), static_cast<int>(v.size()), idx.data(), static_cast<int>(idx.size()));
     } else {
-        // Built-in: sky that warms at dawn and dusk, sun and moon on opposite sides of the disc.
-        SDL_Color sky = skyAt(t);
+        // Built-in: sky that warms as the sun nears the horizon, sun and moon on opposite sides of the disc.
+        const float sunHeight = std::cos(turn);
+        SDL_Color sky = skyFor(sunHeight);
         draw::fillPolygon(r, cx, hy, halfDisc(cx, hy, R, true), sky);
         draw::fillEllipse(r, cx, hy, R * 0.98f, R * 0.32f, draw::withAlpha(SDL_Color{255, 226, 180, 255}, 70)); // horizon glow
-        float night = std::clamp((t - 0.82f) / 0.18f, 0.f, 1.f); // stars come out at dusk
+        float night = std::clamp((0.15f - sunHeight) / 0.45f, 0.f, 1.f); // stars come out as the sun goes down
         if (night > 0.f) {
             for (const auto& st : kStars) {
                 float a = -st[0], d = st[1] * R; // stars on the night half, turning with the disc
@@ -301,7 +282,7 @@ void drawDayDial(SDL_Renderer* r, float cx, float hy, float R, float t) {
             }
         }
         // Only what's above (or just sinking below) the horizon: the frame's base plate hides the rest.
-        const float sunA = kDialPi * 0.5f - turn; // left at sunrise, right at sunset
+        const float sunA = kDialPi * 0.5f - turn; // top at the start, right halfway, below at the end
         const float sunY = hy - std::sin(sunA) * R * 0.66f;
         if (sunY < hy + R * 0.02f) drawSun(r, cx + std::cos(sunA) * R * 0.66f, sunY, R * 0.17f);
         const float moonA = sunA + kDialPi;
