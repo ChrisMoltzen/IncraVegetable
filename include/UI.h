@@ -32,9 +32,12 @@ void drawCoin(SDL_Renderer* r, float cx, float cy, float radius);
 // disc turns behind a half-circle window, so the sun rises on the left as
 // the day starts and sets on the right at the end, with the moon following.
 // (cx, horizonY) is the middle of the horizon, R the window's radius,
-// t how far through the day it is (0 = sunrise, 1 = sunset).
+// t how far through the day it is (0 = sunrise, 1 = sunset); from 1 to
+// kDialNightfall (1.5) the sun sinks behind the hills and the moon rises
+// into a full night sky, played out after the day ends.
 // Art: ui/dial_sky is the whole disc (day half on top with the sun at the
 // top, night half below), turned by the game; ui/dial_frame goes over it.
+constexpr float kDialNightfall = 1.5f;
 void drawDayDial(SDL_Renderer* r, float cx, float horizonY, float R, float t);
 SDL_FRect dialFrameRect(float cx, float horizonY, float R);
 
