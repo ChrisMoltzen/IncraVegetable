@@ -94,7 +94,25 @@ void MainMenu::renderBackground(SDL_Renderer* r) const {
         {540.f, 56.f, 22.f, SDL_Color{112, 74, 46, 255}},
         {640.f, 84.f, 34.f, SDL_Color{100, 66, 40, 255}},
     };
-    const Crop pattern[] = {0, 1, 0, 2, 1, 0}; // (wrapped to however many crops there are)
+    // A mix of the unlocked vegetables, the same every time.
+    auto cropAt = [this](int k, int ri) {
+        const int n = static_cast<int>(crops_.size());
+        if (n <= 1) return crops_.empty() ? 0 : crops_[0];
+        Uint32 h = static_cast<Uint32>(k) * 2654435761u ^ static_cast<Uint32>(ri + 1) * 40503u;
+        h ^= h >> 13;
+        h *= 0x5bd1e995u;
+        h ^= h >> 15;
+        // Cheaper crops turn up more often, like in the patch.
+        float best = -1.f;
+        int pick = 0;
+        for (int i = 0; i < n; ++i) {
+            Uint32 hi = (h + static_cast<Uint32>(i) * 0x9e3779b9u) * 0x85ebca6bu;
+            hi ^= hi >> 16;
+            float roll = static_cast<float>(hi % 1000u) / 1000.f * cropDef(crops_[i]).weight;
+            if (roll > best) { best = roll; pick = i; }
+        }
+        return crops_[pick];
+    };
     for (int ri = 0; ri < 3; ++ri) {
         const Row& row = rows[ri];
         float spacing = row.size * 1.5f;
@@ -103,9 +121,8 @@ void MainMenu::renderBackground(SDL_Renderer* r) const {
         int first = static_cast<int>(std::floor(clock_ * row.speed / spacing));
         for (int k = -1; k * spacing < 1280 + spacing; ++k) {
             float x = k * spacing - offset + spacing * 0.5f;
-            int idx = ((k + first + ri * 2) % 6 + 6) % 6;
             float bob = std::sin(clock_ * 2.f + k * 1.3f + ri) * row.size * 0.03f;
-            Farm::drawCrop(r, pattern[idx] % std::max(1, cropCount()), x, row.y + bob, row.size);
+            Farm::drawCrop(r, cropAt(k + first, ri), x, row.y + bob, row.size);
         }
     }
 }
