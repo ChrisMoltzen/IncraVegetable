@@ -5,7 +5,9 @@
 #include "DebugMenu.h"
 #include "Farm.h"
 #include "Menus.h"
+#include "PlayStats.h"
 #include "SaveSystem.h"
+#include "StatsScreen.h"
 #include "TechTree.h"
 #include "TechTreeScreen.h"
 
@@ -34,7 +36,7 @@ public:
     int exportArtTemplates(const std::string& folder);
 
 private:
-    enum class State { MainMenu, SlotSelect, Settings, Farming, DaySummary, TechTree, Paused };
+    enum class State { MainMenu, SlotSelect, Settings, Farming, DaySummary, TechTree, Paused, Stats };
 
     // Flow
     void goToMainMenu();
@@ -47,6 +49,9 @@ private:
     void endDay();
     void openTechTree();
     void pause();
+    void openStats();
+    void closeStats();
+    std::vector<StatsScreen::Row> statsRows() const;
     void resume();
     void openSettings();
     void closeSettings();
@@ -71,6 +76,7 @@ private:
 
     // Input helpers
     bool handlePauseButton(const SDL_Event& e);
+    bool handleStatsButton(const SDL_Event& e);
     bool handleEndDayButton(const SDL_Event& e);
     bool pointerActive() const;
 
@@ -81,7 +87,7 @@ private:
     void renderHud();
     void renderSummary();
 
-    void playHarvestSounds();
+    void takeHarvests(); // sounds + stats for everything picked this frame
     void showToast(const std::string& msg);
 
     SDL_Window* window_ = nullptr;
@@ -92,6 +98,7 @@ private:
     State state_ = State::MainMenu;
     State pausedFrom_ = State::Farming;   // what's under the pause menu
     State settingsFrom_ = State::MainMenu; // where Settings returns to
+    State statsFrom_ = State::Farming;     // what's under the stats page
 
     TechTree tree_;
     TechTreeScreen treeScreen_;
@@ -100,6 +107,8 @@ private:
     SlotMenu slotMenu_;
     SettingsMenu settingsMenu_;
     PauseMenu pauseMenu_;
+    StatsScreen statsScreen_;
+    PlayStats playStats_;
     DebugMenu debugMenu_;
     DebugOptions debug_;
     bool debugButtonDown_ = false;
@@ -125,10 +134,12 @@ private:
     bool usingTouch_ = false;
     bool touchDown_ = false;
     bool pauseButtonDown_ = false;
+    bool statsButtonDown_ = false;
     bool endDayButtonDown_ = false;
 
     SDL_FRect summaryButton_{640.f - 150.f, 470.f, 300.f, 62.f};
     SDL_FRect pauseButton_{1280.f - 62.f, 12.f, 48.f, 48.f};
+    SDL_FRect statsButton_{1280.f - 118.f, 12.f, 48.f, 48.f}; // left of the pause button
     static constexpr float kDialX = 640.f, kDialHorizon = 56.f, kDialRadius = 48.f; // day/night dial in the HUD
     SDL_FRect endDayButton_{1280.f - 196.f, 720.f - 60.f, 180.f, 46.f}; // bottom-right while farming
 };

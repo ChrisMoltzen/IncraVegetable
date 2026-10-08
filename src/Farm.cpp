@@ -409,8 +409,8 @@ void Farm::ripenAll() {
 
 void Farm::setTimeLeft(float seconds) { timeLeft_ = std::max(0.f, seconds); }
 
-std::vector<Crop> Farm::takeHarvests() {
-    std::vector<Crop> out;
+std::vector<Farm::Harvest> Farm::takeHarvests() {
+    std::vector<Harvest> out;
     out.swap(harvests_);
     return out;
 }
@@ -665,7 +665,7 @@ void Farm::harvest(int index, double& coins, std::mt19937& rng, PickedBy by) {
     ++pickedToday_;
     if (static_cast<int>(pickedByCrop_.size()) < cropCount()) pickedByCrop_.resize(cropCount(), 0);
     ++pickedByCrop_[t.crop];
-    harvests_.push_back(t.crop);
+    harvests_.push_back({t.crop, by, gain});
 
     float cx = t.x, cy = t.y;
 

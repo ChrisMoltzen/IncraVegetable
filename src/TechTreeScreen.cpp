@@ -380,7 +380,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
     art::draw(r, "tree/header_bar", SDL_FRect{0, 0, 1280, 64});
     draw::textShadow(r, 24, 18, "THE BARN", 3.f, kWhite);
     std::string coinText = draw::number(coins) + " coins";
-    float coinX = 1192.f - draw::textWidth(coinText, 3.f);
+    float coinX = 1136.f - draw::textWidth(coinText, 3.f); // clear of the stats and pause buttons
     ui::drawCoin(r, coinX - 22, 32, 12);
     draw::textShadow(r, coinX, 21, coinText, 3.f, kGold);
     draw::text(r, 64, 690,
