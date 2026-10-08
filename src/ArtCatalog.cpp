@@ -165,9 +165,9 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
     add({"ui/hud_logo", 336, 30, "Game name in the top-left of the farm screen", false, drawHudLogoBuiltin});
     add({"ui/coin", 64, 64, "Coin icon", false, ui::drawCoinBuiltin});
     add({"ui/dial_sky", 256, 256,
-         "Day/night dial: the WHOLE sky disc. Day half on top with the sun at the top middle, night half below with "
-         "the moon at the bottom middle. The game turns it so the sun rises on the left and sets on the right; only "
-         "the top half shows",
+         "Day/night dial: the WHOLE sky disc. Day half on the right with the sun at the right middle, night half on "
+         "the left with the moon at the left middle. The game turns it so the sun rises on the left, is at the top at "
+         "noon and sets on the right, then the moon comes up; only the top half shows",
          false, ui::drawDialSkyBuiltin});
     add({"ui/dial_frame", 280, 150,
          "Day/night dial: frame drawn over the sky disc. Leave the half-circle window see-through (it fills the frame's "

@@ -213,16 +213,24 @@ SDL_FRect dialFrameRect(float cx, float horizonY, float R) {
     return {cx - R - rim, horizonY - R - rim, 2.f * (R + rim), R + rim + base};
 }
 
-// Template: the whole disc, day on top (sun at the top) and night below (moon at the bottom).
+// Template: the whole disc, day on the right (sun at the right) and night on the left (moon at the left).
 void drawDialSkyBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     float cx = rc.x + rc.w * 0.5f, cy = rc.y + rc.h * 0.5f, R = std::min(rc.w, rc.h) * 0.5f;
-    draw::fillPolygon(r, cx, cy, halfDisc(cx, cy, R, true), kNoon);
-    draw::fillPolygon(r, cx, cy, halfDisc(cx, cy, R, false), kNight);
-    for (const auto& st : kStars)
-        draw::fillCircle(r, cx + std::cos(st[0]) * st[1] * R, cy + std::sin(st[0]) * st[1] * R, R * 0.025f + 1.f,
+    auto halfSide = [&](bool right) {
+        std::vector<SDL_FPoint> pts;
+        for (int i = 0; i <= 32; ++i) {
+            float a = kDialPi * i / 32.f - kDialPi * 0.5f; // -90 to +90 degrees
+            pts.push_back({cx + (right ? 1.f : -1.f) * std::cos(a) * R, cy + std::sin(a) * R});
+        }
+        return pts;
+    };
+    draw::fillPolygon(r, cx, cy, halfSide(true), kNoon);
+    draw::fillPolygon(r, cx, cy, halfSide(false), kNight);
+    for (const auto& st : kStars) // stars on the night (left) half
+        draw::fillCircle(r, cx - std::sin(st[0]) * st[1] * R, cy - std::cos(st[0]) * st[1] * R, R * 0.025f + 1.f,
                          SDL_Color{240, 236, 210, 255});
-    drawSun(r, cx, cy - R * 0.66f, R * 0.17f);
-    drawMoon(r, cx, cy + R * 0.66f, R * 0.15f, kNight);
+    drawSun(r, cx + R * 0.66f, cy, R * 0.17f);
+    drawMoon(r, cx - R * 0.66f, cy, R * 0.15f, kNight);
 }
 
 void drawDialFrameBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
@@ -267,7 +275,8 @@ void drawDayDial(SDL_Renderer* r, float cx, float hy, float R, float t) {
         std::vector<int> idx;
         const float c = std::cos(-turn), s = std::sin(-turn);
         auto vert = [&](float dx, float dy) {
-            float ux = dx * c - dy * s, uy = dx * s + dy * c; // turn back into the image
+            float rx = dx * c - dy * s, ry = dx * s + dy * c; // turn back into the disc...
+            float ux = -ry, uy = rx; // ...whose day half is on the image's right (screen up at noon)
             return SDL_Vertex{{cx + dx, hy + dy}, {1, 1, 1, 1}, {0.5f + ux / (2.f * R), 0.5f + uy / (2.f * R)}};
         };
         v.push_back(vert(0, 0));
