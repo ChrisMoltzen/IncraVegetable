@@ -9,7 +9,8 @@ is brightened or darkened automatically.
 
 | File | Size | 9-slice | What it is |
 |---|---|---|---|
-| `farm/background.png` | 1280 x 720 |  | Everything behind the vegetable patch while farming |
+| `farm/background.png` | 1280 x 720 |  | Everything behind the vegetable patch while farming (leave out the grass tufts: they're drawn on top and sway) |
+| `farm/grass_tuft.png` | 16 x 16 |  | One tuft of grass, standing on the bottom edge. Scattered over the farm background at different sizes and swayed by the breeze (the top bends, the bottom row stays put) |
 | `farm/hud_bar.png` | 1280 x 72 |  | Strip along the top of the farm screen (day, timer, coins sit on it) |
 | `farm/bed.png` | 640 x 400 |  | The rectangular garden bed the vegetables grow in. Stretched to fit, always 1.6x wider than tall. Plants sit inside the middle ~90%, so leave a border of soil or edging around them |
 | `farm/fence_h.png` | 64 x 64 |  | Fence tile along the top and bottom of the bed (joins left and right) |
