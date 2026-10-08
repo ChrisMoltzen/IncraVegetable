@@ -22,7 +22,7 @@ constexpr float kSpacingY = 112.f;
 constexpr float kTop = 64.f + 24.f;      // keep tiles below the header...
 constexpr float kBottom = 720.f - 96.f;  // ...and above the Start Day button row
 constexpr float kDragThreshold = 6.f;
-constexpr float kMinZoom = 0.3f, kMaxZoom = 1.6f;
+constexpr float kMinZoom = 0.12f, kMaxZoom = 1.6f; // far enough out to fit a fully grown tree
 constexpr float kPivotX = 640.f;
 constexpr float kPivotY = kTop + kTile * 0.5f; // the top row stays put when zooming from Home
 
@@ -50,8 +50,18 @@ const SDL_Color kTipBad = pal::Skin; // the palette's reds are too dark to read 
 
 void TechTreeScreen::open(const TechTree& tree) {
     flash_.assign(tree.nodes().size(), 0.f);
-    // Centre what the player can see so far (a big tree would otherwise open on
-    // an empty corner).
+    pressing_ = dragged_ = false;
+    pinching_ = false;
+    fingers_ = 0;
+    pressedZoom_ = 0;
+    selected_ = -1;
+    fitView(tree);
+}
+
+// Zooms and pans so every tech the player can see fits on screen (between the
+// header and the Start Day row), centred. Never zooms in past 100%; if even
+// the furthest zoom-out can't fit them, shows the top of the tree.
+void TechTreeScreen::fitView(const TechTree& tree) {
     float minX = 1e9f, maxX = -1e9f, minY = 1e9f, maxY = -1e9f;
     for (const auto& n : tree.nodes()) {
         if (!isVisible(tree, n)) continue;
@@ -59,15 +69,23 @@ void TechTreeScreen::open(const TechTree& tree) {
         minY = std::min(minY, n.gridY); maxY = std::max(maxY, n.gridY);
     }
     if (minX > maxX) minX = maxX = minY = maxY = 0.f;
-    originX_ = 640.f - (minX + maxX) * 0.5f * kSpacingX;
-    originY_ = (kTop + kBottom) * 0.5f - (minY + maxY) * 0.5f * kSpacingY;
-    // Taller than the screen? Start at the top; drag to see the rest.
-    originY_ = std::max(originY_, kTop + kTile * 0.5f - minY * kSpacingY);
-    pressing_ = dragged_ = false;
-    pinching_ = false;
-    fingers_ = 0;
-    pressedZoom_ = 0;
-    selected_ = -1;
+    // Lay the tree out with the visible part's middle at the screen's middle (at 100%)...
+    const float midY = (kTop + kBottom) * 0.5f;
+    originX_ = kPivotX - (minX + maxX) * 0.5f * kSpacingX;
+    originY_ = midY - (minY + maxY) * 0.5f * kSpacingY;
+    // ...then zoom out until it all fits (tiles' edges and the frame included, plus a little room).
+    const float margin = 24.f;
+    const float w = (maxX - minX) * kSpacingX + kTile + 2.f * margin;
+    const float h = (maxY - minY) * kSpacingY + kTile + 2.f * margin;
+    const float availW = 1280.f, availH = kBottom - kTop;
+    zoom_ = std::clamp(std::min(availW / w, availH / h), kMinZoom, 1.f);
+    // Keep the middle of the visible techs at the middle of the screen.
+    const float wy = originY_ + (minY + maxY) * 0.5f * kSpacingY;
+    camX_ = 0.f; // x: the layout's middle is already the pivot
+    camY_ = midY - kPivotY - (wy - kPivotY) * zoom_;
+    // Still too tall at the furthest zoom? Start at the top; drag to see the rest.
+    const float topY = kPivotY + (originY_ + minY * kSpacingY - kPivotY) * zoom_ + camY_ - kTile * 0.5f * zoom_;
+    if (topY < kTop) camY_ += kTop - topY;
 }
 
 SDL_FPoint TechTreeScreen::toScreen(float x, float y) const {
@@ -239,10 +257,7 @@ TechTreeScreen::Action TechTreeScreen::handleEvent(const SDL_Event& e, TechTree&
     }
     case SDL_EVENT_KEY_DOWN:
         if (e.key.key == SDLK_RETURN || e.key.key == SDLK_SPACE) return Action::StartDay;
-        if (e.key.key == SDLK_HOME) {
-            camX_ = camY_ = 0.f;
-            zoom_ = 1.f;
-        }
+        if (e.key.key == SDLK_HOME) fitView(tree); // back to showing everything you can see
         if (e.key.key == SDLK_EQUALS || e.key.key == SDLK_PLUS || e.key.key == SDLK_KP_PLUS)
             zoomAt(640.f, 360.f, zoom_ * 1.25f);
         if (e.key.key == SDLK_MINUS || e.key.key == SDLK_KP_MINUS) zoomAt(640.f, 360.f, zoom_ / 1.25f);
@@ -370,7 +385,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
     draw::textShadow(r, coinX, 21, coinText, 3.f, kGold);
     draw::text(r, 64, 690,
                touchMode_ ? "Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom."
-                          : "Hover to see, click to buy.  Drag to move, wheel to zoom, Home to reset.",
+                          : "Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit.",
                1.5f, kGrey);
 
     // Start day button.

@@ -144,7 +144,7 @@ Save and settings files live in your user data folder:
 | Farm | Hover over a ripe vegetable until its bar fills | Hold a finger on it (drag across the patch) |
 | Farm | **End Day** button, bottom-right: finish the day early | Tap **End Day** |
 | Day summary | Click **Tech Tree** (or Space / Enter) | Tap **Tech Tree** |
-| Tech tree | Click to buy, drag to pan, Home to recentre, **Start Day** (or Space / Enter) | Tap to inspect, tap again to buy, drag to pan |
+| The Barn | Click to buy, drag to pan, wheel or +/- to zoom, Home to fit everything on screen, **Start Day** (or Space / Enter) | Tap to inspect, tap again to buy, drag to pan |
 | Anywhere in play | Esc or the pause button | Pause button |
 | Anywhere | F1 opens the debug screen | Bug button, bottom-left |
 
