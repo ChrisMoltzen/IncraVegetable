@@ -12,7 +12,7 @@ filter nearest
 # their corners and stretch the middle. By default the corner is a quarter
 # of the image's smaller side. Set it yourself (in pixels of your image),
 # and optionally how big corners appear on screen (1 = actual size):
-# slice ui/panel 48
+slice ui/panel 12
 # slice ui/button_primary 24 0.5
 
 # The main menu draws rows of vegetables drifting across its background.
