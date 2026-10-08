@@ -275,7 +275,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
             if (!from) continue;
             SDL_FRect fr = nodeRect(*from);
             bool met = from->level >= p.level;
-            SDL_Color c = met ? SDL_Color{110, 200, 110, 255} : SDL_Color{80, 85, 90, 255};
+            SDL_Color c = met ? pal::FreshLeaf : pal::Slate; // palette: green once the requirement is met
             float x1 = fr.x + fr.w * 0.5f, y1 = fr.y + fr.h * 0.5f;
             float x2 = to.x + to.w * 0.5f, y2 = to.y + to.h * 0.5f;
             draw::thickLine(r, x1, y1, x2, y2, std::max(2.f, 4.f * zoom_), c);
@@ -283,7 +283,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
             if (!met && zoom_ >= 0.6f) {
                 float mx = (x1 + x2) * 0.5f, my = (y1 + y2) * 0.5f;
                 std::string need = draw::strf("Lv%d", p.level);
-                draw::fillRoundRect(r, mx - 22, my - 10, 44, 20, 8, SDL_Color{50, 55, 60, 255});
+                draw::fillRoundRect(r, mx - 22, my - 10, 44, 20, 8, pal::Panel);
                 draw::text(r, mx, my - 4, need, 1.f, kGrey, draw::Align::Center);
             }
         }
