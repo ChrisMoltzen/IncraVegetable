@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Palette.h"
 
 #include <algorithm>
 #include <cmath>
@@ -14,12 +15,12 @@ struct Palette {
 };
 Palette paletteFor(Style s) {
     switch (s) {
-    case Style::Primary: return {{240, 160, 50, 255}, {255, 190, 80, 255}, {255, 255, 255, 255}};
-    case Style::Secondary: return {{80, 170, 70, 255}, {110, 200, 90, 255}, {255, 255, 255, 255}};
-    case Style::Danger: return {{205, 75, 60, 255}, {235, 100, 80, 255}, {255, 255, 255, 255}};
-    case Style::Ghost: return {{60, 66, 72, 255}, {85, 92, 100, 255}, {235, 235, 235, 255}};
+    case Style::Primary: return {{240, 160, 50, 255}, {255, 190, 80, 255}, pal::Cream};
+    case Style::Secondary: return {{80, 170, 70, 255}, {110, 200, 90, 255}, pal::Cream};
+    case Style::Danger: return {{205, 75, 60, 255}, {235, 100, 80, 255}, pal::Cream};
+    case Style::Ghost: return {{60, 66, 72, 255}, {85, 92, 100, 255}, pal::Parchment};
     }
-    return {{240, 160, 50, 255}, {255, 190, 80, 255}, {255, 255, 255, 255}};
+    return {{240, 160, 50, 255}, {255, 190, 80, 255}, pal::Cream};
 }
 } // namespace
 

@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Palette.h"
 
 #include <algorithm>
 #include <cctype>
@@ -15,10 +16,11 @@ constexpr float kTop = 196.f;       // content top edge
 constexpr float kRowH = 46.f;       // button height
 constexpr int kTechRowsPerPage = 7;
 
-const SDL_Color kText{235, 235, 225, 255};
-const SDL_Color kDim{150, 155, 150, 255};
-const SDL_Color kAccent{120, 230, 255, 255};
-const SDL_Color kWarn{255, 190, 90, 255};
+// Text colours, from the palette (Palette.h).
+const SDL_Color kText = pal::Parchment;
+const SDL_Color kDim = pal::Stone;
+const SDL_Color kAccent = pal::Mist;
+const SDL_Color kWarn = pal::Pumpkin;
 
 const char* tabName(int t) {
     static const char* names[] = {"Money", "Time", "Farm", "Tech", "Info"};
@@ -513,7 +515,7 @@ void DebugMenu::render(SDL_Renderer* r) {
     draw::fillRoundRect(r, kPanelX + 4, kPanelY + 8, kPanelW, kPanelH, 18, SDL_Color{0, 0, 0, 120});
     draw::fillRoundRect(r, kPanelX - 2, kPanelY - 2, kPanelW + 4, kPanelH + 4, 20, SDL_Color{150, 90, 190, 255});
     draw::fillRoundRect(r, kPanelX, kPanelY, kPanelW, kPanelH, 18, SDL_Color{28, 24, 34, 248});
-    draw::text(r, kLeft, kPanelY + 22, "DEBUG", 3.5f, SDL_Color{215, 170, 255, 255});
+    draw::text(r, kLeft, kPanelY + 22, "DEBUG", 3.5f, pal::Lavender);
     draw::text(r, kLeft + 170, kPanelY + 32, "F1 or Esc to close   -   Tab to switch tabs", 1.5f, kDim);
 
     int hovered = -1;
@@ -549,7 +551,7 @@ void DebugMenu::render(SDL_Renderer* r) {
             const std::string& buf = buffers_[w.field];
             float tx = w.rect.x + 12, ty = w.rect.y + w.rect.h * 0.5f - 8;
             if (buf.empty() && !focused) {
-                draw::text(r, tx, ty + 2, "type...", 1.5f, SDL_Color{110, 105, 120, 255});
+                draw::text(r, tx, ty + 2, "type...", 1.5f, pal::Stone);
             } else {
                 draw::text(r, tx, ty, buf, 2.f, kText);
                 if (focused && std::fmod(clock_, 1.f) < 0.6f)
@@ -562,6 +564,6 @@ void DebugMenu::render(SDL_Renderer* r) {
 
     if (toastTime_ > 0.f) {
         Uint8 a = static_cast<Uint8>(255 * std::min(1.f, toastTime_ * 2.f));
-        draw::text(r, kLeft, kPanelY + kPanelH - 26, toast_, 2.f, SDL_Color{150, 255, 150, a});
+        draw::text(r, kLeft, kPanelY + kPanelH - 26, toast_, 2.f, pal::alpha(pal::PaleShoot, a));
     }
 }

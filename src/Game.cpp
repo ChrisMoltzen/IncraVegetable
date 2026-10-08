@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Palette.h"
 #include "Platform.h"
 #include "UI.h"
 
@@ -10,9 +11,10 @@
 #include <sstream>
 
 namespace {
-const SDL_Color kWhite{255, 255, 255, 255};
-const SDL_Color kGold{255, 205, 70, 255};
-const SDL_Color kGrey{190, 195, 190, 255};
+// Text colours, from the palette (Palette.h).
+const SDL_Color kWhite = pal::Cream;
+const SDL_Color kGold = pal::Coin;
+const SDL_Color kGrey = pal::SageMist;
 
 constexpr float kAutosaveSeconds = 15.f;
 
@@ -677,12 +679,12 @@ void Game::render(bool present) {
         Uint8 a = static_cast<Uint8>(255 * std::min(1.f, toastTime_ * 2.f));
         float w = draw::textWidth(toast_, 2.f) + 40;
         draw::fillRoundRect(renderer_, (kWidth - w) * 0.5f, 84, w, 40, 12, SDL_Color{0, 0, 0, static_cast<Uint8>(a * 0.7f)});
-        draw::text(renderer_, kWidth * 0.5f, 96, toast_, 2.f, SDL_Color{255, 255, 255, a}, draw::Align::Center);
+        draw::text(renderer_, kWidth * 0.5f, 96, toast_, 2.f, pal::alpha(pal::Cream, a), draw::Align::Center);
     }
 
     if (kDebugTools) {
         if (debug_.showFps) {
-            draw::textShadow(renderer_, 56, 686, draw::strf("%.0f fps", fps_), 1.5f, SDL_Color{150, 255, 150, 255});
+            draw::textShadow(renderer_, 56, 686, draw::strf("%.0f fps", fps_), 1.5f, pal::PaleShoot);
         }
         if (debugMenu_.isOpen()) {
             debugMenu_.render(renderer_);
@@ -755,14 +757,14 @@ void Game::renderSummary() {
     draw::textShadow(renderer_, kWidth * 0.5f, y + 22, draw::strf("Sunset - Day %d done!", day_ - 1), 3.f, kWhite,
                      draw::Align::Center);
 
-    const SDL_Color ink{70, 50, 35, 255};
+    const SDL_Color ink = pal::DeepSoil;
     float ty = y + 100;
     draw::text(renderer_, x + 50, ty, draw::strf("Vegetables picked: %d", farm_.pickedToday()), 2.f, ink);
     ty += 30;
     for (Crop c = 0; c < cropCount(); ++c) {
         if (farm_.pickedOf(c) == 0) continue;
         draw::text(renderer_, x + 80, ty, draw::strf("%s x%d", cropDef(c).name.c_str(), farm_.pickedOf(c)), 1.5f,
-                   SDL_Color{120, 95, 70, 255});
+                   pal::Tilled);
         ty += 22;
     }
     ty += 10;

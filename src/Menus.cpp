@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Palette.h"
 #include "Farm.h"
 #include "Platform.h"
 
@@ -9,9 +10,10 @@
 #include <cmath>
 
 namespace {
-const SDL_Color kWhite{255, 255, 255, 255};
-const SDL_Color kInk{70, 50, 35, 255};
-const SDL_Color kInkSoft{125, 100, 75, 255};
+// Text colours, from the palette (Palette.h).
+const SDL_Color kWhite = pal::Cream;
+const SDL_Color kInk = pal::DeepSoil;
+const SDL_Color kInkSoft = pal::Tilled;
 
 bool isBack(const SDL_Event& e) {
     return e.type == SDL_EVENT_KEY_DOWN && (e.key.key == SDLK_ESCAPE || e.key.key == SDLK_AC_BACK);
@@ -71,9 +73,9 @@ void MainMenu::drawLogoBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     float scale = std::min(7.f, rc.w / draw::textWidth("IncraVegetable", 1.f));
     float total = draw::textWidth("IncraVegetable", scale);
     float x = rc.x + (rc.w - total) * 0.5f, y = rc.y + 10.f * scale / 7.f;
-    draw::text(r, x + 6, y + 6, "IncraVegetable", scale, SDL_Color{90, 40, 20, 160});
-    draw::text(r, x, y, "Incra", scale, SDL_Color{70, 165, 60, 255});
-    draw::text(r, x + draw::textWidth("Incra", scale), y, "Vegetable", scale, SDL_Color{235, 110, 30, 255});
+    draw::text(r, x + 6, y + 6, "IncraVegetable", scale, pal::alpha(pal::DeepSoil, 160));
+    draw::text(r, x, y, "Incra", scale, pal::FreshLeaf);
+    draw::text(r, x + draw::textWidth("Incra", scale), y, "Vegetable", scale, pal::Pumpkin);
     draw::text(r, rc.x + rc.w * 0.5f, rc.y + 86.f * scale / 7.f, "an incremental farming game", 2.f * scale / 7.f,
                SDL_Color{120, 60, 30, 255}, draw::Align::Center);
 }
@@ -116,7 +118,7 @@ void MainMenu::render(SDL_Renderer* r) const {
     art::draw(r, "menu/logo", SDL_FRect{190.f, 64.f + bounce, 900.f, 112.f});
 
     buttons_.render(r);
-    draw::text(r, 1270, 704, std::string("v") + kGameVersion, 1.5f, SDL_Color{255, 255, 255, 180}, draw::Align::Right);
+    draw::text(r, 1270, 704, std::string("v") + kGameVersion, 1.5f, pal::alpha(pal::Cream, 180), draw::Align::Right);
 }
 
 // ===========================================================================

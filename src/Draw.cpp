@@ -1,5 +1,7 @@
 #include "Draw.h"
 
+#include "Palette.h"
+
 #include "Art.h"
 
 #include <algorithm>
@@ -151,6 +153,7 @@ float textWidth(const std::string& s, float scale) {
 }
 
 void text(SDL_Renderer* r, float x, float y, const std::string& s, float scale, SDL_Color c, Align align) {
+    c = pal::nearest(c); // all text uses the game's palette (Palette.h)
     float w = textWidth(s, scale);
     if (align == Align::Center) x -= w * 0.5f;
     else if (align == Align::Right) x -= w;
@@ -181,7 +184,7 @@ void text(SDL_Renderer* r, float x, float y, const std::string& s, float scale, 
 
 void textShadow(SDL_Renderer* r, float x, float y, const std::string& s, float scale, SDL_Color c, Align align) {
     float off = std::max(1.f, scale * 0.75f);
-    text(r, x + off, y + off, s, scale, SDL_Color{0, 0, 0, static_cast<Uint8>(c.a * 0.6f)}, align);
+    text(r, x + off, y + off, s, scale, pal::alpha(pal::NightSoil, static_cast<Uint8>(c.a * 0.6f)), align);
     text(r, x, y, s, scale, c, align);
 }
 
