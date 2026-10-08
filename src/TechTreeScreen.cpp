@@ -345,8 +345,9 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         art::draw(r, "tree/icons/" + (n.icon.empty() ? n.id : n.icon), ic);
         if (locked) draw::fillRoundRect(r, ic.x - 2, ic.y - 2, ic.w + 4, ic.h + 4, 8, draw::withAlpha(fill, 165));
 
-        // A thin bar near the bottom shows how many levels are bought.
-        if (n.maxLevel > 0) {
+        // A thin bar near the bottom shows how many levels are bought (techs with
+        // more than one level only; a one-level tech's frame already shows if it's bought).
+        if (n.maxLevel > 1) {
             SDL_FRect bar = scaled(tileshape::barRect(shape, base), cx, cy, z);
             float f = static_cast<float>(n.level) / static_cast<float>(n.maxLevel);
             draw::fillRoundRect(r, bar.x, bar.y, bar.w, bar.h, 2, SDL_Color{0, 0, 0, 120});
@@ -408,9 +409,10 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
     std::vector<Line> lines;
     const bool maxed = tree.isMaxed(n), unlocked = tree.prereqsMet(n);
     lines.push_back({n.name, 2.5f, maxed ? kTipGold : kTipTitle});
-    lines.push_back({maxed ? draw::strf("Level %d / %d  -  MAX", n.level, n.maxLevel)
-                           : draw::strf("Level %d / %d", n.level, n.maxLevel),
-                     1.5f, maxed ? kTipGold : kTipDim});
+    if (n.maxLevel > 1) // a one-level tech is either bought or not; no level line
+        lines.push_back({maxed ? draw::strf("Level %d / %d  -  MAX", n.level, n.maxLevel)
+                               : draw::strf("Level %d / %d", n.level, n.maxLevel),
+                         1.5f, maxed ? kTipGold : kTipDim});
     lines.push_back({"", 0.6f, kWhite});
     for (const auto& w : draw::wrap(n.description, 36)) lines.push_back({w, 1.5f, kTipText});
     lines.push_back({"", 0.8f, kWhite});
@@ -442,7 +444,7 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
     }
     lines.push_back({"", 0.8f, kWhite});
     if (maxed) {
-        lines.push_back({"Fully upgraded!", 2.f, kTipGold});
+        lines.push_back({n.maxLevel > 1 ? "Fully upgraded!" : "UNLOCKED", 2.f, kTipGold});
     } else {
         double c = tree.cost(n);
         lines.push_back({"Price: " + draw::number(c) + " coins", 2.f, coins >= c ? kTipGold : kTipBad});
