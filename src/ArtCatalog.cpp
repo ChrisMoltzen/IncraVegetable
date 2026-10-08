@@ -156,6 +156,10 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
 
     // ---------------- HUD ----------------
     add({"ui/coin", 64, 64, "Coin icon", false, ui::drawCoinBuiltin});
+    add({"ui/app_icon", 32, 32,
+         "The game's icon on the window, taskbar and Dock. Pixel art, drawn at 32 x 32 (scaled up crisply). The "
+         "Windows .exe and Mac icons are in the icon/ folder",
+         false, ui::drawCoinBuiltin});
     add({"ui/dial_sky", 256, 256,
          "Day/night dial: the WHOLE sky disc. Day half on top with the sun at the top middle, night half below with "
          "the moon at the bottom middle. The game turns it clockwise exactly half a turn over the day: the sun starts "

@@ -76,6 +76,7 @@ private:
 
     // Rendering
     void renderPlayScene(State s);
+    void setWindowIcon();
     void renderBackground();
     void renderHud();
     void renderSummary();
