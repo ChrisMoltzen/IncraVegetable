@@ -2,11 +2,26 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <sstream>
+
+// Decoders for OGG and MP3 (single-file libraries, public domain / MIT-0).
+#define STB_VORBIS_NO_PUSHDATA_API
+#include "stb_vorbis.c"
+#undef L
+#undef C
+#undef R
+#define DR_MP3_IMPLEMENTATION
+#include "dr_mp3.h"
 
 namespace {
 constexpr int kRate = 44100;
 constexpr float kTwoPi = 6.28318530718f;
 constexpr size_t kMaxVoices = 24;
+constexpr float kCrossfadeSeconds = 1.5f;
 
 float midiToHz(int note) { return 440.f * std::pow(2.f, (note - 69) / 12.f); }
 
@@ -46,17 +61,143 @@ void normalize(std::vector<float>& buf, float peak) {
 }
 
 std::vector<float> makeBuffer(float seconds) { return std::vector<float>(static_cast<size_t>(seconds * kRate), 0.f); }
+
+std::vector<float> monoToStereo(const std::vector<float>& m) {
+    std::vector<float> s(m.size() * 2);
+    for (size_t i = 0; i < m.size(); ++i) s[2 * i] = s[2 * i + 1] = m[i];
+    return s;
+}
+
+// Any sample format, rate and channel count -> 44.1 kHz float stereo.
+bool convertToGame(const SDL_AudioSpec& from, const void* data, int bytes, std::vector<float>& out) {
+    SDL_AudioSpec to{SDL_AUDIO_F32, 2, kRate};
+    Uint8* conv = nullptr;
+    int len = 0;
+    if (!SDL_ConvertAudioSamples(&from, static_cast<const Uint8*>(data), bytes, &to, &conv, &len)) return false;
+    out.assign(reinterpret_cast<float*>(conv), reinterpret_cast<float*>(conv) + len / sizeof(float));
+    SDL_free(conv);
+    return !out.empty();
+}
+
+bool endsWith(const std::string& s, const char* ext) {
+    size_t n = std::char_traits<char>::length(ext);
+    if (s.size() < n) return false;
+    for (size_t i = 0; i < n; ++i)
+        if (std::tolower(static_cast<unsigned char>(s[s.size() - n + i])) != ext[i]) return false;
+    return true;
+}
+
+// Reads a WAV, OGG or MP3 file into 44.1 kHz stereo. Returns false (with a reason) if it can't.
+bool decodeFile(const std::string& path, std::vector<float>& out, std::string& why) {
+    if (endsWith(path, ".wav")) {
+        SDL_AudioSpec spec;
+        Uint8* buf = nullptr;
+        Uint32 len = 0;
+        if (!SDL_LoadWAV(path.c_str(), &spec, &buf, &len)) {
+            why = SDL_GetError();
+            return false;
+        }
+        bool ok = convertToGame(spec, buf, static_cast<int>(len), out);
+        SDL_free(buf);
+        if (!ok) why = SDL_GetError();
+        return ok;
+    }
+    if (endsWith(path, ".ogg")) {
+        int channels = 0, rate = 0;
+        short* pcm = nullptr;
+        int frames = stb_vorbis_decode_filename(path.c_str(), &channels, &rate, &pcm);
+        if (frames <= 0 || !pcm) {
+            why = "not a readable OGG Vorbis file";
+            return false;
+        }
+        SDL_AudioSpec spec{SDL_AUDIO_S16, channels, rate};
+        bool ok = convertToGame(spec, pcm, frames * channels * static_cast<int>(sizeof(short)), out);
+        free(pcm);
+        if (!ok) why = SDL_GetError();
+        return ok;
+    }
+    if (endsWith(path, ".mp3")) {
+        drmp3_config cfg{};
+        drmp3_uint64 frames = 0;
+        float* pcm = drmp3_open_file_and_read_pcm_frames_f32(path.c_str(), &cfg, &frames, nullptr);
+        if (!pcm || frames == 0) {
+            why = "not a readable MP3 file";
+            return false;
+        }
+        SDL_AudioSpec spec{SDL_AUDIO_F32, static_cast<int>(cfg.channels), static_cast<int>(cfg.sampleRate)};
+        bool ok = convertToGame(spec, pcm, static_cast<int>(frames * cfg.channels * sizeof(float)), out);
+        drmp3_free(pcm, nullptr);
+        if (!ok) why = SDL_GetError();
+        return ok;
+    }
+    why = "unknown file type";
+    return false;
+}
+
+// assets/audio/<name>.wav / .ogg / .mp3 - the first that exists, or "".
+std::string findSound(const std::string& folder, const std::string& name) {
+    for (const char* ext : {".wav", ".ogg", ".mp3"}) {
+        std::string p = folder + name + ext;
+        SDL_PathInfo info;
+        if (SDL_GetPathInfo(p.c_str(), &info) && info.type == SDL_PATHTYPE_FILE) return p;
+    }
+    return "";
+}
+
+// A 16-bit mono WAV file (the built-in sounds are mono, so the templates are too).
+bool writeWav(const std::string& path, const std::vector<float>& stereo) {
+    std::ofstream f(path, std::ios::binary);
+    if (!f) return false;
+    auto u32 = [&](Uint32 v) { f.write(reinterpret_cast<const char*>(&v), 4); };
+    auto u16 = [&](Uint16 v) { f.write(reinterpret_cast<const char*>(&v), 2); };
+    const size_t frames = stereo.size() / 2;
+    const Uint32 dataBytes = static_cast<Uint32>(frames * 2);
+    f.write("RIFF", 4); u32(36 + dataBytes); f.write("WAVE", 4);
+    f.write("fmt ", 4); u32(16); u16(1); u16(1); u32(kRate); u32(kRate * 2); u16(2); u16(16);
+    f.write("data", 4); u32(dataBytes);
+    for (size_t i = 0; i < frames; ++i) {
+        float v = 0.5f * (stereo[2 * i] + stereo[2 * i + 1]);
+        Sint16 s = static_cast<Sint16>(std::lround(std::clamp(v, -1.f, 1.f) * 32767.f));
+        f.write(reinterpret_cast<const char*>(&s), 2);
+    }
+    return static_cast<bool>(f);
+}
 } // namespace
+
+const char* Audio::sfxName(Sfx s) {
+    switch (s) {
+    case Sfx::Pick: return "pick";
+    case Sfx::Coin: return "coin";
+    case Sfx::Buy: return "buy";
+    case Sfx::Deny: return "deny";
+    case Sfx::Click: return "click";
+    case Sfx::Sunset: return "sunset";
+    case Sfx::Count: break;
+    }
+    return "";
+}
+
+const char* Audio::musicName(Music m) {
+    switch (m) {
+    case Music::Farm: return "music";
+    case Music::Menu: return "music_menu";
+    case Music::Barn: return "music_barn";
+    case Music::Count: break;
+    }
+    return "";
+}
 
 Audio::~Audio() { shutdown(); }
 
 bool Audio::init() {
     buildSfx();
+    sfxFromFile_.assign(sfx_.size(), false);
+    music_.assign(static_cast<size_t>(Music::Count), {});
     if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
         SDL_Log("Audio unavailable: %s", SDL_GetError());
         return false;
     }
-    SDL_AudioSpec spec{SDL_AUDIO_F32, 1, kRate};
+    SDL_AudioSpec spec{SDL_AUDIO_F32, 2, kRate};
     stream_ = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, &Audio::callback, this);
     if (!stream_) {
         SDL_Log("Could not open audio device: %s", SDL_GetError());
@@ -73,12 +214,87 @@ void Audio::shutdown() {
     }
 }
 
+int Audio::loadFiles(const std::string& folder) {
+    errors_.clear();
+    // Decode everything first (slow), then swap it in under the lock (quick).
+    std::vector<std::vector<std::vector<float>>> sfx = builtinSfx();
+    std::vector<bool> fromFile(sfx.size(), false);
+    std::vector<std::vector<float>> music(static_cast<size_t>(Music::Count));
+    int loaded = 0;
+    auto load = [&](const std::string& name, std::vector<float>& out) {
+        std::string path = findSound(folder, name);
+        if (path.empty()) return false;
+        std::string why;
+        if (decodeFile(path, out, why)) {
+            ++loaded;
+            return true;
+        }
+        errors_.push_back(path + ": " + why);
+        SDL_Log("Audio: couldn't load %s (%s) - using the built-in sound", path.c_str(), why.c_str());
+        return false;
+    };
+    if (!folder.empty()) {
+        for (int i = 0; i < static_cast<int>(Sfx::Count); ++i) {
+            std::vector<std::vector<float>> takes;
+            for (int k = 1; k <= 9; ++k) {
+                std::vector<float> buf;
+                std::string name = std::string(sfxName(static_cast<Sfx>(i))) + (k == 1 ? "" : std::to_string(k));
+                if (load(name, buf)) takes.push_back(std::move(buf));
+            }
+            if (!takes.empty()) {
+                sfx[i] = std::move(takes);
+                fromFile[i] = true;
+            }
+        }
+        for (int m = 0; m < static_cast<int>(Music::Count); ++m) load(musicName(static_cast<Music>(m)), music[m]);
+    }
+    if (stream_) SDL_LockAudioStream(stream_);
+    sfx_ = std::move(sfx);
+    sfxFromFile_ = std::move(fromFile);
+    music_ = std::move(music);
+    voices_.clear();
+    current_ = previous_ = sourceFor(wanted_);
+    currentPos_ = previousPos_ = 0.0;
+    fade_ = 1.f;
+    if (stream_) SDL_UnlockAudioStream(stream_);
+    if (loaded) SDL_Log("Audio: %d sound file(s) loaded from %s", loaded, folder.c_str());
+    return loaded;
+}
+
 void Audio::play(Sfx sfx, float pitch, float gain) {
     if (!stream_) return;
     SDL_LockAudioStream(stream_);
-    if (voices_.size() >= kMaxVoices) voices_.erase(voices_.begin());
-    voices_.push_back({static_cast<int>(sfx), 0.0, pitch, gain});
+    const int i = static_cast<int>(sfx);
+    if (i >= 0 && i < static_cast<int>(sfx_.size()) && !sfx_[i].empty()) {
+        if (voices_.size() >= kMaxVoices) voices_.erase(voices_.begin());
+        rng_ = rng_ * 1664525u + 1013904223u;
+        const int take = static_cast<int>((rng_ >> 8) % sfx_[i].size());
+        if (!pitchVariation_ && i < static_cast<int>(sfxFromFile_.size()) && sfxFromFile_[i]) pitch = 1.f;
+        voices_.push_back({i, take, 0.0, pitch, gain});
+    }
     SDL_UnlockAudioStream(stream_);
+}
+
+int Audio::sourceFor(Music m) const {
+    int i = static_cast<int>(m);
+    if (i < static_cast<int>(music_.size()) && !music_[i].empty()) return i;
+    int farm = static_cast<int>(Music::Farm);
+    if (farm < static_cast<int>(music_.size()) && !music_[farm].empty()) return farm;
+    return -1; // the built-in tune
+}
+
+void Audio::setMusic(Music m) {
+    if (stream_) SDL_LockAudioStream(stream_);
+    wanted_ = m;
+    int src = sourceFor(m);
+    if (src != current_) {
+        previous_ = current_;
+        previousPos_ = currentPos_;
+        current_ = src;
+        currentPos_ = 0.0; // a new track starts from the top
+        fade_ = 0.f;
+    }
+    if (stream_) SDL_UnlockAudioStream(stream_);
 }
 
 void Audio::setMusicVolume(float v) {
@@ -102,35 +318,67 @@ void Audio::pauseDevice(bool paused) {
 // Called by SDL on the audio thread, with the stream locked.
 void SDLCALL Audio::callback(void* userdata, SDL_AudioStream* stream, int additional, int /*total*/) {
     auto* self = static_cast<Audio*>(userdata);
-    int frames = additional / static_cast<int>(sizeof(float));
+    int frames = additional / static_cast<int>(2 * sizeof(float));
     while (frames > 0) {
         int chunk = std::min(frames, 1024);
-        self->scratch_.resize(chunk);
+        self->scratch_.resize(2 * chunk);
         self->mix(self->scratch_.data(), chunk);
-        SDL_PutAudioStreamData(stream, self->scratch_.data(), chunk * static_cast<int>(sizeof(float)));
+        SDL_PutAudioStreamData(stream, self->scratch_.data(), chunk * static_cast<int>(2 * sizeof(float)));
         frames -= chunk;
     }
+}
+
+void Audio::sourceFrame(int source, double& pos, float& l, float& r) {
+    if (source < 0) {
+        l = r = 0.f; // the built-in tune is added separately (it always runs)
+        return;
+    }
+    const auto& buf = music_[source];
+    const size_t frames = buf.size() / 2;
+    size_t i = static_cast<size_t>(pos);
+    if (i >= frames) i = 0, pos = 0.0;
+    l = buf[2 * i];
+    r = buf[2 * i + 1];
+    pos += 1.0;
+    if (pos >= static_cast<double>(frames)) pos -= static_cast<double>(frames); // loop
 }
 
 void Audio::mix(float* out, int frames) {
     const float musicGain = 0.5f * musicVolume_ * musicVolume_; // squared feels more natural on a slider
     const float sfxGain = 0.85f * sfxVolume_ * sfxVolume_;
+    const float fadeStep = 1.f / (kCrossfadeSeconds * kRate);
     for (int i = 0; i < frames; ++i) {
-        float s = musicSample() * musicGain; // always advance the tune, even when muted
+        // Music: the current track, crossfading from the previous one.
+        float synth = synthSample(); // always advance the built-in tune, even when it isn't heard
+        float cl, cr, pl = 0.f, pr = 0.f;
+        sourceFrame(current_, currentPos_, cl, cr);
+        if (current_ < 0) cl = cr = synth;
+        if (fade_ < 1.f) {
+            sourceFrame(previous_, previousPos_, pl, pr);
+            if (previous_ < 0) pl = pr = synth;
+            fade_ = std::min(1.f, fade_ + fadeStep);
+        }
+        float l = (cl * fade_ + pl * (1.f - fade_)) * musicGain;
+        float r = (cr * fade_ + pr * (1.f - fade_)) * musicGain;
+        // Sound effects.
         for (auto& v : voices_) {
-            const auto& buf = sfx_[v.sfx];
+            const auto& buf = sfx_[v.sfx][v.take];
             size_t idx = static_cast<size_t>(v.pos);
-            if (idx + 1 >= buf.size()) continue;
-            float frac = static_cast<float>(v.pos - idx);
-            s += (buf[idx] + (buf[idx + 1] - buf[idx]) * frac) * v.gain * sfxGain;
+            if (2 * (idx + 1) + 1 >= buf.size()) continue;
+            float frac = static_cast<float>(v.pos - idx), g = v.gain * sfxGain;
+            l += (buf[2 * idx] + (buf[2 * idx + 2] - buf[2 * idx]) * frac) * g;
+            r += (buf[2 * idx + 1] + (buf[2 * idx + 3] - buf[2 * idx + 1]) * frac) * g;
             v.pos += v.rate;
         }
-        out[i] = std::clamp(s, -1.f, 1.f);
+        out[2 * i] = std::clamp(l, -1.f, 1.f);
+        out[2 * i + 1] = std::clamp(r, -1.f, 1.f);
     }
-    std::erase_if(voices_, [this](const Voice& v) { return static_cast<size_t>(v.pos) + 1 >= sfx_[v.sfx].size(); });
+    std::erase_if(voices_, [this](const Voice& v) {
+        return 2 * (static_cast<size_t>(v.pos) + 1) + 1 >= sfx_[v.sfx][v.take].size();
+    });
 }
 
-float Audio::musicSample() {
+float Audio::synthSample() {
     const float dt = 1.f / kRate;
     int step = static_cast<int>(musicClock_ / kStepSeconds) % (kBars * kStepsPerBar);
     musicClock_ += dt;
@@ -189,8 +437,12 @@ float Audio::musicSample() {
     return lead + bass + pad + hat;
 }
 
-void Audio::buildSfx() {
-    sfx_.assign(static_cast<size_t>(Sfx::Count), {});
+void Audio::buildSfx() { sfx_ = builtinSfx(); }
+
+// The built-in sound effects, one take each.
+std::vector<std::vector<std::vector<float>>> Audio::builtinSfx() {
+    std::vector<std::vector<std::vector<float>>> out(static_cast<size_t>(Sfx::Count));
+    auto set = [&out](Sfx s, std::vector<float>&& mono) { out[static_cast<int>(s)] = {monoToStereo(mono)}; };
 
     { // Pick: a quick upward "pop".
         auto b = makeBuffer(0.10f);
@@ -203,7 +455,7 @@ void Audio::buildSfx() {
             b[i] = (std::sin(phase * kTwoPi) + 0.3f * std::sin(phase * 2.f * kTwoPi)) * env;
         }
         normalize(b, 0.55f);
-        sfx_[static_cast<int>(Sfx::Pick)] = std::move(b);
+        set(Sfx::Pick, std::move(b));
     }
     { // Coin: two bright tones.
         auto b = makeBuffer(0.40f);
@@ -216,7 +468,7 @@ void Audio::buildSfx() {
             b[i] = (std::sin(x) + 0.25f * std::sin(3.f * x)) * env;
         }
         normalize(b, 0.35f);
-        sfx_[static_cast<int>(Sfx::Coin)] = std::move(b);
+        set(Sfx::Coin, std::move(b));
     }
     { // Buy: a happy rising arpeggio.
         const float notes[4] = {523.25f, 659.25f, 783.99f, 1046.5f};
@@ -230,7 +482,7 @@ void Audio::buildSfx() {
             b[i] = triangle(ph) * env;
         }
         normalize(b, 0.6f);
-        sfx_[static_cast<int>(Sfx::Buy)] = std::move(b);
+        set(Sfx::Buy, std::move(b));
     }
     { // Deny: two low soft buzzes.
         auto b = makeBuffer(0.22f);
@@ -242,7 +494,7 @@ void Audio::buildSfx() {
             b[i] = (0.6f * (ph < 0.5f ? 1.f : -1.f) + 0.4f * triangle(ph)) * env;
         }
         normalize(b, 0.4f);
-        sfx_[static_cast<int>(Sfx::Deny)] = std::move(b);
+        set(Sfx::Deny, std::move(b));
     }
     { // Click: a tiny tick for buttons.
         auto b = makeBuffer(0.05f);
@@ -251,7 +503,7 @@ void Audio::buildSfx() {
             b[i] = std::sin(1500.f * t * kTwoPi) * std::exp(-t * 90.f);
         }
         normalize(b, 0.45f);
-        sfx_[static_cast<int>(Sfx::Click)] = std::move(b);
+        set(Sfx::Click, std::move(b));
     }
     { // Sunset: two bell strikes.
         auto b = makeBuffer(2.0f);
@@ -268,6 +520,53 @@ void Audio::buildSfx() {
         bell(0.0f, 783.99f, 1.f);
         bell(0.35f, 587.33f, 0.9f);
         normalize(b, 0.5f);
-        sfx_[static_cast<int>(Sfx::Sunset)] = std::move(b);
+        set(Sfx::Sunset, std::move(b));
     }
+    return out;
+}
+
+int Audio::exportTemplates(const std::string& folderIn) {
+    std::string folder = folderIn;
+    if (!folder.empty() && folder.back() != '/' && folder.back() != '\\') folder += '/';
+    const std::string dir = folder + "audio/";
+    SDL_CreateDirectory(dir.c_str());
+    const auto builtin = builtinSfx();
+    int written = 0;
+    for (int i = 0; i < static_cast<int>(Sfx::Count); ++i)
+        if (writeWav(dir + sfxName(static_cast<Sfx>(i)) + ".wav", builtin[i][0])) ++written;
+    // One loop of the built-in tune (the audio thread is paused while we borrow its synth).
+    {
+        if (stream_) SDL_LockAudioStream(stream_);
+        const int frames = static_cast<int>(kStepSeconds * kBars * kStepsPerBar * kRate);
+        double clock = musicClock_;
+        int step = lastStep_;
+        musicClock_ = 0.0;
+        lastStep_ = -1;
+        std::vector<float> mono(frames);
+        for (int i = 0; i < frames; ++i) mono[i] = synthSample() * 0.5f;
+        musicClock_ = clock;
+        lastStep_ = step;
+        if (stream_) SDL_UnlockAudioStream(stream_);
+        if (writeWav(dir + "music.wav", monoToStereo(mono))) ++written;
+    }
+    // Add them to the art list.
+    std::ofstream list(folder + "ART_LIST.md", std::ios::app);
+    list << "\n## Sounds\n\n"
+         << "Put your sounds in `assets/audio/` using these names. WAV, OGG or MP3, any sample rate, mono or stereo.\n"
+         << "Anything you leave out uses the built-in sound. The built-in ones are in `audio/` here to listen to or replace.\n"
+         << "Sound effects can have up to 9 takes, picked at random: `pick.wav`, `pick2.wav`, `pick3.wav`...\n"
+         << "Music loops; when the screen changes it crossfades to that screen's track. F5 in game reloads your sounds.\n\n"
+         << "| File | What it is |\n|---|---|\n"
+         << "| `audio/music` | Music on the farm, and anywhere without its own track (loops) |\n"
+         << "| `audio/music_menu` | Main menu, save slots and settings (optional: else `music`) |\n"
+         << "| `audio/music_barn` | The Barn (optional: else `music`) |\n"
+         << "| `audio/pick` | Picking a vegetable (played slightly higher or lower each time) |\n"
+         << "| `audio/coin` | Coins for a pick (quietly, under `pick`), and the sound-volume preview |\n"
+         << "| `audio/buy` | Buying an upgrade in The Barn |\n"
+         << "| `audio/deny` | Clicking an upgrade you can't buy yet |\n"
+         << "| `audio/click` | Buttons |\n"
+         << "| `audio/sunset` | The day ending |\n\n"
+         << "Your own effects get the same small random pitch changes as the built-in ones. To turn that off,\n"
+         << "put `sound_pitch_variation off` in `assets/art.txt`.\n";
+    return written;
 }
