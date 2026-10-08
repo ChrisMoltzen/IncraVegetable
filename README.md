@@ -102,6 +102,32 @@ Things to know:
 - The `assets/` folder is copied next to the executable when you build, and packed into the app on iOS.
 - The debug screen itself always uses the built-in look.
 
+## Music and sound effects
+
+Every sound has a built-in version, so the game always has sound. Put your own files in **`assets/audio/`** to replace any of them, one at a time. WAV, OGG and MP3 all work, at any sample rate, in mono or stereo.
+
+| Name | When it plays |
+|---|---|
+| `music` | On the farm, and on any screen without its own track. Loops. |
+| `music_menu` | Main menu, save slots and settings. Optional: without it, `music` plays. |
+| `music_barn` | The Barn. Optional: without it, `music` plays. |
+| `pick` | Picking a vegetable |
+| `coin` | The coins for a pick (quietly, under `pick`), and the sound-volume preview in Settings |
+| `buy` | Buying an upgrade |
+| `deny` | Clicking an upgrade you can't buy yet |
+| `click` | Buttons |
+| `sunset` | The day ending |
+
+- The file name is the name plus its extension, e.g. `assets/audio/music.ogg` or `assets/audio/pick.wav`. If there's more than one, `.wav` wins, then `.ogg`, then `.mp3`.
+- **Takes:** a sound effect can have up to 9 versions, picked at random each time it plays: `pick.wav`, `pick2.wav`, `pick3.wav`... This helps sounds that play a lot, like `pick`.
+- **Music** loops seamlessly from the end back to the start. When the screen changes, it crossfades to that screen's track over 1.5 seconds.
+- **Pitch:** sound effects are played slightly higher or lower each time, as the built-in ones are. To play your own exactly as recorded, add `sound_pitch_variation off` to `assets/art.txt`.
+- **Reloading:** **F5** in the game reloads your sounds along with the artwork.
+- **Problems:** a file that can't be read is skipped, and the built-in sound plays instead. The console says why.
+- **Starting points:** the built-in sounds are in **`art_templates/audio/`**, to listen to or edit.
+- **Volume:** the Music and Sound sliders in Settings work on your files too.
+- **File size:** use OGG or MP3 for music. A few minutes of WAV is tens of megabytes.
+
 ## Debug screen
 
 Press **F1** (or tap the purple bug button in the bottom-left corner of any screen) to open it. The game pauses while it's open. Everything takes effect immediately, including on a day that's in progress.

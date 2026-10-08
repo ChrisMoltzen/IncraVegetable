@@ -61,6 +61,7 @@ bool Game::init() {
     audio_.init(); // the game still runs if there's no audio device
     audio_.setMusicVolume(settings_.musicVolume);
     audio_.setSfxVolume(settings_.sfxVolume);
+    loadSounds();
 
 
     lastTicks_ = SDL_GetTicksNS();
@@ -423,8 +424,10 @@ void Game::handleEvent(SDL_Event& e) {
     // F5 reloads the artwork from assets/, so you can see changes without restarting.
     if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_F5 && !e.key.repeat) {
         int n = art::reload();
-        showToast(art::assetDir().empty() ? std::string("No assets folder found")
-                                          : draw::strf("Artwork reloaded - %d image%s", n, n == 1 ? "" : "s"));
+        int s = loadSounds();
+        showToast(art::assetDir().empty()
+                      ? std::string("No assets folder found")
+                      : draw::strf("Reloaded %d image%s and %d sound%s", n, n == 1 ? "" : "s", s, s == 1 ? "" : "s"));
         return;
     }
     if (handleDebugInput(e)) return;
@@ -595,10 +598,35 @@ void Game::showToast(const std::string& msg) {
     toastTime_ = 2.5f;
 }
 
-int Game::exportArtTemplates(const std::string& folder) { return art::exportTemplates(renderer_, folder); }
+int Game::exportArtTemplates(const std::string& folder) {
+    int n = art::exportTemplates(renderer_, folder);
+    return n + audio_.exportTemplates(folder); // the built-in sounds, in <folder>/audio/
+}
+
+// Your own music and sound effects from assets/audio/ (see Audio.h).
+int Game::loadSounds() {
+    const std::string dir = art::assetDir();
+    int n = audio_.loadFiles(dir.empty() ? std::string() : dir + "audio/");
+    audio_.setPitchVariation(art::option("sound_pitch_variation", true));
+    return n;
+}
+
+// Which music goes with what's on screen.
+void Game::updateMusic() {
+    State s = state_;
+    if (s == State::Paused) s = pausedFrom_;
+    if (s == State::Settings) s = settingsFrom_ == State::Paused ? pausedFrom_ : settingsFrom_;
+    switch (s) {
+    case State::Farming:
+    case State::DaySummary: audio_.setMusic(Music::Farm); break;
+    case State::TechTree: audio_.setMusic(Music::Barn); break;
+    default: audio_.setMusic(Music::Menu); break;
+    }
+}
 
 void Game::update(float dt) {
     toastTime_ = std::max(0.f, toastTime_ - dt);
+    updateMusic();
     farm_.setTimerFrozen(debug_.freezeTimer);
     farm_.setDebugView(debug_.showTileInfo);
     if (debugMenu_.isOpen()) {
