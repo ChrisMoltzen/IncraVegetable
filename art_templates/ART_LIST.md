@@ -10,7 +10,7 @@ is brightened or darkened automatically.
 | File | Size | 9-slice | What it is |
 |---|---|---|---|
 | `farm/background.png` | 1280 x 720 |  | Everything behind the vegetable patch while farming |
-| `farm/hud_bar.png` | 1280 x 72 |  | Strip along the top of the farm screen (title, timer, coins sit on it) |
+| `farm/hud_bar.png` | 1280 x 72 |  | Strip along the top of the farm screen (day, timer, coins sit on it) |
 | `farm/bed.png` | 640 x 400 |  | The rectangular garden bed the vegetables grow in. Stretched to fit, always 1.6x wider than tall. Plants sit inside the middle ~90%, so leave a border of soil or edging around them |
 | `farm/fence_h.png` | 64 x 64 |  | Fence tile along the top and bottom of the bed (joins left and right) |
 | `farm/fence_v.png` | 64 x 64 |  | Fence tile down the left and right sides of the bed (joins top and bottom) |
@@ -33,7 +33,6 @@ is brightened or darkened automatically.
 | `farm/farmer_pick.png` | 128 x 128 |  | Farmer bending down to pick a crop (optional). Feet at the bottom middle, about 8% up from the bottom edge. Draw it facing RIGHT: it's mirrored when the farmer walks left. |
 | `fx/particle.png` | 32 x 32 |  | Burst particle when a vegetable is picked. Draw it WHITE: the game tints it to the crop's colour |
 | `fx/reach_circle.png` | 256 x 256 |  | Picking area around the pointer (Wide Reach upgrade). Usually see-through |
-| `ui/hud_logo.png` | 336 x 30 |  | Game name in the top-left of the farm screen |
 | `ui/coin.png` | 64 x 64 |  | Coin icon |
 | `ui/dial_sky.png` | 256 x 256 |  | Day/night dial: the WHOLE sky disc. Day half on top with the sun at the top middle, night half below with the moon at the bottom middle. The game turns it clockwise exactly half a turn over the day: the sun starts at the top and sets on the right, and when the timer runs out the moon is at the top; only the top half shows |
 | `ui/dial_frame.png` | 280 x 150 |  | Day/night dial: frame drawn over the sky disc. Leave the half-circle window see-through (it fills the frame's width minus about 6% each side, with the horizon about 79% of the way down); the bottom strip hides the sun as it sets |

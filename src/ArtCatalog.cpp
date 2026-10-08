@@ -46,13 +46,6 @@ void drawGrassBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     }
 }
 
-void drawHudLogoBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
-    float scale = std::min(rc.h / 9.f, rc.w / draw::textWidth("IncraVegetable", 1.f));
-    float y = rc.y + (rc.h - 8.f * scale) * 0.5f;
-    draw::textShadow(r, rc.x, y, "Incra", scale, pal::FreshLeaf);
-    draw::textShadow(r, rc.x + draw::textWidth("Incra", scale), y, "Vegetable", scale, pal::Pumpkin);
-}
-
 void drawPanelHeaderBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     const SDL_Color orange{240, 150, 60, 255};
     draw::fillRoundRect(r, rc.x, rc.y, rc.w, rc.h, 20, orange);
@@ -102,7 +95,7 @@ void addNodeStyle(const char* name, SDL_Color fill, SDL_Color border, const char
 void registerCatalog(const std::vector<std::pair<std::string, std::string>>& techNodes) {
     // ---------------- Farm ----------------
     add({"farm/background", 1280, 720, "Everything behind the vegetable patch while farming", false, drawGrassBuiltin});
-    add({"farm/hud_bar", 1280, 72, "Strip along the top of the farm screen (title, timer, coins sit on it)", false,
+    add({"farm/hud_bar", 1280, 72, "Strip along the top of the farm screen (day, timer, coins sit on it)", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { draw::fillRect(r, rc.x, rc.y, rc.w, rc.h, SDL_Color{20, 28, 18, 210}); }});
     add({"farm/bed", 640, 400,
          "The rectangular garden bed the vegetables grow in. Stretched to fit, always 1.6x wider than tall. Plants "
@@ -162,7 +155,6 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          Farm::drawReachBuiltin});
 
     // ---------------- HUD ----------------
-    add({"ui/hud_logo", 336, 30, "Game name in the top-left of the farm screen", false, drawHudLogoBuiltin});
     add({"ui/coin", 64, 64, "Coin icon", false, ui::drawCoinBuiltin});
     add({"ui/dial_sky", 256, 256,
          "Day/night dial: the WHOLE sky disc. Day half on top with the sun at the top middle, night half below with "
