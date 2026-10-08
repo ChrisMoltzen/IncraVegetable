@@ -27,7 +27,7 @@ crop carrot
   grow 1.6
   pick 1.25
   weight 35
-  tier 1
+  tier 2
   look carrot
 end
 
@@ -37,7 +37,7 @@ crop pumpkin
   grow 2.6
   pick 1.6
   weight 20
-  tier 2
+  tier 3
   look pumpkin
 end
 
@@ -47,7 +47,7 @@ crop turnip
   grow 3.4
   pick 1.9
   weight 15
-  tier 3
+  tier 1
   look round
 end
 
@@ -57,111 +57,112 @@ tech barn
   max 1
   cost 4
   growth 1
-  pos 0 0
+  pos 0 -0
 end
 
 tech patch
   name Bigger Patch 1
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 5
+  cost 10
   growth 1
-  pos 0.357 -1.2
+  pos -0.5 -1
   requires barn 1
   effect patchSize add 1
 end
 
 tech patch_2
   name Bigger Patch 2
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 7
+  cost 15
   growth 1
-  pos -0.357 -1.718
+  pos -3 -4.5
   icon patch
-  requires patch 1
+  requires seeds_3 1
+  requires pickspeed_3 1
   effect patchSize add 1
 end
 
 tech patch_3
   name Bigger Patch 3
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 10
+  cost 22
   growth 1
-  pos 0.357 -2.236
+  pos -3 1.5
   icon patch
-  requires patch_2 1
+  requires growspeed 1
   effect patchSize add 1
 end
 
 tech patch_4
   name Bigger Patch 4
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 12
+  cost 31
   growth 1
-  pos -0.357 -2.754
+  pos 6.5 -4.5
   icon patch
-  requires patch_3 1
+  requires autopickchance_3 1
   effect patchSize add 1
 end
 
 tech patch_5
   name Bigger Patch 5
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 33
+  cost 45
   growth 1
-  pos 0.357 -3.271
+  pos 7.5 2
   icon patch
-  requires patch_4 1
+  requires autopickchance_4 1
   effect patchSize add 1
 end
 
 tech patch_6
   name Bigger Patch 6
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 48
+  cost 65
   growth 1
-  pos -0.357 -3.789
+  pos 9 -1
   icon patch
-  requires patch_5 1
+  requires seeds_9 1
   effect patchSize add 1
 end
 
 tech patch_7
   name Bigger Patch 7
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 75
+  cost 93
   growth 1
-  pos 0.357 -4.307
+  pos -6 1.5
   icon patch
-  requires patch_6 1
+  requires autopickchance 1
   effect patchSize add 1
 end
 
 tech patch_8
   name Bigger Patch 8
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 83
+  cost 135
   growth 1
-  pos -0.357 -4.825
+  pos 1.5 3
   icon patch
-  requires patch_7 1
+  requires pickspeed 1
   effect patchSize add 1
 end
 
 tech patch_9
   name Bigger Patch 9
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 140
+  cost 196
   growth 1
-  pos 0.357 -5.343
+  pos -2 8
   icon patch
   requires patch_8 1
   effect patchSize add 1
@@ -169,11 +170,11 @@ end
 
 tech patch_10
   name Bigger Patch 10
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 300
+  cost 284
   growth 1
-  pos -0.357 -5.861
+  pos -2 9
   icon patch
   requires patch_9 1
   effect patchSize add 1
@@ -181,11 +182,11 @@ end
 
 tech patch_11
   name Bigger Patch 11
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 350
+  cost 411
   growth 1
-  pos 0.357 -6.379
+  pos -2 10
   icon patch
   requires patch_10 1
   effect patchSize add 1
@@ -193,11 +194,11 @@ end
 
 tech patch_12
   name Bigger Patch 12
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 1200
+  cost 596
   growth 1
-  pos -0.357 -6.896
+  pos -2 11
   icon patch
   requires patch_11 1
   effect patchSize add 1
@@ -205,11 +206,11 @@ end
 
 tech patch_13
   name Bigger Patch 13
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 1300
+  cost 864
   growth 1
-  pos 0.357 -7.414
+  pos -2 12
   icon patch
   requires patch_12 1
   effect patchSize add 1
@@ -217,11 +218,11 @@ end
 
 tech patch_14
   name Bigger Patch 14
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 3500
+  cost 1253
   growth 1
-  pos -0.357 -7.932
+  pos -2 13
   icon patch
   requires patch_13 1
   effect patchSize add 1
@@ -229,11 +230,11 @@ end
 
 tech patch_15
   name Bigger Patch 15
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 4300
+  cost 1817
   growth 1
-  pos 0.357 -8.45
+  pos -2 14
   icon patch
   requires patch_14 1
   effect patchSize add 1
@@ -241,11 +242,11 @@ end
 
 tech patch_16
   name Bigger Patch 16
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 5100
+  cost 2634
   growth 1
-  pos -0.357 -8.968
+  pos -2 15
   icon patch
   requires patch_15 1
   effect patchSize add 1
@@ -253,11 +254,11 @@ end
 
 tech patch_17
   name Bigger Patch 17
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 6800
+  cost 3819
   growth 1
-  pos 0.357 -9.486
+  pos -2 16
   icon patch
   requires patch_16 1
   effect patchSize add 1
@@ -265,11 +266,11 @@ end
 
 tech patch_18
   name Bigger Patch 18
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 8700
+  cost 5537
   growth 1
-  pos -0.357 -10.004
+  pos -2 17
   icon patch
   requires patch_17 1
   effect patchSize add 1
@@ -277,11 +278,11 @@ end
 
 tech patch_19
   name Bigger Patch 19
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 13000
+  cost 8029
   growth 1
-  pos 0.357 -10.521
+  pos -2 18
   icon patch
   requires patch_18 1
   effect patchSize add 1
@@ -289,11 +290,11 @@ end
 
 tech patch_20
   name Bigger Patch 20
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 32000
+  cost 11642
   growth 1
-  pos -0.357 -11.039
+  pos -2 19
   icon patch
   requires patch_19 1
   effect patchSize add 1
@@ -301,11 +302,11 @@ end
 
 tech patch_21
   name Bigger Patch 21
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 52000
+  cost 16880
   growth 1
-  pos 0.357 -11.557
+  pos -2 20
   icon patch
   requires patch_20 1
   effect patchSize add 1
@@ -313,11 +314,11 @@ end
 
 tech patch_22
   name Bigger Patch 22
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 69000
+  cost 24476
   growth 1
-  pos -0.357 -12.075
+  pos -2 21
   icon patch
   requires patch_21 1
   effect patchSize add 1
@@ -325,11 +326,11 @@ end
 
 tech patch_23
   name Bigger Patch 23
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 81000
+  cost 35490
   growth 1
-  pos 0.357 -12.593
+  pos -2 22
   icon patch
   requires patch_22 1
   effect patchSize add 1
@@ -337,11 +338,11 @@ end
 
 tech patch_24
   name Bigger Patch 24
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 110000
+  cost 51460
   growth 1
-  pos -0.357 -13.111
+  pos -2 23
   icon patch
   requires patch_23 1
   effect patchSize add 1
@@ -349,11 +350,11 @@ end
 
 tech patch_25
   name Bigger Patch 25
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 130000
+  cost 74617
   growth 1
-  pos 0.357 -13.629
+  pos -2 24
   icon patch
   requires patch_24 1
   effect patchSize add 1
@@ -361,11 +362,11 @@ end
 
 tech patch_26
   name Bigger Patch 26
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 150000
+  cost 108194
   growth 1
-  pos -0.357 -14.146
+  pos -2 25
   icon patch
   requires patch_25 1
   effect patchSize add 1
@@ -373,11 +374,11 @@ end
 
 tech patch_27
   name Bigger Patch 27
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 170000
+  cost 156881
   growth 1
-  pos 0.357 -14.664
+  pos -2 26
   icon patch
   requires patch_26 1
   effect patchSize add 1
@@ -385,11 +386,11 @@ end
 
 tech patch_28
   name Bigger Patch 28
-  desc Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30).
+  desc Dig out a bigger patch with room for more vegetables. Each level adds a row and a column (up to 30 x 30).
   max 1
-  cost 180000
+  cost 227477
   growth 1
-  pos -0.357 -15.182
+  pos -2 27
   icon patch
   requires patch_27 1
   effect patchSize add 1
@@ -397,47 +398,46 @@ end
 
 tech seeds
   name More Seeds 1
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
   cost 6
-  growth 1
-  pos -1.01 0.213
-  requires barn 1
+)TECHTREE",
+R"TECHTREE(  growth 1
+  pos -2 -2
+  requires patch 1
   effect maxCrops add 1
 end
 
 tech seeds_2
   name More Seeds 2
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
   cost 9
   growth 1
-  pos -1.036 1.263
+  pos 2 -1
   icon seeds
-  requires seeds 1
+  requires daylength 1
   effect maxCrops add 1
 end
 
 tech seeds_3
   name More Seeds 3
-)TECHTREE",
-R"TECHTREE(  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 10
+  cost 14
   growth 1
-  pos -1.777 0.767
+  pos -2 -3.5
   icon seeds
-  requires seeds_2 1
   effect maxCrops add 2
 end
 
 tech seeds_4
   name More Seeds 4
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 14
+  cost 21
   growth 1
-  pos -1.803 1.817
+  pos -1 -4.5
   icon seeds
   requires seeds_3 1
   effect maxCrops add 2
@@ -445,11 +445,11 @@ end
 
 tech seeds_5
   name More Seeds 5
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 43
+  cost 31
   growth 1
-  pos -2.544 1.321
+  pos -2 -6
   icon seeds
   requires seeds_4 1
   effect maxCrops add 2
@@ -457,35 +457,34 @@ end
 
 tech seeds_6
   name More Seeds 6
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 59
+  cost 46
   growth 1
-  pos -2.57 2.371
+  pos -5 -7
   icon seeds
-  requires seeds_5 1
+  requires pumpkins 1
   effect maxCrops add 3
 end
 
 tech seeds_7
   name More Seeds 7
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 82
+  cost 69
   growth 1
-  pos -3.311 1.874
+  pos 10.5 9.5
   icon seeds
-  requires seeds_6 1
   effect maxCrops add 4
 end
 
 tech seeds_8
   name More Seeds 8
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 130
+  cost 103
   growth 1
-  pos -3.337 2.924
+  pos 10.5 5.5
   icon seeds
   requires seeds_7 1
   effect maxCrops add 5
@@ -493,35 +492,34 @@ end
 
 tech seeds_9
   name More Seeds 9
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 300
+  cost 154
   growth 1
-  pos -4.078 2.428
+  pos 5.5 -0.5
   icon seeds
-  requires seeds_8 1
+  requires autopickradius_2 1
   effect maxCrops add 6
 end
 
 tech seeds_10
   name More Seeds 10
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 330
+  cost 231
   growth 1
-  pos -4.105 3.478
+  pos -1 9
   icon seeds
-  requires seeds_9 1
   effect maxCrops add 7
 end
 
 tech seeds_11
   name More Seeds 11
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 960
+  cost 346
   growth 1
-  pos -4.845 2.981
+  pos -1 10
   icon seeds
   requires seeds_10 1
   effect maxCrops add 10
@@ -529,11 +527,11 @@ end
 
 tech seeds_12
   name More Seeds 12
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 1200
+  cost 519
   growth 1
-  pos -4.872 4.031
+  pos -1 11
   icon seeds
   requires seeds_11 1
   effect maxCrops add 11
@@ -541,11 +539,11 @@ end
 
 tech seeds_13
   name More Seeds 13
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 3400
+  cost 779
   growth 1
-  pos -5.612 3.535
+  pos -1 12
   icon seeds
   requires seeds_12 1
   effect maxCrops add 15
@@ -553,11 +551,11 @@ end
 
 tech seeds_14
   name More Seeds 14
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 4200
+  cost 1168
   growth 1
-  pos -5.639 4.585
+  pos -1 13
   icon seeds
   requires seeds_13 1
   effect maxCrops add 18
@@ -565,11 +563,11 @@ end
 
 tech seeds_15
   name More Seeds 15
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 4800
+  cost 1752
   growth 1
-  pos -6.379 4.088
+  pos -1 14
   icon seeds
   requires seeds_14 1
   effect maxCrops add 23
@@ -577,11 +575,11 @@ end
 
 tech seeds_16
   name More Seeds 16
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 6500
+  cost 2628
   growth 1
-  pos -6.406 5.138
+  pos -1 15
   icon seeds
   requires seeds_15 1
   effect maxCrops add 28
@@ -589,11 +587,11 @@ end
 
 tech seeds_17
   name More Seeds 17
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 8800
+  cost 3942
   growth 1
-  pos -7.146 4.642
+  pos -1 16
   icon seeds
   requires seeds_16 1
   effect maxCrops add 36
@@ -601,11 +599,11 @@ end
 
 tech seeds_18
   name More Seeds 18
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 26000
+  cost 5912
   growth 1
-  pos -7.173 5.692
+  pos -1 17
   icon seeds
   requires seeds_17 1
   effect maxCrops add 44
@@ -613,11 +611,11 @@ end
 
 tech seeds_19
   name More Seeds 19
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 48000
+  cost 8868
   growth 1
-  pos -7.913 5.196
+  pos -1 18
   icon seeds
   requires seeds_18 1
   effect maxCrops add 56
@@ -625,11 +623,11 @@ end
 
 tech seeds_20
   name More Seeds 20
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 58000
+  cost 13302
   growth 1
-  pos -7.94 6.246
+  pos -1 19
   icon seeds
   requires seeds_19 1
   effect maxCrops add 69
@@ -637,11 +635,11 @@ end
 
 tech seeds_21
   name More Seeds 21
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 70000
+  cost 19952
   growth 1
-  pos -8.68 5.749
+  pos -1 20
   icon seeds
   requires seeds_20 1
   effect maxCrops add 87
@@ -649,11 +647,11 @@ end
 
 tech seeds_22
   name More Seeds 22
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 87000
+  cost 29928
   growth 1
-  pos -8.707 6.799
+  pos -1 21
   icon seeds
   requires seeds_21 1
   effect maxCrops add 108
@@ -661,11 +659,11 @@ end
 
 tech seeds_23
   name More Seeds 23
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 110000
+  cost 44891
   growth 1
-  pos -9.448 6.303
+  pos -1 22
   icon seeds
   requires seeds_22 1
   effect maxCrops add 136
@@ -673,11 +671,11 @@ end
 
 tech seeds_24
   name More Seeds 24
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 140000
+  cost 67337
   growth 1
-  pos -9.474 7.353
+  pos -1 23
   icon seeds
   requires seeds_23 1
   effect maxCrops add 169
@@ -685,11 +683,11 @@ end
 
 tech seeds_25
   name More Seeds 25
-  desc Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch.
+  desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
-  cost 170000
+  cost 101005
   growth 1
-  pos -10.215 6.856
+  pos -1 24
   icon seeds
   requires seeds_24 1
   effect maxCrops add 212
@@ -697,22 +695,22 @@ end
 
 tech daylength
   name Longer Days 1
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 5
+  cost 6
   growth 1
-  pos 0.653 0.987
+  pos 0.5 -1
   requires barn 1
   effect dayLength add 2
 end
 
 tech daylength_2
   name Longer Days 2
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 7
+  cost 8
   growth 1
-  pos 1.344 0.454
+  pos 2 -2
   icon daylength
   requires daylength 1
   effect dayLength add 2
@@ -720,11 +718,11 @@ end
 
 tech daylength_3
   name Longer Days 3
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 9
+  cost 10
   growth 1
-  pos 1.321 1.469
+  pos 1.5 -3.5
   icon daylength
   requires daylength_2 1
   effect dayLength add 2
@@ -732,23 +730,24 @@ end
 
 tech daylength_4
   name Longer Days 4
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 10
+  cost 13
   growth 1
-  pos 2.012 0.937
+  pos 2 -5
   icon daylength
   requires daylength_3 1
+  requires pickspeed_4 1
   effect dayLength add 2
 end
 
 tech daylength_5
   name Longer Days 5
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 30
+  cost 17
   growth 1
-  pos 1.989 1.951
+  pos 2 -7
   icon daylength
   requires daylength_4 1
   effect dayLength add 2
@@ -756,59 +755,59 @@ end
 
 tech daylength_6
   name Longer Days 6
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 44
+  cost 21
   growth 1
-  pos 2.68 1.419
+  pos -1 1.5
   icon daylength
-  requires daylength_5 1
+  requires growspeed 1
   effect dayLength add 2
 end
 
 tech daylength_7
   name Longer Days 7
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 59
+  cost 27
   growth 1
-  pos 2.657 2.433
+  pos -4.5 -3.5
   icon daylength
-  requires daylength_6 1
+  requires autopick 1
   effect dayLength add 2
 end
 
 tech daylength_8
   name Longer Days 8
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 76
+  cost 34
   growth 1
-  pos 3.348 1.901
+  pos -5.5 -2.5
   icon daylength
-  requires daylength_7 1
+  requires farmhand 1
   effect dayLength add 2
 end
 
 tech daylength_9
   name Longer Days 9
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 94
+  cost 44
   growth 1
-  pos 3.325 2.915
+  pos 0 8
   icon daylength
-  requires daylength_8 1
   effect dayLength add 2
 end
 
 tech daylength_10
   name Longer Days 10
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 200
+)TECHTREE",
+R"TECHTREE(  cost 56
   growth 1
-  pos 4.016 2.383
+  pos 0 9
   icon daylength
   requires daylength_9 1
   effect dayLength add 2
@@ -816,24 +815,23 @@ end
 
 tech daylength_11
   name Longer Days 11
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 310
+  cost 71
   growth 1
-  pos 3.993 3.397
+  pos 0 10
   icon daylength
   requires daylength_10 1
   effect dayLength add 2
 end
 
-)TECHTREE",
-R"TECHTREE(tech daylength_12
+tech daylength_12
   name Longer Days 12
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 350
+  cost 91
   growth 1
-  pos 4.684 2.865
+  pos 0 11
   icon daylength
   requires daylength_11 1
   effect dayLength add 2
@@ -841,11 +839,11 @@ end
 
 tech daylength_13
   name Longer Days 13
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 1000
+  cost 117
   growth 1
-  pos 4.661 3.879
+  pos 0 12
   icon daylength
   requires daylength_12 1
   effect dayLength add 2
@@ -853,11 +851,11 @@ end
 
 tech daylength_14
   name Longer Days 14
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 1300
+  cost 149
   growth 1
-  pos 5.352 3.347
+  pos 0 13
   icon daylength
   requires daylength_13 1
   effect dayLength add 2
@@ -865,11 +863,11 @@ end
 
 tech daylength_15
   name Longer Days 15
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 3200
+  cost 191
   growth 1
-  pos 5.329 4.362
+  pos 0 14
   icon daylength
   requires daylength_14 1
   effect dayLength add 2
@@ -877,11 +875,11 @@ end
 
 tech daylength_16
   name Longer Days 16
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 4000
+  cost 244
   growth 1
-  pos 6.021 3.829
+  pos 0 15
   icon daylength
   requires daylength_15 1
   effect dayLength add 2
@@ -889,11 +887,11 @@ end
 
 tech daylength_17
   name Longer Days 17
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 4600
+  cost 312
   growth 1
-  pos 5.997 4.844
+  pos 0 16
   icon daylength
   requires daylength_16 1
   effect dayLength add 2
@@ -901,11 +899,11 @@ end
 
 tech daylength_18
   name Longer Days 18
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 5800
+  cost 399
   growth 1
-  pos 6.689 4.312
+  pos 0 17
   icon daylength
   requires daylength_17 1
   effect dayLength add 2
@@ -913,11 +911,11 @@ end
 
 tech daylength_19
   name Longer Days 19
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 8100
+  cost 511
   growth 1
-  pos 6.666 5.326
+  pos 0 18
   icon daylength
   requires daylength_18 1
   effect dayLength add 2
@@ -925,11 +923,11 @@ end
 
 tech daylength_20
   name Longer Days 20
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 11000
+  cost 654
   growth 1
-  pos 7.357 4.794
+  pos 0 19
   icon daylength
   requires daylength_19 1
   effect dayLength add 2
@@ -937,11 +935,11 @@ end
 
 tech daylength_21
   name Longer Days 21
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 27000
+  cost 837
   growth 1
-  pos 7.334 5.808
+  pos 0 20
   icon daylength
   requires daylength_20 1
   effect dayLength add 2
@@ -949,11 +947,11 @@ end
 
 tech daylength_22
   name Longer Days 22
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 47000
+  cost 1071
   growth 1
-  pos 8.025 5.276
+  pos 0 21
   icon daylength
   requires daylength_21 1
   effect dayLength add 2
@@ -961,11 +959,11 @@ end
 
 tech daylength_23
   name Longer Days 23
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 51000
+  cost 1371
   growth 1
-  pos 8.002 6.29
+  pos 0 22
   icon daylength
   requires daylength_22 1
   effect dayLength add 2
@@ -973,11 +971,11 @@ end
 
 tech daylength_24
   name Longer Days 24
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 67000
+  cost 1754
   growth 1
-  pos 8.693 5.758
+  pos 0 23
   icon daylength
   requires daylength_23 1
   effect dayLength add 2
@@ -985,11 +983,11 @@ end
 
 tech daylength_25
   name Longer Days 25
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 78000
+  cost 2245
   growth 1
-  pos 8.67 6.772
+  pos 0 24
   icon daylength
   requires daylength_24 1
   effect dayLength add 2
@@ -997,11 +995,11 @@ end
 
 tech daylength_26
   name Longer Days 26
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 110000
+  cost 2874
   growth 1
-  pos 9.361 6.24
+  pos 0 25
   icon daylength
   requires daylength_25 1
   effect dayLength add 2
@@ -1009,11 +1007,11 @@ end
 
 tech daylength_27
   name Longer Days 27
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 120000
+  cost 3678
   growth 1
-  pos 9.338 7.254
+  pos 0 26
   icon daylength
   requires daylength_26 1
   effect dayLength add 2
@@ -1021,11 +1019,11 @@ end
 
 tech daylength_28
   name Longer Days 28
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 150000
+  cost 4708
   growth 1
-  pos 10.029 6.722
+  pos 0 27
   icon daylength
   requires daylength_27 1
   effect dayLength add 2
@@ -1033,11 +1031,11 @@ end
 
 tech daylength_29
   name Longer Days 29
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 170000
+  cost 6027
   growth 1
-  pos 10.006 7.737
+  pos 0 28
   icon daylength
   requires daylength_28 1
   effect dayLength add 2
@@ -1045,11 +1043,11 @@ end
 
 tech daylength_30
   name Longer Days 30
-  desc Wake up a little earlier: 2 more seconds of picking every day.
+  desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 180000
+  cost 7714
   growth 1
-  pos 10.697 7.204
+  pos 0 29
   icon daylength
   requires daylength_29 1
   effect dayLength add 2
@@ -1057,70 +1055,70 @@ end
 
 tech pickspeed
   name Quick Hands 1
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 6
+  cost 8
   growth 1
-  pos 1.005 -0.725
+  pos 0 1
   requires barn 1
   effect pickTime multiply 0.82
 end
 
 tech pickspeed_2
   name Quick Hands 2
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 12
+  cost 14
   growth 1
-  pos 2.009 -1.45
+  pos -3 -3
   icon pickspeed
-  requires pickspeed 1
+  requires seeds_3 1
+  requires seeds 1
   effect pickTime multiply 0.82
 end
 
 tech pickspeed_3
   name Quick Hands 3
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 65
+  cost 24
   growth 1
-  pos 3.014 -2.175
+  pos -3.5 -6
   icon pickspeed
-  requires pickspeed_2 1
   effect pickTime multiply 0.82
 end
 
 tech pickspeed_4
   name Quick Hands 4
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 220
+  cost 40
   growth 1
-  pos 4.018 -2.9
+  pos 2.5 -3.5
   icon pickspeed
-  requires pickspeed_3 1
+  requires daylength_2 1
   effect pickTime multiply 0.82
 end
 
 tech pickspeed_5
   name Quick Hands 5
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 1100
+  cost 67
   growth 1
-  pos 5.023 -3.625
+  pos 2.5 4
   icon pickspeed
-  requires pickspeed_4 1
+  requires patch_8 1
   effect pickTime multiply 0.82
 end
 
 tech pickspeed_6
   name Quick Hands 6
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 3600
+  cost 114
   growth 1
-  pos 6.028 -4.35
+  pos 2 7
   icon pickspeed
   requires pickspeed_5 1
   effect pickTime multiply 0.82
@@ -1128,11 +1126,11 @@ end
 
 tech pickspeed_7
   name Quick Hands 7
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 7100
+  cost 194
   growth 1
-  pos 7.032 -5.075
+  pos 2 8
   icon pickspeed
   requires pickspeed_6 1
   effect pickTime multiply 0.82
@@ -1140,11 +1138,11 @@ end
 
 tech pickspeed_8
   name Quick Hands 8
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 29000
+  cost 329
   growth 1
-  pos 8.037 -5.8
+  pos 2 9.5
   icon pickspeed
   requires pickspeed_7 1
   effect pickTime multiply 0.82
@@ -1152,11 +1150,11 @@ end
 
 tech pickspeed_9
   name Quick Hands 9
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 73000
+  cost 559
   growth 1
-  pos 9.041 -6.525
+  pos 2 11
   icon pickspeed
   requires pickspeed_8 1
   effect pickTime multiply 0.82
@@ -1164,58 +1162,117 @@ end
 
 tech pickspeed_10
   name Quick Hands 10
-  desc Practice makes perfect: pick vegetables 18% faster.
+  desc Practice makes perfect. Pick vegetables 18% faster per level.
   max 1
-  cost 120000
+  cost 949
   growth 1
-  pos 10.046 -7.25
+  pos 2 12.5
   icon pickspeed
   requires pickspeed_9 1
   effect pickTime multiply 0.82
 end
 
+tech headstart
+  name Head Start 1
+  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
+  max 1
+  cost 60
+  growth 1
+  pos -1.5 3
+  requires pickspeed 1
+  effect headStart add 0.2
+end
+
+tech headstart_2
+  name Head Start 2
+  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
+  max 1
+  cost 120
+  growth 1
+  pos -1.5 6
+  icon headstart
+  requires carrots 1
+  effect headStart add 0.2
+end
+
+tech headstart_3
+  name Head Start 3
+  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
+  max 1
+  cost 240
+  growth 1
+  pos 1 7
+  icon headstart
+  requires headstart_2 1
+  effect headStart add 0.2
+end
+
+tech headstart_4
+  name Head Start 4
+  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
+  max 1
+  cost 480
+  growth 1
+  pos 1 8
+  icon headstart
+  requires headstart_3 1
+  effect headStart add 0.2
+end
+
+tech headstart_5
+  name Head Start 5
+  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
+  max 1
+  cost 960
+  growth 1
+)TECHTREE",
+R"TECHTREE(  pos 1 9
+  icon headstart
+  requires headstart_4 1
+  effect headStart add 0.2
+end
+
 tech growspeed
   name Fertile Soil 1
-  desc Richer compost: vegetables grow 12% faster.
+  desc Richer compost. Vegetables grow 12% faster per level.
   max 1
-  cost 9
+  cost 25
   growth 1
-  pos -0 1.75
-  requires barn 1
+  pos -2 -0
+  requires patch 1
   effect growTime multiply 0.88
 end
 
 tech growspeed_2
   name Fertile Soil 2
-  desc Richer compost: vegetables grow 12% faster.
+  desc Richer compost. Vegetables grow 12% faster per level.
   max 1
-  cost 34
+  cost 45
   growth 1
-  pos -0 3.5
+  pos -7 -0
   icon growspeed
-  requires growspeed 1
+  requires farmhand 1
   effect growTime multiply 0.88
 end
 
 tech growspeed_3
   name Fertile Soil 3
-  desc Richer compost: vegetables grow 12% faster.
+  desc Richer compost. Vegetables grow 12% faster per level.
   max 1
-  cost 84
+  cost 81
   growth 1
-  pos -0 5.25
+  pos -3 3
   icon growspeed
-  requires growspeed_2 1
   effect growTime multiply 0.88
 end
 
 tech growspeed_4
   name Fertile Soil 4
-  desc Richer compost: vegetables grow 12% faster.
+  desc Richer compost. Vegetables grow 12% faster per level.
   max 1
-  cost 370
+  cost 146
   growth 1
-  pos -0 7
+  pos -3 4
   icon growspeed
   requires growspeed_3 1
   effect growTime multiply 0.88
@@ -1223,11 +1280,11 @@ end
 
 tech growspeed_5
   name Fertile Soil 5
-  desc Richer compost: vegetables grow 12% faster.
+  desc Richer compost. Vegetables grow 12% faster per level.
   max 1
-  cost 3500
+  cost 263
   growth 1
-  pos -0 8.75
+  pos -3 5
   icon growspeed
   requires growspeed_4 1
   effect growTime multiply 0.88
@@ -1235,11 +1292,11 @@ end
 
 tech growspeed_6
   name Fertile Soil 6
-  desc Richer compost: vegetables grow 12% faster.
+  desc Richer compost. Vegetables grow 12% faster per level.
   max 1
-  cost 6800
+  cost 473
   growth 1
-  pos -0 10.5
+  pos -3 6
   icon growspeed
   requires growspeed_5 1
   effect growTime multiply 0.88
@@ -1247,12 +1304,11 @@ end
 
 tech growspeed_7
   name Fertile Soil 7
-  desc Richer compost: vegetables grow 12% faster.
+  desc Richer compost. Vegetables grow 12% faster per level.
   max 1
-)TECHTREE",
-R"TECHTREE(  cost 32000
+  cost 851
   growth 1
-  pos -0 12.25
+  pos -3 7
   icon growspeed
   requires growspeed_6 1
   effect growTime multiply 0.88
@@ -1260,140 +1316,104 @@ end
 
 tech growspeed_8
   name Fertile Soil 8
-  desc Richer compost: vegetables grow 12% faster.
+  desc Richer compost. Vegetables grow 12% faster per level.
   max 1
-  cost 81000
+  cost 1531
   growth 1
-  pos -0 14
+  pos -3 8
   icon growspeed
   requires growspeed_7 1
   effect growTime multiply 0.88
 end
 
-tech carrots
-  name Carrots
-  desc Unlocks carrots. They grow slower but sell for 4 coins each.
-  max 1
-  cost 14
-  growth 1
-  pos 0.693 2.25
-  requires growspeed 1
-  effect cropTier atleast 1
-end
-
-tech pumpkins
-  name Pumpkins
-  desc Unlocks pumpkins. Slow to grow and hard to pick, but worth 15 coins each.
-  max 1
-  cost 370
-  growth 1
-  pos -0.693 5.75
-  requires growspeed_3 1
-  effect cropTier atleast 2
-end
-
-tech turnip
-  name Turnips
-  desc Unlocks turnips. The slowest crop of all, but worth 38 coins each.
-  max 1
-  cost 13000
-  growth 1
-  pos 0.693 11
-  icon crop_turnip
-  requires growspeed_6 1
-  effect cropTier atleast 3
-end
-
 tech value
   name Prize Produce 1
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 34
+  cost 30
   growth 1
-  pos -0.693 4
-  requires growspeed_2 1
+  pos -0 3
+  requires pickspeed 1
   effect valueMult add 0.25
 end
 
 tech value_2
   name Prize Produce 2
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 48
+  cost 53
   growth 1
-  pos -1.386 4.5
+  pos 2 0
   icon value
-  requires value 1
+  requires daylength 1
   effect valueMult add 0.25
 end
 
 tech value_3
   name Prize Produce 3
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 110
+  cost 92
   growth 1
-  pos -2.078 5
+  pos 4 -2
   icon value
-  requires value_2 1
+  requires seeds_2 1
   effect valueMult add 0.25
 end
 
 tech value_4
   name Prize Produce 4
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 750
+  cost 161
   growth 1
-  pos -2.771 5.5
+  pos 8 4
   icon value
-  requires value_3 1
   effect valueMult add 0.25
 end
 
 tech value_5
   name Prize Produce 5
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 2800
+  cost 282
   growth 1
-  pos -3.464 6
+  pos -8 -4.5
   icon value
-  requires value_4 1
+  requires farmerpick 1
   effect valueMult add 0.25
 end
 
 tech value_6
   name Prize Produce 6
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 5100
+  cost 493
   growth 1
-  pos -4.157 6.5
+  pos -7 -7
   icon value
-  requires value_5 1
+  requires pumpkins 1
   effect valueMult add 0.25
 end
 
 tech value_7
   name Prize Produce 7
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 12000
+  cost 862
   growth 1
-  pos -4.85 7
+  pos 8 7
   icon value
-  requires value_6 1
   effect valueMult add 0.25
 end
 
 tech value_8
   name Prize Produce 8
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 53000
+  cost 1508
   growth 1
-  pos -5.543 7.5
+  pos 8 8
   icon value
   requires value_7 1
   effect valueMult add 0.25
@@ -1401,11 +1421,11 @@ end
 
 tech value_9
   name Prize Produce 9
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 95000
+  cost 2639
   growth 1
-  pos -6.235 8
+  pos 8 9
   icon value
   requires value_8 1
   effect valueMult add 0.25
@@ -1413,11 +1433,11 @@ end
 
 tech value_10
   name Prize Produce 10
-  desc Bigger, shinier vegetables: every vegetable sells for a little more.
+  desc Bigger, shinier vegetables. Every vegetable sells for 25% more per level.
   max 1
-  cost 160000
+  cost 4619
   growth 1
-  pos -6.928 8.5
+  pos 8 10
   icon value
   requires value_9 1
   effect valueMult add 0.25
@@ -1429,8 +1449,8 @@ tech reach
   max 1
   cost 150
   growth 1
-  pos 1.05 -5.843
-  requires patch_9 1
+  pos -2 -1
+  requires patch 1
   effect reach add 1
 end
 
@@ -1438,11 +1458,11 @@ tech reach_2
   name Wide Reach 2
   desc Long arms. Pick every ripe vegetable inside a circle around the mouse.
   max 1
-  cost 1400
+  cost 525
   growth 1
-  pos 1.743 -6.343
+  pos 5.5 -1.5
   icon reach
-  requires reach 1
+  requires value_3 1
   effect reach add 1
 end
 
@@ -1450,81 +1470,44 @@ tech reach_3
   name Wide Reach 3
   desc Long arms. Pick every ripe vegetable inside a circle around the mouse.
   max 1
-  cost 32000
+  cost 1838
   growth 1
-  pos 2.436 -6.843
+  pos 4 5.5
   icon reach
-  requires reach_2 1
+  requires pickspeed_5 1
   effect reach add 1
 end
 
-tech headstart
-  name Head Start 1
-  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
+tech carrots
+  name Carrots
+  desc Unlocks carrots. They grow slower but sell for 4 coins each.
   max 1
-  cost 100
+  cost 180
   growth 1
-  pos 3.325 3.915
-  requires daylength_9 1
-  effect headStart add 0.2
-end
-
-tech headstart_2
-  name Head Start 2
-  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
-  max 1
-  cost 870
-  growth 1
-  pos 3.325 4.915
-  icon headstart
+  pos -1.5 4.5
   requires headstart 1
-  effect headStart add 0.2
+  effect cropTier atleast 2
 end
 
-tech headstart_3
-  name Head Start 3
-  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
+tech pumpkins
+  name Pumpkins
+  desc Unlocks pumpkins. Slow to grow and hard to pick, but worth 15 coins each.
   max 1
-  cost 4300
+  cost 1500
   growth 1
-  pos 3.325 5.915
-  icon headstart
-  requires headstart_2 1
-  effect headStart add 0.2
-end
-
-tech headstart_4
-  name Head Start 4
-  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
-  max 1
-  cost 24000
-  growth 1
-  pos 3.325 6.915
-  icon headstart
-  requires headstart_3 1
-  effect headStart add 0.2
-end
-
-tech headstart_5
-  name Head Start 5
-  desc Crops keep growing overnight. Part of the patch is already ripe when the day begins.
-  max 1
-  cost 81000
-  growth 1
-  pos 3.325 7.915
-  icon headstart
-  requires headstart_4 1
-  effect headStart add 0.2
+  pos -6 -5.5
+  requires farmerpick 1
+  effect cropTier atleast 3
 end
 
 tech autopick
   name Helping Hand
   desc Sometimes picking a crop also picks a ripe one next to it: 10% chance, 1 crop, within 1.5 plant widths.
   max 1
-  cost 85
+  cost 200
   growth 1
-  pos 3.707 -1.675
-  requires pickspeed_3 1
+  pos -3 -1
+  requires growspeed 1
   effect autoPickChance add 10
   effect autoPickCount add 1
   effect autoPickRadius add 1.5
@@ -1532,70 +1515,69 @@ end
 
 tech autopickchance
   name Lucky Streak 1
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 140
+  cost 150
   growth 1
-  pos 4.399 -1.175
+  pos -4.5 0.5
   requires autopick 1
   effect autoPickChance add 5
 end
 
 tech autopickchance_2
   name Lucky Streak 2
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 340
+  cost 255
   growth 1
-  pos 5.092 -0.675
+  pos -8.5 -3
   icon autopickchance
-  requires autopickchance 1
+  requires farmerpick 1
   effect autoPickChance add 5
 end
 
 tech autopickchance_3
   name Lucky Streak 3
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 1200
+  cost 434
   growth 1
-  pos 5.785 -0.175
+  pos 5.5 -3
   icon autopickchance
-  requires autopickchance_2 1
+  requires value_3 1
   effect autoPickChance add 5
 end
 
 tech autopickchance_4
   name Lucky Streak 4
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 3500
+  cost 737
   growth 1
-  pos 6.478 0.325
+  pos 5.5 1
   icon autopickchance
-  requires autopickchance_3 1
+  requires autopickradius_2 1
   effect autoPickChance add 5
 end
 
 tech autopickchance_5
   name Lucky Streak 5
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 5800
+  cost 1253
   growth 1
-  pos 7.171 0.825
+  pos 5 9
   icon autopickchance
-  requires autopickchance_4 1
   effect autoPickChance add 5
 end
 
 tech autopickchance_6
   name Lucky Streak 6
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 9200
+  cost 2130
   growth 1
-  pos 7.864 1.325
+  pos 5 10
   icon autopickchance
   requires autopickchance_5 1
   effect autoPickChance add 5
@@ -1603,11 +1585,11 @@ end
 
 tech autopickchance_7
   name Lucky Streak 7
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 31000
+  cost 3621
   growth 1
-  pos 8.556 1.825
+  pos 5 11
   icon autopickchance
   requires autopickchance_6 1
   effect autoPickChance add 5
@@ -1615,11 +1597,11 @@ end
 
 tech autopickchance_8
   name Lucky Streak 8
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 65000
+  cost 6156
   growth 1
-  pos 9.249 2.325
+  pos 5 12
   icon autopickchance
   requires autopickchance_7 1
   effect autoPickChance add 5
@@ -1627,11 +1609,11 @@ end
 
 tech autopickchance_9
   name Lucky Streak 9
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 93000
+  cost 10464
   growth 1
-  pos 9.942 2.825
+  pos 5 13
   icon autopickchance
   requires autopickchance_8 1
   effect autoPickChance add 5
@@ -1639,11 +1621,11 @@ end
 
 tech autopickchance_10
   name Lucky Streak 10
-  desc Helping Hand happens more often: +5% chance.
+  desc Helping Hand happens more often: +5% chance per level.
   max 1
-  cost 140000
+  cost 17789
   growth 1
-  pos 10.635 3.325
+  pos 5 14
   icon autopickchance
   requires autopickchance_9 1
   effect autoPickChance add 5
@@ -1651,35 +1633,34 @@ end
 
 tech autopickcount
   name Bumper Bunch 1
-  desc Helping Hand picks one more nearby crop.
+  desc Helping Hand picks one more nearby crop per level.
   max 1
-  cost 9300
+  cost 250
   growth 1
-  pos 8.556 0.825
-  requires autopickchance_6 1
+  pos 6 5
   effect autoPickCount add 1
 end
 
 tech autopickcount_2
   name Bumper Bunch 2
-)TECHTREE",
-R"TECHTREE(  desc Helping Hand picks one more nearby crop.
+  desc Helping Hand picks one more nearby crop per level.
   max 1
-  cost 10000
+  cost 550
   growth 1
-  pos 9.249 0.325
+  pos 6 6
   icon autopickcount
   requires autopickcount 1
-  effect autoPickCount add 1
+)TECHTREE",
+R"TECHTREE(  effect autoPickCount add 1
 end
 
 tech autopickcount_3
   name Bumper Bunch 3
-  desc Helping Hand picks one more nearby crop.
+  desc Helping Hand picks one more nearby crop per level.
   max 1
-  cost 11000
+  cost 1210
   growth 1
-  pos 9.942 -0.175
+  pos 6 7
   icon autopickcount
   requires autopickcount_2 1
   effect autoPickCount add 1
@@ -1687,11 +1668,11 @@ end
 
 tech autopickcount_4
   name Bumper Bunch 4
-  desc Helping Hand picks one more nearby crop.
+  desc Helping Hand picks one more nearby crop per level.
   max 1
-  cost 61000
+  cost 2662
   growth 1
-  pos 10.635 -0.675
+  pos 6 8
   icon autopickcount
   requires autopickcount_3 1
   effect autoPickCount add 1
@@ -1699,11 +1680,11 @@ end
 
 tech autopickcount_5
   name Bumper Bunch 5
-  desc Helping Hand picks one more nearby crop.
+  desc Helping Hand picks one more nearby crop per level.
   max 1
-  cost 130000
+  cost 5857
   growth 1
-  pos 11.328 -1.175
+  pos 6 9
   icon autopickcount
   requires autopickcount_4 1
   effect autoPickCount add 1
@@ -1711,46 +1692,45 @@ end
 
 tech autopickradius
   name Spreading Roots 1
-  desc Helping Hand reaches further: +0.5 plant widths.
+  desc Helping Hand reaches further: +0.5 plant widths per level.
   max 1
-  cost 1200
+  cost 180
   growth 1
-  pos 6.478 -0.675
-  requires autopickchance_3 1
+  pos -4.5 -1
+  requires autopick 1
   effect autoPickRadius add 0.5
 end
 
 tech autopickradius_2
   name Spreading Roots 2
-  desc Helping Hand reaches further: +0.5 plant widths.
+  desc Helping Hand reaches further: +0.5 plant widths per level.
   max 1
-  cost 2600
+  cost 342
   growth 1
-  pos 7.171 -1.175
+  pos 4 -0
   icon autopickradius
-  requires autopickradius 1
+  requires seeds_2 1
   effect autoPickRadius add 0.5
 end
 
 tech autopickradius_3
   name Spreading Roots 3
-  desc Helping Hand reaches further: +0.5 plant widths.
+  desc Helping Hand reaches further: +0.5 plant widths per level.
   max 1
-  cost 5700
+  cost 650
   growth 1
-  pos 7.864 -1.675
+  pos 7 7
   icon autopickradius
-  requires autopickradius_2 1
   effect autoPickRadius add 0.5
 end
 
 tech autopickradius_4
   name Spreading Roots 4
-  desc Helping Hand reaches further: +0.5 plant widths.
+  desc Helping Hand reaches further: +0.5 plant widths per level.
   max 1
-  cost 25000
+  cost 1235
   growth 1
-  pos 8.556 -2.175
+  pos 7 8
   icon autopickradius
   requires autopickradius_3 1
   effect autoPickRadius add 0.5
@@ -1758,11 +1738,11 @@ end
 
 tech autopickradius_5
   name Spreading Roots 5
-  desc Helping Hand reaches further: +0.5 plant widths.
+  desc Helping Hand reaches further: +0.5 plant widths per level.
   max 1
-  cost 69000
+  cost 2346
   growth 1
-  pos 9.249 -2.675
+  pos 7 9
   icon autopickradius
   requires autopickradius_4 1
   effect autoPickRadius add 0.5
@@ -1770,11 +1750,11 @@ end
 
 tech autopickradius_6
   name Spreading Roots 6
-  desc Helping Hand reaches further: +0.5 plant widths.
+  desc Helping Hand reaches further: +0.5 plant widths per level.
   max 1
-  cost 140000
+  cost 4457
   growth 1
-  pos 9.942 -3.175
+  pos 7 10
   icon autopickradius
   requires autopickradius_5 1
   effect autoPickRadius add 0.5
@@ -1784,43 +1764,43 @@ tech farmhand
   name Farmhand
   desc Hire a farmer who walks the patch picking ripe crops for you. Farmers pick the nearest ripe crop no one else is going for.
   max 1
-  cost 250
+  cost 400
   growth 1
-  pos -1.039 -0.75
-  requires barn 1
+  pos -5.5 -1
+  requires autopickradius 1
+  requires autopickchance 1
   effect farmers add 1
 end
 
 tech farmcrew
   name Farm Crew 1
-  desc Hire another farmer.
+  desc Hire another farmer per level.
   max 1
-  cost 2600
+  cost 1200
   growth 1
-  pos -2.771 -1
-  requires farmerspeed 1
+  pos -6 -8
+  requires pumpkins 1
   effect farmers add 1
 end
 
 tech farmcrew_2
   name Farm Crew 2
-  desc Hire another farmer.
+  desc Hire another farmer per level.
   max 1
-  cost 6100
+  cost 2880
   growth 1
-  pos -3.464 -0.5
+  pos -6 3.5
   icon farmcrew
-  requires farmcrew 1
   effect farmers add 1
 end
 
 tech farmcrew_3
   name Farm Crew 3
-  desc Hire another farmer.
+  desc Hire another farmer per level.
   max 1
-  cost 45000
+  cost 6912
   growth 1
-  pos -4.157 0
+  pos -6 5
   icon farmcrew
   requires farmcrew_2 1
   effect farmers add 1
@@ -1828,11 +1808,11 @@ end
 
 tech farmcrew_4
   name Farm Crew 4
-  desc Hire another farmer.
+  desc Hire another farmer per level.
   max 1
-  cost 100000
+  cost 16589
   growth 1
-  pos -4.85 0.5
+  pos -6 6
   icon farmcrew
   requires farmcrew_3 1
   effect farmers add 1
@@ -1840,46 +1820,45 @@ end
 
 tech farmerspeed
   name Comfy Boots 1
-  desc Farmers walk faster.
+  desc Farmers walk 20% faster per level.
   max 1
-  cost 940
+  cost 300
   growth 1
-  pos -2.078 -1.5
+  pos -7.5 -1.5
   requires farmhand 1
   effect farmerSpeed add 0.4
 end
 
 tech farmerspeed_2
   name Comfy Boots 2
-  desc Farmers walk faster.
+  desc Farmers walk 20% faster per level.
   max 1
-  cost 2800
+  cost 540
   growth 1
-  pos -3.118 -2.25
+  pos -10 -3.5
   icon farmerspeed
-  requires farmerspeed 1
+  requires autopickchance_2 1
   effect farmerSpeed add 0.4
 end
 
 tech farmerspeed_3
   name Comfy Boots 3
-  desc Farmers walk faster.
+  desc Farmers walk 20% faster per level.
   max 1
-  cost 4600
+  cost 972
   growth 1
-  pos -4.157 -3
+  pos -7 5
   icon farmerspeed
-  requires farmerspeed_2 1
   effect farmerSpeed add 0.4
 end
 
 tech farmerspeed_4
   name Comfy Boots 4
-  desc Farmers walk faster.
+  desc Farmers walk 20% faster per level.
   max 1
-  cost 6900
+  cost 1750
   growth 1
-  pos -5.196 -3.75
+  pos -7 6
   icon farmerspeed
   requires farmerspeed_3 1
   effect farmerSpeed add 0.4
@@ -1887,11 +1866,11 @@ end
 
 tech farmerspeed_5
   name Comfy Boots 5
-  desc Farmers walk faster.
+  desc Farmers walk 20% faster per level.
   max 1
-  cost 26000
+  cost 3150
   growth 1
-  pos -6.235 -4.5
+  pos -7 7
   icon farmerspeed
   requires farmerspeed_4 1
   effect farmerSpeed add 0.4
@@ -1899,11 +1878,11 @@ end
 
 tech farmerspeed_6
   name Comfy Boots 6
-  desc Farmers walk faster.
+  desc Farmers walk 20% faster per level.
   max 1
-  cost 58000
+  cost 5669
   growth 1
-  pos -7.275 -5.25
+  pos -7 8
   icon farmerspeed
   requires farmerspeed_5 1
   effect farmerSpeed add 0.4
@@ -1911,11 +1890,11 @@ end
 
 tech farmerspeed_7
   name Comfy Boots 7
-  desc Farmers walk faster.
+  desc Farmers walk 20% faster per level.
   max 1
-  cost 86000
+  cost 10204
   growth 1
-  pos -8.314 -6
+  pos -7 9
   icon farmerspeed
   requires farmerspeed_6 1
   effect farmerSpeed add 0.4
@@ -1923,11 +1902,11 @@ end
 
 tech farmerspeed_8
   name Comfy Boots 8
-  desc Farmers walk faster.
+  desc Farmers walk 20% faster per level.
   max 1
-  cost 140000
+  cost 18367
   growth 1
-  pos -9.353 -6.75
+  pos -7 10
   icon farmerspeed
   requires farmerspeed_7 1
   effect farmerSpeed add 0.4
@@ -1935,46 +1914,45 @@ end
 
 tech farmerpick
   name Sharp Shears 1
-  desc Farmers pick 15% faster.
+  desc Farmers pick 15% faster per level.
   max 1
-  cost 6900
+  cost 350
   growth 1
-  pos -5.889 -3.25
-  requires farmerspeed_4 1
+  pos -7 -3
+  requires farmhand 1
   effect farmerPickTime multiply 0.85
 end
 
 tech farmerpick_2
   name Sharp Shears 2
-  desc Farmers pick 15% faster.
+  desc Farmers pick 15% faster per level.
   max 1
-  cost 7700
+  cost 648
   growth 1
-  pos -6.582 -2.75
+  pos -10 -1
   icon farmerpick
-  requires farmerpick 1
+  requires farmerspeed 1
   effect farmerPickTime multiply 0.85
 end
 
 tech farmerpick_3
   name Sharp Shears 3
-  desc Farmers pick 15% faster.
+  desc Farmers pick 15% faster per level.
   max 1
-  cost 8300
+  cost 1198
   growth 1
-  pos -7.275 -2.25
+  pos -8 5
   icon farmerpick
-  requires farmerpick_2 1
   effect farmerPickTime multiply 0.85
 end
 
 tech farmerpick_4
   name Sharp Shears 4
-  desc Farmers pick 15% faster.
+  desc Farmers pick 15% faster per level.
   max 1
-  cost 9000
+  cost 2217
   growth 1
-  pos -7.967 -1.75
+  pos -8 6
   icon farmerpick
   requires farmerpick_3 1
   effect farmerPickTime multiply 0.85
@@ -1982,11 +1960,11 @@ end
 
 tech farmerpick_5
   name Sharp Shears 5
-  desc Farmers pick 15% faster.
+  desc Farmers pick 15% faster per level.
   max 1
-  cost 28000
+  cost 4100
   growth 1
-  pos -8.66 -1.25
+  pos -8 7
   icon farmerpick
   requires farmerpick_4 1
   effect farmerPickTime multiply 0.85
@@ -1994,11 +1972,11 @@ end
 
 tech farmerpick_6
   name Sharp Shears 6
-  desc Farmers pick 15% faster.
+  desc Farmers pick 15% faster per level.
   max 1
-  cost 64000
+  cost 7585
   growth 1
-  pos -9.353 -0.75
+  pos -8 8
   icon farmerpick
   requires farmerpick_5 1
   effect farmerPickTime multiply 0.85
@@ -2006,11 +1984,11 @@ end
 
 tech farmerpick_7
   name Sharp Shears 7
-  desc Farmers pick 15% faster.
+  desc Farmers pick 15% faster per level.
   max 1
-  cost 110000
+  cost 14032
   growth 1
-  pos -10.046 -0.25
+  pos -8 9
   icon farmerpick
   requires farmerpick_6 1
   effect farmerPickTime multiply 0.85
@@ -2018,14 +1996,25 @@ end
 
 tech farmerpick_8
   name Sharp Shears 8
-  desc Farmers pick 15% faster.
+  desc Farmers pick 15% faster per level.
   max 1
-  cost 150000
+  cost 25958
   growth 1
-  pos -10.739 0.25
+  pos -8 10
   icon farmerpick
   requires farmerpick_7 1
   effect farmerPickTime multiply 0.85
+end
+
+tech turnip
+  name Turnip
+  desc Turnips now grow in patch
+  max 5
+  cost 1
+  growth 1.8
+  pos -5 7.5
+  icon crop_turnip
+  effect cropTier add 1
 end
 
 )TECHTREE",
