@@ -36,6 +36,7 @@ is brightened or darkened automatically.
 | `ui/hud_logo.png` | 336 x 30 |  | Game name in the top-left of the farm screen |
 | `ui/coin.png` | 64 x 64 |  | Coin icon |
 | `ui/dial_sky.png` | 256 x 256 |  | Day/night dial: the WHOLE sky disc. Day half on the right with the sun at the right middle, night half on the left with the moon at the left middle. The game turns it so the sun rises on the left, is at the top at noon and sets on the right, then the moon comes up; only the top half shows |
+| `ui/dial_sky_dawn_dusk.png` | 256 x 256 |  | Not used by the game: an example `ui/dial_sky` with a dawn/dusk band along the day/night edge (dawn colours at the bottom end, which shows at sunrise; dusk at the top end, which shows at sunset; all on the night side, so nothing shows at noon). Copy it to `assets/ui/dial_sky.png` to use it |
 | `ui/dial_frame.png` | 280 x 150 |  | Day/night dial: frame drawn over the sky disc. Leave the half-circle window see-through (it fills the frame's width minus about 6% each side, with the horizon about 79% of the way down); the bottom strip hides the sun as it sets |
 | `ui/pick_bar_back.png` | 128 x 16 |  | Behind the picking progress bar under a vegetable |
 | `ui/pick_bar_fill.png` | 128 x 16 |  | Picking progress bar when full (cropped while picking) |
