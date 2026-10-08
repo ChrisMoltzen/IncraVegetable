@@ -85,6 +85,8 @@ What you can replace:
 - **Tech tree**: background, top bar, upgrade tiles (four states), the hover pop-up, and an icon for each upgrade (`tree/icons/<name>`, 64 x 64, drawn in the middle of its tile; each tech uses the icon named after its id unless you pick another in the editor. There are 19 built-in pictures; a file named like one of them, e.g. `tree/icons/carrots.png`, repaints it, and any other name is a new icon you can choose)
 - **Font**: an optional bitmap font that replaces the built-in pixel font
 
+**Palette.** The game's colours come from a 32-colour muted palette: `art_templates/IncraVegetable.gpl` (load it in GIMP, Aseprite or Krita) and `art_templates/palette.png`, so your art can match. All text is drawn in these colours (`include/Palette.h`).
+
 Things to know:
 
 - Your images don't have to match the template size; they're scaled to fit. Keep the same shape (proportions) for best results.

@@ -8,6 +8,7 @@
 #include "Art.h"
 #include "DebugMenu.h"
 #include "Draw.h"
+#include "Palette.h"
 #include "Farm.h"
 #include "Menus.h"
 #include "TechData.h"
@@ -48,8 +49,8 @@ void drawGrassBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
 void drawHudLogoBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     float scale = std::min(rc.h / 9.f, rc.w / draw::textWidth("IncraVegetable", 1.f));
     float y = rc.y + (rc.h - 8.f * scale) * 0.5f;
-    draw::textShadow(r, rc.x, y, "Incra", scale, SDL_Color{120, 210, 90, 255});
-    draw::textShadow(r, rc.x + draw::textWidth("Incra", scale), y, "Vegetable", scale, SDL_Color{245, 150, 50, 255});
+    draw::textShadow(r, rc.x, y, "Incra", scale, pal::FreshLeaf);
+    draw::textShadow(r, rc.x + draw::textWidth("Incra", scale), y, "Vegetable", scale, pal::Pumpkin);
 }
 
 void drawPanelHeaderBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {

@@ -3,6 +3,7 @@
 #include "Art.h"
 #include "CropLooks.h"
 #include "Draw.h"
+#include "Palette.h"
 
 #include <algorithm>
 #include <cctype>
@@ -678,9 +679,9 @@ void Farm::harvest(int index, double& coins, std::mt19937& rng, PickedBy by) {
                               k % 3 == 0 ? SDL_Color{255, 225, 90, 255} : burst});
     }
     floatTexts_.push_back({cx, cy - plantSize_ * 0.3f, 1.0f, "+" + draw::number(gain),
-                           by == PickedBy::AutoPick ? SDL_Color{150, 240, 140, 255}
-                           : by == PickedBy::Farmer ? SDL_Color{190, 220, 255, 255}
-                                                    : SDL_Color{255, 230, 90, 255}});
+                           by == PickedBy::AutoPick ? pal::PaleShoot
+                           : by == PickedBy::Farmer ? pal::Mist
+                                                    : pal::PaleGold});
 
     // Auto-pick: a chance to also pick the nearest ripe crops within range.
     std::vector<int> extra;
@@ -694,7 +695,7 @@ void Farm::harvest(int index, double& coins, std::mt19937& rng, PickedBy by) {
         }
         std::sort(near.begin(), near.end());
         for (int k = 0; k < static_cast<int>(near.size()) && k < stats_.autoPickCount; ++k) extra.push_back(near[k].second);
-        if (!extra.empty()) floatTexts_.push_back({cx, cy - plantSize_ * 0.75f, 1.1f, "Auto-pick!", SDL_Color{150, 240, 140, 255}});
+        if (!extra.empty()) floatTexts_.push_back({cx, cy - plantSize_ * 0.75f, 1.1f, "Auto-pick!", pal::PaleShoot});
     }
 
     // Replant straight away, in a new random spot.

@@ -4,6 +4,7 @@
 #include "CropLooks.h"
 #include "TileShapes.h"
 #include "Draw.h"
+#include "Palette.h"
 #include "Farm.h"
 #include "UI.h"
 
@@ -30,11 +31,21 @@ SDL_FRect scaled(const SDL_FRect& rc, float cx, float cy, float z) {
     return SDL_FRect{cx + (rc.x - cx) * z, cy + (rc.y - cy) * z, rc.w * z, rc.h * z};
 }
 
-const SDL_Color kWhite{255, 255, 255, 255};
-const SDL_Color kGold{255, 205, 70, 255};
-const SDL_Color kGreen{110, 220, 110, 255};
-const SDL_Color kRed{240, 100, 90, 255};
-const SDL_Color kGrey{150, 150, 155, 255};
+// Text colours, from the palette (Palette.h).
+const SDL_Color kWhite = pal::Cream;
+const SDL_Color kGold = pal::Coin;
+const SDL_Color kGreen = pal::FreshLeaf;
+const SDL_Color kRed = pal::Rosehip;
+const SDL_Color kGrey = pal::Stone;
+// Tooltip text: the lightest shade of each colour, drawn with a shadow, so it
+// reads on the built-in dark box and on lighter art (e.g. a wooden one).
+const SDL_Color kTipTitle = pal::Cream;
+const SDL_Color kTipText = pal::Parchment;
+const SDL_Color kTipDim = pal::SageMist;
+const SDL_Color kTipNow = pal::Mist;
+const SDL_Color kTipGood = pal::PaleShoot;
+const SDL_Color kTipGold = pal::PaleGold;
+const SDL_Color kTipBad = pal::Skin; // the palette's reds are too dark to read on a box, so warnings are a warm pink-beige
 } // namespace
 
 void TechTreeScreen::open(const TechTree& tree) {
@@ -396,19 +407,19 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
     };
     std::vector<Line> lines;
     const bool maxed = tree.isMaxed(n), unlocked = tree.prereqsMet(n);
-    lines.push_back({n.name, 2.5f, maxed ? kGold : kWhite});
+    lines.push_back({n.name, 2.5f, maxed ? kTipGold : kTipTitle});
     lines.push_back({maxed ? draw::strf("Level %d / %d  -  MAX", n.level, n.maxLevel)
                            : draw::strf("Level %d / %d", n.level, n.maxLevel),
-                     1.5f, maxed ? kGold : kGrey});
+                     1.5f, maxed ? kTipGold : kTipDim});
     lines.push_back({"", 0.6f, kWhite});
-    for (const auto& w : draw::wrap(n.description, 36)) lines.push_back({w, 1.5f, SDL_Color{200, 205, 200, 255}});
+    for (const auto& w : draw::wrap(n.description, 36)) lines.push_back({w, 1.5f, kTipText});
     lines.push_back({"", 0.8f, kWhite});
     if (n.describeStats) {
         // Worked out from all your upgrades, so e.g. a second farmer reads "2 farmers".
-        lines.push_back({"Now:  " + n.describeStats(tree.computeStats()), 1.5f, SDL_Color{190, 220, 255, 255}});
-        if (!maxed) lines.push_back({"Next: " + n.describeStats(tree.computeStatsWith(n, n.level + 1)), 1.5f, kGreen});
+        lines.push_back({"Now:  " + n.describeStats(tree.computeStats()), 1.5f, kTipNow});
+        if (!maxed) lines.push_back({"Next: " + n.describeStats(tree.computeStatsWith(n, n.level + 1)), 1.5f, kTipGood});
         if (n.maxLevel > 1 && n.level + 1 < n.maxLevel)
-            lines.push_back({"At max: " + n.describeStats(tree.computeStatsWith(n, n.maxLevel)), 1.5f, kGrey});
+            lines.push_back({"At max: " + n.describeStats(tree.computeStatsWith(n, n.maxLevel)), 1.5f, kTipDim});
     }
     if (!n.describeStats) {
         // A tech that only unlocks others: say which.
@@ -419,7 +430,7 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
         if (!names.empty()) {
             bool first = true;
             for (const auto& w : draw::wrap("Unlocks: " + names, 36)) {
-                lines.push_back({(first ? "" : "  ") + w, 1.5f, SDL_Color{190, 220, 255, 255}});
+                lines.push_back({(first ? "" : "  ") + w, 1.5f, kTipNow});
                 first = false;
             }
         }
@@ -427,19 +438,19 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
     for (const auto& p : n.prereqs) {
         const TechNode* other = tree.find(p.id);
         if (other && other->level < p.level)
-            lines.push_back({draw::strf("Needs %s Lv %d", other->name.c_str(), p.level), 1.5f, kRed});
+            lines.push_back({draw::strf("Needs %s Lv %d", other->name.c_str(), p.level), 1.5f, kTipBad});
     }
     lines.push_back({"", 0.8f, kWhite});
     if (maxed) {
-        lines.push_back({"Fully upgraded!", 2.f, kGold});
+        lines.push_back({"Fully upgraded!", 2.f, kTipGold});
     } else {
         double c = tree.cost(n);
-        lines.push_back({"Price: " + draw::number(c) + " coins", 2.f, coins >= c ? kGold : kRed});
+        lines.push_back({"Price: " + draw::number(c) + " coins", 2.f, coins >= c ? kTipGold : kTipBad});
         const char* hint = !unlocked      ? "Locked"
                            : coins < c    ? "Not enough coins"
                            : touchMode_   ? "Tap again to buy"
                                           : "Click to buy";
-        lines.push_back({hint, 1.25f, unlocked && coins >= c ? kGreen : kGrey});
+        lines.push_back({hint, 1.25f, unlocked && coins >= c ? kTipGood : kTipDim});
     }
 
     float w = 0.f, h = 0.f;
@@ -464,7 +475,7 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
     art::draw(r, "ui/tooltip", SDL_FRect{x - 2, y - 2, w + 4, h + 4});
     float ty = y + 12.f;
     for (const auto& l : lines) {
-        if (!l.text.empty()) draw::text(r, x + 14, ty, l.text, l.scale, l.color);
+        if (!l.text.empty()) draw::textShadow(r, x + 14, ty, l.text, l.scale, l.color); // shadowed: reads on light or dark boxes
         ty += 8.f * l.scale + 6.f;
     }
 }
