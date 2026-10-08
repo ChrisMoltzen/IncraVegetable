@@ -59,4 +59,34 @@ editor-win:
 	g++ $(EDITOR_SRC) -o $(EDITOR_DIR)/TechTreeEditor.exe -Itools/TechTreeEditor/include $(WIN_INCLUDE_DIRS) $(WIN_LIBS) -std=c++20 $(OPT)
 	$(WIN_COPY_DLL_EDITOR)
 
-.PHONY: default editor win editor-win
+# ---------------------------------------------------------------------------
+# Release builds: every file in assets/ is compiled into the game, and it never
+# reads an assets folder, so players can't swap the art or sounds. The debug
+# screen (F1 / bug button) and F5 reload are left out, and saves must be the
+# scrambled kind. Everything goes in build/release/.
+#   make release        macOS: build/release/game
+#   make release-win    Windows: build/release/game.exe (+ SDL3.dll)
+# tools/AssetPacker (built and run first) turns assets/ into AssetPack.cpp.
+# ---------------------------------------------------------------------------
+RELEASE_DIR = $(OUTPUT_DIR)/release
+RELEASE_DEFS = -DINCRA_RELEASE -DINCRA_PACKED_ASSETS -DINCRA_DEBUG_TOOLS=0
+PACKER_SRC = tools/AssetPacker/main.cpp
+
+release:
+	mkdir -p $(RELEASE_DIR)
+	clang++ $(PACKER_SRC) -o $(RELEASE_DIR)/AssetPacker $(INCLUDE_DIRS) -std=c++20 -O2
+	$(RELEASE_DIR)/AssetPacker assets $(RELEASE_DIR)/AssetPack.cpp
+	clang++ $(SRC) $(RELEASE_DIR)/AssetPack.cpp -o $(RELEASE_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(RELEASE_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
+
+WIN_RELEASE_DIR = powershell -NoProfile -Command "New-Item -ItemType Directory -Force '$(RELEASE_DIR)' | Out-Null"
+WIN_RUN_PACKER = powershell -NoProfile -Command "& './$(RELEASE_DIR)/AssetPacker.exe' assets '$(RELEASE_DIR)/AssetPack.cpp'"
+WIN_COPY_DLL_RELEASE = powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(RELEASE_DIR)/'"
+
+release-win:
+	$(WIN_RELEASE_DIR)
+	g++ $(PACKER_SRC) -o $(RELEASE_DIR)/AssetPacker.exe $(INCLUDE_DIRS) -static -std=c++20 -O2
+	$(WIN_RUN_PACKER)
+	g++ $(SRC) $(RELEASE_DIR)/AssetPack.cpp -o $(RELEASE_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(RELEASE_DEFS) $(WIN_LIBS) -std=c++20 $(OPT) -mwindows
+	$(WIN_COPY_DLL_RELEASE)
+
+.PHONY: default editor win editor-win release release-win

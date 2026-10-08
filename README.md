@@ -31,6 +31,23 @@ make editor-win     # the Tech Tree Editor: build\techtree\TechTreeEditor.exe
 - `g++ --version` must be 10 or newer (for C++20).
 - Error **0xc000007b** when starting means a 32-bit DLL got loaded. Make sure `build\SDL3.dll` is the one from `lib\x64`, not `lib\x86` (`make win` copies the right one).
 
+## Release builds
+
+A release build is the version to give to players:
+
+```
+make release        # macOS: build/release/game
+make release-win    # Windows: build\release\game.exe (with SDL3.dll next to it)
+```
+
+- **Art and sounds are built in.** Everything in `assets/` (images, `art.txt` and `audio/`) is compiled into the game, scrambled, so it can't simply be copied out of the .exe. The game never looks at an `assets` folder, so swapping files next to it changes nothing. To ship new art, rebuild.
+- **No debug tools.** The debug screen (F1 / the bug button) and F5 reload are left out.
+- **Saves.** Release builds only load scrambled saves (see Saving).
+- **To give it to someone,** send the files in `build/release/`: `game.exe` and `SDL3.dll`. Leave out `AssetPacker.exe` and `AssetPack.cpp`; those are only used to make the build.
+- **No console.** On Windows the release game opens without a console window.
+
+How it works: `tools/AssetPacker` (built and run by `make release`) turns `assets/` into `build/release/AssetPack.cpp`, which is compiled in. The scrambling keeps casual players from extracting or editing files, but it isn't encryption. Someone determined, with a debugger, could still get at them.
+
 ## Building for iPhone and iPad
 
 You need a Mac with Xcode 15 or newer and CMake 3.21+ (`brew install cmake`).
@@ -163,6 +180,8 @@ Save and settings files live in your user data folder:
 - macOS: `~/Library/Application Support/IncraVegetable/IncraVegetable/`
 - Linux: `~/.local/share/IncraVegetable/IncraVegetable/`
 - iOS: inside the app's own storage (removed if the app is deleted)
+
+**Save files are scrambled.** Each save is stored scrambled, with a check value, so it can't be opened and edited as text. If a save has been edited (or damaged), it fails the check and the backup (`slotN.sav.bak`) loads instead. Development builds still read old plain-text saves and re-save them scrambled; release builds don't. As with the assets, this keeps honest players honest rather than being real encryption.
 
 ## Controls
 

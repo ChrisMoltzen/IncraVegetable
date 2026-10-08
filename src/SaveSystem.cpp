@@ -3,7 +3,79 @@
 #include "Draw.h"
 
 #include <algorithm>
+#include <cstring>
 #include <sstream>
+
+namespace {
+// Save file layout: "IVSV" | version (1 byte) | nonce (8) | scrambled text | check (8).
+constexpr char kMagic[4] = {'I', 'V', 'S', 'V'};
+constexpr Uint8 kVersion = 1;
+constexpr Uint64 kKey = 0x6A09E667F3BCC908ull;  // scramble key
+constexpr Uint64 kSalt = 0xBB67AE8584CAA73Bull; // mixed into the check value
+
+Uint64 splitmix(Uint64& state) {
+    Uint64 z = (state += 0x9E3779B97F4A7C15ull);
+    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+    z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+    return z ^ (z >> 31);
+}
+
+void scrambleText(std::string& bytes, Uint64 nonce) {
+    Uint64 state = kKey ^ nonce;
+    Uint64 word = 0;
+    for (size_t i = 0; i < bytes.size(); ++i) {
+        if (i % 8 == 0) word = splitmix(state);
+        bytes[i] = static_cast<char>(bytes[i] ^ static_cast<char>(word >> (8 * (i % 8))));
+    }
+}
+
+Uint64 checkValue(const std::string& text, Uint64 nonce) {
+    Uint64 h = 0xCBF29CE484222325ull ^ kSalt ^ nonce; // FNV-1a, salted
+    for (unsigned char c : text) {
+        h ^= c;
+        h *= 0x100000001B3ull;
+    }
+    Uint64 state = h;
+    return splitmix(state);
+}
+
+void putU64(std::string& out, Uint64 v) {
+    for (int i = 0; i < 8; ++i) out.push_back(static_cast<char>(v >> (8 * i)));
+}
+Uint64 getU64(const std::string& in, size_t at) {
+    Uint64 v = 0;
+    for (int i = 0; i < 8; ++i) v |= static_cast<Uint64>(static_cast<unsigned char>(in[at + i])) << (8 * i);
+    return v;
+}
+} // namespace
+
+std::string SaveSystem::encodeSave(const std::string& text) {
+    Uint64 nonce = (static_cast<Uint64>(SDL_GetTicksNS()) * 0x9E3779B97F4A7C15ull) ^ (static_cast<Uint64>(SDL_rand_bits()) << 32);
+    std::string out(kMagic, 4);
+    out.push_back(static_cast<char>(kVersion));
+    putU64(out, nonce);
+    std::string body = text;
+    scrambleText(body, nonce);
+    out += body;
+    putU64(out, checkValue(text, nonce));
+    return out;
+}
+
+bool SaveSystem::decodeSave(const std::string& file, std::string& text) {
+    if (file.size() >= 4 && std::memcmp(file.data(), kMagic, 4) == 0) {
+        if (file.size() < 4 + 1 + 8 + 8 || static_cast<Uint8>(file[4]) != kVersion) return false;
+        const Uint64 nonce = getU64(file, 5);
+        text = file.substr(13, file.size() - 13 - 8);
+        scrambleText(text, nonce);
+        return checkValue(text, nonce) == getU64(file, file.size() - 8); // edited or damaged otherwise
+    }
+#ifdef INCRA_RELEASE
+    return false; // release builds only accept scrambled saves
+#else
+    text = file; // a plain-text save from before saves were scrambled
+    return true;
+#endif
+}
 
 bool SaveSystem::init() {
     char* pref = SDL_GetPrefPath("IncraVegetable", "IncraVegetable");
@@ -18,7 +90,7 @@ bool SaveSystem::init() {
     std::string legacy = dir_ + "save.txt";
     std::string contents;
     if (!slotInfo(0).exists && readFile(legacy, contents) && looksValid(contents)) {
-        if (writeFileAtomic(slotPath(0), contents, false)) {
+        if (writeFileAtomic(slotPath(0), encodeSave(contents), false)) {
             SDL_RemovePath(legacy.c_str());
             Settings s = loadSettings();
             s.lastSlot = 0;
@@ -68,14 +140,14 @@ bool SaveSystem::looksValid(const std::string& contents) {
 
 bool SaveSystem::writeSlot(int slot, const std::string& contents) const {
     if (dir_.empty() || slot < 0 || slot >= kSlotCount) return false;
-    return writeFileAtomic(slotPath(slot), contents, true);
+    return writeFileAtomic(slotPath(slot), encodeSave(contents), true);
 }
 
 bool SaveSystem::readSlot(int slot, std::string& out) const {
     if (dir_.empty() || slot < 0 || slot >= kSlotCount) return false;
-    std::string path = slotPath(slot);
-    if (readFile(path, out) && looksValid(out)) return true;
-    if (readFile(path + ".bak", out) && looksValid(out)) {
+    std::string path = slotPath(slot), file;
+    if (readFile(path, file) && decodeSave(file, out) && looksValid(out)) return true;
+    if (readFile(path + ".bak", file) && decodeSave(file, out) && looksValid(out)) {
         SDL_Log("Slot %d was damaged; loaded the backup instead", slot + 1);
         return true;
     }

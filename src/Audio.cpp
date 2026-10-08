@@ -1,5 +1,7 @@
 #include "Audio.h"
 
+#include "AssetPack.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cctype>
@@ -88,12 +90,23 @@ bool endsWith(const std::string& s, const char* ext) {
 }
 
 // Reads a WAV, OGG or MP3 file into 44.1 kHz stereo. Returns false (with a reason) if it can't.
+// (From disk, or from the assets compiled into a release build.)
 bool decodeFile(const std::string& path, std::vector<float>& out, std::string& why) {
+    size_t fileSize = 0;
+    void* file = assetpack::load(path, &fileSize);
+    if (!file) {
+        why = "can't read the file";
+        return false;
+    }
+    struct Free {
+        void* p;
+        ~Free() { SDL_free(p); }
+    } freeFile{file};
     if (endsWith(path, ".wav")) {
         SDL_AudioSpec spec;
         Uint8* buf = nullptr;
         Uint32 len = 0;
-        if (!SDL_LoadWAV(path.c_str(), &spec, &buf, &len)) {
+        if (!SDL_LoadWAV_IO(SDL_IOFromConstMem(file, fileSize), true, &spec, &buf, &len)) {
             why = SDL_GetError();
             return false;
         }
@@ -105,7 +118,8 @@ bool decodeFile(const std::string& path, std::vector<float>& out, std::string& w
     if (endsWith(path, ".ogg")) {
         int channels = 0, rate = 0;
         short* pcm = nullptr;
-        int frames = stb_vorbis_decode_filename(path.c_str(), &channels, &rate, &pcm);
+        int frames = stb_vorbis_decode_memory(static_cast<const unsigned char*>(file), static_cast<int>(fileSize),
+                                              &channels, &rate, &pcm);
         if (frames <= 0 || !pcm) {
             why = "not a readable OGG Vorbis file";
             return false;
@@ -119,7 +133,7 @@ bool decodeFile(const std::string& path, std::vector<float>& out, std::string& w
     if (endsWith(path, ".mp3")) {
         drmp3_config cfg{};
         drmp3_uint64 frames = 0;
-        float* pcm = drmp3_open_file_and_read_pcm_frames_f32(path.c_str(), &cfg, &frames, nullptr);
+        float* pcm = drmp3_open_memory_and_read_pcm_frames_f32(file, fileSize, &cfg, &frames, nullptr);
         if (!pcm || frames == 0) {
             why = "not a readable MP3 file";
             return false;
@@ -138,8 +152,7 @@ bool decodeFile(const std::string& path, std::vector<float>& out, std::string& w
 std::string findSound(const std::string& folder, const std::string& name) {
     for (const char* ext : {".wav", ".ogg", ".mp3"}) {
         std::string p = folder + name + ext;
-        SDL_PathInfo info;
-        if (SDL_GetPathInfo(p.c_str(), &info) && info.type == SDL_PATHTYPE_FILE) return p;
+        if (assetpack::exists(p)) return p;
     }
     return "";
 }

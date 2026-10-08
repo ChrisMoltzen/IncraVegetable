@@ -1,6 +1,7 @@
 #include "Game.h"
 
 #include "Art.h"
+#include "AssetPack.h"
 #include "Draw.h"
 #include "Palette.h"
 #include "Platform.h"
@@ -422,7 +423,7 @@ void Game::handleEvent(SDL_Event& e) {
     }
 
     // F5 reloads the artwork from assets/, so you can see changes without restarting.
-    if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_F5 && !e.key.repeat) {
+    if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_F5 && !e.key.repeat && !assetpack::embedded()) {
         int n = art::reload();
         int s = loadSounds();
         showToast(art::assetDir().empty()
