@@ -28,6 +28,7 @@ public:
 
 private:
     SDL_FRect nodeRect(const TechNode& n) const;
+    void fitView(const TechTree& tree); // zoom and pan so every visible tech is on screen
     // Zoom: tiles are laid out at zoom 1, then scaled about the pivot (the
     // middle of the screen, horizontally, and the top row of tiles).
     SDL_FPoint toScreen(float x, float y) const;
