@@ -126,7 +126,13 @@ private:
     float viewZoom() const; // extra scale while the camera glides to a new zoom (1 = settled)
     Crop randomCrop(std::mt19937& rng) const;
     SDL_FRect plantRect(int index) const; // square the plant is drawn in
-    void drawFence(SDL_Renderer* r) const;
+    struct FenceRing {
+        SDL_FRect outer{}; // outside edge of the fence tiles
+        int nx = 0, ny = 0; // tiles along the top / down each side
+        float tw = 0, th = 0; // one tile
+    };
+    FenceRing fenceRing() const;
+    void drawFence(SDL_Renderer* r, bool front) const;
     int plantAt(float x, float y) const;  // nearest plant under the pointer, or -1
     float pickRadius() const;
     bool tileInReach(int index, float mx, float my) const;
