@@ -77,7 +77,7 @@ tech patch_2
   max 1
   cost 15
   growth 1
-  pos -3 -4
+  pos -3 -4.5
   icon patch
   requires seeds_3 1
   requires pickspeed_3 1
@@ -90,8 +90,9 @@ tech patch_3
   max 1
   cost 22
   growth 1
-  pos -2 2
+  pos -3 1.5
   icon patch
+  requires growspeed 1
   effect patchSize add 1
 end
 
@@ -101,9 +102,9 @@ tech patch_4
   max 1
   cost 31
   growth 1
-  pos -2 3
+  pos 6.5 -4.5
   icon patch
-  requires patch_3 1
+  requires autopickchance_3 1
   effect patchSize add 1
 end
 
@@ -113,9 +114,9 @@ tech patch_5
   max 1
   cost 45
   growth 1
-  pos -2 4
+  pos 7.5 2
   icon patch
-  requires patch_4 1
+  requires autopickchance_4 1
   effect patchSize add 1
 end
 
@@ -125,9 +126,9 @@ tech patch_6
   max 1
   cost 65
   growth 1
-  pos -2 5
+  pos 9 -1
   icon patch
-  requires patch_5 1
+  requires seeds_9 1
   effect patchSize add 1
 end
 
@@ -137,9 +138,9 @@ tech patch_7
   max 1
   cost 93
   growth 1
-  pos -2 6
+  pos -6 1.5
   icon patch
-  requires patch_6 1
+  requires autopickchance 1
   effect patchSize add 1
 end
 
@@ -151,7 +152,6 @@ tech patch_8
   growth 1
   pos -2 7
   icon patch
-  requires patch_7 1
   effect patchSize add 1
 end
 
@@ -402,20 +402,20 @@ tech seeds
   cost 6
   growth 1
   pos -2 -2
-  requires patch 1
+)TECHTREE",
+R"TECHTREE(  requires patch 1
   effect maxCrops add 1
 end
-)TECHTREE",
-R"TECHTREE(
+
 tech seeds_2
   name More Seeds 2
   desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
   cost 9
   growth 1
-  pos -1 -2.5
+  pos 2 -1
   icon seeds
-  requires seeds 1
+  requires daylength 1
   effect maxCrops add 1
 end
 
@@ -427,7 +427,6 @@ tech seeds_3
   growth 1
   pos -2 -3.5
   icon seeds
-  requires seeds_2 1
   effect maxCrops add 2
 end
 
@@ -437,7 +436,7 @@ tech seeds_4
   max 1
   cost 21
   growth 1
-  pos -1 -4
+  pos -1 -4.5
   icon seeds
   requires seeds_3 1
   effect maxCrops add 2
@@ -449,7 +448,7 @@ tech seeds_5
   max 1
   cost 31
   growth 1
-  pos -2 -4.5
+  pos -2 -6
   icon seeds
   requires seeds_4 1
   effect maxCrops add 2
@@ -461,9 +460,9 @@ tech seeds_6
   max 1
   cost 46
   growth 1
-  pos -0.5 -6.5
+  pos -5 -7
   icon seeds
-  requires seeds_5 1
+  requires pumpkins 1
   effect maxCrops add 3
 end
 
@@ -473,9 +472,8 @@ tech seeds_7
   max 1
   cost 69
   growth 1
-  pos 5.5 -3.5
+  pos 10.5 9.5
   icon seeds
-  requires seeds_6 1
   effect maxCrops add 4
 end
 
@@ -485,7 +483,7 @@ tech seeds_8
   max 1
   cost 103
   growth 1
-  pos 7 -3
+  pos 10.5 5.5
   icon seeds
   requires seeds_7 1
   effect maxCrops add 5
@@ -497,9 +495,9 @@ tech seeds_9
   max 1
   cost 154
   growth 1
-  pos 6 -2
+  pos 5.5 -0.5
   icon seeds
-  requires seeds_8 1
+  requires autopickradius_2 1
   effect maxCrops add 6
 end
 
@@ -511,7 +509,6 @@ tech seeds_10
   growth 1
   pos -1 9
   icon seeds
-  requires seeds_9 1
   effect maxCrops add 7
 end
 
@@ -712,7 +709,7 @@ tech daylength_2
   max 1
   cost 8
   growth 1
-  pos 1 -2
+  pos 2 -2
   icon daylength
   requires daylength 1
   effect dayLength add 2
@@ -724,7 +721,7 @@ tech daylength_3
   max 1
   cost 10
   growth 1
-  pos 1.5 -3
+  pos 1.5 -3.5
   icon daylength
   requires daylength_2 1
   effect dayLength add 2
@@ -736,9 +733,10 @@ tech daylength_4
   max 1
   cost 13
   growth 1
-  pos 2 -4
+  pos 2 -5
   icon daylength
   requires daylength_3 1
+  requires pickspeed_4 1
   effect dayLength add 2
 end
 
@@ -748,7 +746,7 @@ tech daylength_5
   max 1
   cost 17
   growth 1
-  pos 3 -5
+  pos 2 -7
   icon daylength
   requires daylength_4 1
   effect dayLength add 2
@@ -760,9 +758,9 @@ tech daylength_6
   max 1
   cost 21
   growth 1
-  pos 0 5
+  pos -1 1.5
   icon daylength
-  requires daylength_5 1
+  requires growspeed 1
   effect dayLength add 2
 end
 
@@ -772,9 +770,9 @@ tech daylength_7
   max 1
   cost 27
   growth 1
-  pos 0 6
+  pos -4.5 -3.5
   icon daylength
-  requires daylength_6 1
+  requires autopick 1
   effect dayLength add 2
 end
 
@@ -784,9 +782,9 @@ tech daylength_8
   max 1
   cost 34
   growth 1
-  pos 0 7
+  pos -5.5 -2.5
   icon daylength
-  requires daylength_7 1
+  requires farmhand 1
   effect dayLength add 2
 end
 
@@ -798,7 +796,6 @@ tech daylength_9
   growth 1
   pos 0 8
   icon daylength
-  requires daylength_8 1
   effect dayLength add 2
 end
 
@@ -808,9 +805,9 @@ tech daylength_10
   max 1
   cost 56
   growth 1
-  pos 0 9
 )TECHTREE",
-R"TECHTREE(  icon daylength
+R"TECHTREE(  pos 0 9
+  icon daylength
   requires daylength_9 1
   effect dayLength add 2
 end
@@ -1085,7 +1082,7 @@ tech pickspeed_3
   max 1
   cost 24
   growth 1
-  pos -3.5 -5
+  pos -3.5 -6
   icon pickspeed
   effect pickTime multiply 0.82
 end
@@ -1096,8 +1093,9 @@ tech pickspeed_4
   max 1
   cost 40
   growth 1
-  pos 2 3
+  pos 2.5 -3.5
   icon pickspeed
+  requires daylength_2 1
   effect pickTime multiply 0.82
 end
 
@@ -1109,7 +1107,6 @@ tech pickspeed_5
   growth 1
   pos 2 4
   icon pickspeed
-  requires pickspeed_4 1
   effect pickTime multiply 0.82
 end
 
@@ -1179,7 +1176,7 @@ tech headstart
   max 1
   cost 60
   growth 1
-  pos -0.5 2
+  pos -0.5 3
   requires pickspeed 1
   effect headStart add 0.2
 end
@@ -1250,9 +1247,9 @@ tech growspeed_2
   max 1
   cost 45
   growth 1
-  pos -3 2
+  pos -7 -0
   icon growspeed
-  requires growspeed 1
+  requires farmhand 1
   effect growTime multiply 0.88
 end
 
@@ -1264,7 +1261,6 @@ tech growspeed_3
   growth 1
   pos -3 3
   icon growspeed
-  requires growspeed_2 1
   effect growTime multiply 0.88
 end
 
@@ -1334,7 +1330,7 @@ tech value
   max 1
   cost 30
   growth 1
-  pos 8 1
+  pos 0.5 3
   requires pickspeed 1
   effect valueMult add 0.25
 end
@@ -1345,9 +1341,9 @@ tech value_2
   max 1
   cost 53
   growth 1
-  pos 8 2
+  pos 2 0
   icon value
-  requires value 1
+  requires daylength 1
   effect valueMult add 0.25
 end
 
@@ -1357,9 +1353,9 @@ tech value_3
   max 1
   cost 92
   growth 1
-  pos 8 3
+  pos 4 -2
   icon value
-  requires value_2 1
+  requires seeds_2 1
   effect valueMult add 0.25
 end
 
@@ -1371,7 +1367,6 @@ tech value_4
   growth 1
   pos 8 4
   icon value
-  requires value_3 1
   effect valueMult add 0.25
 end
 
@@ -1381,9 +1376,9 @@ tech value_5
   max 1
   cost 282
   growth 1
-  pos 8 5
+  pos -8 -4.5
   icon value
-  requires value_4 1
+  requires farmerpick 1
   effect valueMult add 0.25
 end
 
@@ -1393,9 +1388,9 @@ tech value_6
   max 1
   cost 493
   growth 1
-  pos 8 6
+  pos -7 -7
   icon value
-  requires value_5 1
+  requires pumpkins 1
   effect valueMult add 0.25
 end
 
@@ -1407,7 +1402,6 @@ tech value_7
   growth 1
   pos 8 7
   icon value
-  requires value_6 1
   effect valueMult add 0.25
 end
 
@@ -1464,8 +1458,9 @@ tech reach_2
   max 1
   cost 525
   growth 1
-  pos 3 4
+  pos 5.5 -1.5
   icon reach
+  requires value_3 1
   effect reach add 1
 end
 
@@ -1477,7 +1472,6 @@ tech reach_3
   growth 1
   pos 3 5
   icon reach
-  requires reach_2 1
   effect reach add 1
 end
 
@@ -1487,8 +1481,8 @@ tech carrots
   max 1
   cost 180
   growth 1
-  pos -4 3
-  requires growspeed_2 1
+  pos -1 4.5
+  requires headstart 1
   effect cropTier atleast 2
 end
 
@@ -1498,9 +1492,8 @@ tech pumpkins
   max 1
   cost 1500
   growth 1
-  pos 9 4
-  requires carrots 1
-  requires value_3 1
+  pos -6 -5.5
+  requires farmerpick 1
   effect cropTier atleast 3
 end
 
@@ -1523,7 +1516,8 @@ tech autopickchance
   max 1
   cost 150
   growth 1
-  pos 5.5 2.5
+  pos -4.5 0.5
+  requires autopick 1
   effect autoPickChance add 5
 end
 
@@ -1533,9 +1527,9 @@ tech autopickchance_2
   max 1
   cost 255
   growth 1
-  pos 5 6
+  pos -8.5 -3
   icon autopickchance
-  requires autopickchance 1
+  requires farmerpick 1
   effect autoPickChance add 5
 end
 
@@ -1545,9 +1539,9 @@ tech autopickchance_3
   max 1
   cost 434
   growth 1
-  pos 5 7
+  pos 5.5 -3
   icon autopickchance
-  requires autopickchance_2 1
+  requires value_3 1
   effect autoPickChance add 5
 end
 
@@ -1557,9 +1551,9 @@ tech autopickchance_4
   max 1
   cost 737
   growth 1
-  pos 5 8
+  pos 5.5 1
   icon autopickchance
-  requires autopickchance_3 1
+  requires autopickradius_2 1
   effect autoPickChance add 5
 end
 
@@ -1571,7 +1565,6 @@ tech autopickchance_5
   growth 1
   pos 5 9
   icon autopickchance
-  requires autopickchance_4 1
   effect autoPickChance add 5
 end
 
@@ -1654,13 +1647,13 @@ tech autopickcount_2
   pos 6 6
   icon autopickcount
   requires autopickcount 1
-)TECHTREE",
-R"TECHTREE(  effect autoPickCount add 1
+  effect autoPickCount add 1
 end
 
 tech autopickcount_3
   name Bumper Bunch 3
-  desc Helping Hand picks one more nearby crop per level.
+)TECHTREE",
+R"TECHTREE(  desc Helping Hand picks one more nearby crop per level.
   max 1
   cost 1210
   growth 1
@@ -1700,7 +1693,8 @@ tech autopickradius
   max 1
   cost 180
   growth 1
-  pos 7 5
+  pos -4.5 -1
+  requires autopick 1
   effect autoPickRadius add 0.5
 end
 
@@ -1710,9 +1704,9 @@ tech autopickradius_2
   max 1
   cost 342
   growth 1
-  pos 7 6
+  pos 4 -0
   icon autopickradius
-  requires autopickradius 1
+  requires seeds_2 1
   effect autoPickRadius add 0.5
 end
 
@@ -1724,7 +1718,6 @@ tech autopickradius_3
   growth 1
   pos 7 7
   icon autopickradius
-  requires autopickradius_2 1
   effect autoPickRadius add 0.5
 end
 
@@ -1770,8 +1763,9 @@ tech farmhand
   max 1
   cost 400
   growth 1
-  pos -7 1.5
-  requires growspeed 1
+  pos -5.5 -1
+  requires autopickradius 1
+  requires autopickchance 1
   effect farmers add 1
 end
 
@@ -1781,8 +1775,8 @@ tech farmcrew
   max 1
   cost 1200
   growth 1
-  pos -6 3
-  requires farmhand 1
+  pos -6 -8
+  requires pumpkins 1
   effect farmers add 1
 end
 
@@ -1792,9 +1786,8 @@ tech farmcrew_2
   max 1
   cost 2880
   growth 1
-  pos -6 4
+  pos -6 3.5
   icon farmcrew
-  requires farmcrew 1
   effect farmers add 1
 end
 
@@ -1828,7 +1821,7 @@ tech farmerspeed
   max 1
   cost 300
   growth 1
-  pos -7 3
+  pos -7.5 -1.5
   requires farmhand 1
   effect farmerSpeed add 0.4
 end
@@ -1839,9 +1832,9 @@ tech farmerspeed_2
   max 1
   cost 540
   growth 1
-  pos -7 4
+  pos -10 -3.5
   icon farmerspeed
-  requires farmerspeed 1
+  requires autopickchance_2 1
   effect farmerSpeed add 0.4
 end
 
@@ -1853,7 +1846,6 @@ tech farmerspeed_3
   growth 1
   pos -7 5
   icon farmerspeed
-  requires farmerspeed_2 1
   effect farmerSpeed add 0.4
 end
 
@@ -1923,7 +1915,7 @@ tech farmerpick
   max 1
   cost 350
   growth 1
-  pos -8 3
+  pos -7 -3
   requires farmhand 1
   effect farmerPickTime multiply 0.85
 end
@@ -1934,9 +1926,9 @@ tech farmerpick_2
   max 1
   cost 648
   growth 1
-  pos -8 4
+  pos -10 -1
   icon farmerpick
-  requires farmerpick 1
+  requires farmerspeed 1
   effect farmerPickTime multiply 0.85
 end
 
@@ -1948,7 +1940,6 @@ tech farmerpick_3
   growth 1
   pos -8 5
   icon farmerpick
-  requires farmerpick_2 1
   effect farmerPickTime multiply 0.85
 end
 
@@ -2012,15 +2003,14 @@ tech farmerpick_8
   effect farmerPickTime multiply 0.85
 end
 
-tech new_tech
-  name New Tech
-  desc Describe what this upgrade does.
+tech turnip
+  name Turnip
+  desc Turnips now grow in patch
   max 5
   cost 1
   growth 1.8
-  pos 3 -1.5
+  pos -5 7.5
   icon crop_turnip
-  requires barn 1
   effect cropTier add 1
 end
 
