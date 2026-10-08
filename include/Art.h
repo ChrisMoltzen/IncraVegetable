@@ -45,6 +45,8 @@ const std::vector<Info>& catalog();
 
 // The texture for `name`, or nullptr if no image was provided.
 SDL_Texture* texture(const std::string& name);
+// The image file for `name` as an RGBA surface (nullptr if there is no file). Free it with SDL_DestroySurface.
+SDL_Surface* loadSurface(const std::string& name);
 bool has(const std::string& name);
 
 // Draws the image, or the built-in fallback if there is no image.

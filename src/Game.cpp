@@ -57,6 +57,7 @@ bool Game::init() {
     std::vector<std::pair<std::string, std::string>> techNodes;
     for (const auto& n : tree_.nodes()) techNodes.push_back({n.icon.empty() ? n.id : n.icon, n.name});
     art::init(renderer_, techNodes);
+    setWindowIcon();
     if (kIsDesktop && settings_.fullscreen) applyDisplaySettings();
 
     audio_.init(); // the game still runs if there's no audio device
@@ -749,6 +750,21 @@ void Game::renderPlayScene(State s) {
         b.textScale = 2.f;
         ui::drawButton(renderer_, b, hover, live && endDayButtonDown_ && hover);
     }
+}
+
+// The window / taskbar / Dock icon, from assets/ui/app_icon.png. It's pixel art, so the bigger sizes the
+// system asks for are scaled up by whole numbers with no smoothing.
+void Game::setWindowIcon() {
+    SDL_Surface* icon = art::loadSurface("ui/app_icon");
+    if (!icon) return;
+    for (int k : {2, 4, 8}) {
+        if (SDL_Surface* big = SDL_ScaleSurface(icon, icon->w * k, icon->h * k, SDL_SCALEMODE_NEAREST)) {
+            SDL_AddSurfaceAlternateImage(icon, big);
+            SDL_DestroySurface(big);
+        }
+    }
+    SDL_SetWindowIcon(window_, icon);
+    SDL_DestroySurface(icon);
 }
 
 void Game::renderBackground() { art::draw(renderer_, "farm/background", SDL_FRect{0, 0, kWidth, kHeight}); }

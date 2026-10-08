@@ -34,6 +34,7 @@ is brightened or darkened automatically.
 | `fx/particle.png` | 32 x 32 |  | Burst particle when a vegetable is picked. Draw it WHITE: the game tints it to the crop's colour |
 | `fx/reach_circle.png` | 256 x 256 |  | Picking area around the pointer (Wide Reach upgrade). Usually see-through |
 | `ui/coin.png` | 64 x 64 |  | Coin icon |
+| `ui/app_icon.png` | 32 x 32 |  | The game's icon on the window, taskbar and Dock. Pixel art, drawn at 32 x 32 (scaled up crisply). The Windows .exe and Mac icons are in the icon/ folder |
 | `ui/dial_sky.png` | 256 x 256 |  | Day/night dial: the WHOLE sky disc. Day half on top with the sun at the top middle, night half below with the moon at the bottom middle. The game turns it clockwise exactly half a turn over the day: the sun starts at the top and sets on the right, and when the timer runs out the moon is at the top; only the top half shows |
 | `ui/dial_frame.png` | 280 x 150 |  | Day/night dial: frame drawn over the sky disc. Leave the half-circle window see-through (it fills the frame's width minus about 6% each side, with the horizon about 79% of the way down); the bottom strip hides the sun as it sets |
 | `ui/pick_bar_back.png` | 128 x 16 |  | Behind the picking progress bar under a vegetable |

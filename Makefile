@@ -50,8 +50,13 @@ WIN_COPY_DLL = powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/
 WIN_EDITOR_DIR = powershell -NoProfile -Command "New-Item -ItemType Directory -Force '$(EDITOR_DIR)' | Out-Null"
 WIN_COPY_DLL_EDITOR = powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(EDITOR_DIR)/'"
 
+# The .exe's own icon (Explorer, desktop shortcuts): icon/IncraVegetable.ico, compiled in with windres.
+WIN_ICON_RES = $(OUTPUT_DIR)/IncraVegetable_icon.o
+WIN_ICON = windres -I icon icon/IncraVegetable.rc -O coff -o $(WIN_ICON_RES)
+
 win:
-	g++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(WIN_LIBS) -std=c++20 $(OPT)
+	$(WIN_ICON)
+	g++ $(SRC) $(WIN_ICON_RES) -o $(OUTPUT_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(WIN_LIBS) -std=c++20 $(OPT)
 	$(WIN_COPY_DLL)
 
 editor-win:
@@ -86,7 +91,8 @@ release-win:
 	$(WIN_RELEASE_DIR)
 	g++ $(PACKER_SRC) -o $(RELEASE_DIR)/AssetPacker.exe $(INCLUDE_DIRS) -static -std=c++20 -O2
 	$(WIN_RUN_PACKER)
-	g++ $(SRC) $(RELEASE_DIR)/AssetPack.cpp -o $(RELEASE_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(RELEASE_DEFS) $(WIN_LIBS) -std=c++20 $(OPT) -mwindows
+	$(WIN_ICON)
+	g++ $(SRC) $(RELEASE_DIR)/AssetPack.cpp $(WIN_ICON_RES) -o $(RELEASE_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(RELEASE_DEFS) $(WIN_LIBS) -std=c++20 $(OPT) -mwindows
 	$(WIN_COPY_DLL_RELEASE)
 
 .PHONY: default editor win editor-win release release-win

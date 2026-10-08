@@ -142,6 +142,27 @@ void loadConfig() {
     }
 }
 
+SDL_Surface* loadSurfaceFile(const std::string& name) {
+    State& s = S();
+    if (s.dir.empty()) return nullptr;
+    for (const char* ext : kExtensions) {
+        size_t size = 0;
+        void* file = assetpack::load(s.dir + name + ext, &size);
+        if (!file) continue;
+        int w = 0, h = 0, channels = 0;
+        unsigned char* pixels = stbi_load_from_memory(static_cast<const stbi_uc*>(file), static_cast<int>(size), &w,
+                                                      &h, &channels, 4);
+        SDL_free(file);
+        if (!pixels) return nullptr;
+        SDL_Surface* view = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_RGBA32, pixels, w * 4);
+        SDL_Surface* copy = view ? SDL_DuplicateSurface(view) : nullptr; // owns its own pixels
+        if (view) SDL_DestroySurface(view);
+        stbi_image_free(pixels);
+        return copy;
+    }
+    return nullptr;
+}
+
 SDL_Texture* loadTexture(const std::string& name) {
     State& s = S();
     if (s.dir.empty() || !s.renderer) return nullptr;
@@ -293,6 +314,8 @@ void add(Info info) {
 }
 
 const std::vector<Info>& catalog() { return S().catalog; }
+
+SDL_Surface* loadSurface(const std::string& name) { return loadSurfaceFile(name); }
 
 SDL_Texture* texture(const std::string& name) {
     State& s = S();
