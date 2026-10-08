@@ -96,7 +96,34 @@ void Game::goToMainMenu() {
         info = draw::strf("Slot %d  -  Day %d  -  %s coins", slot + 1, s.day, draw::number(s.coins).c_str());
     }
     mainMenu_.refresh(slot >= 0, info);
+    mainMenu_.setCrops(unlockedCrops(slot));
     state_ = State::MainMenu;
+}
+
+// The crops a save slot has unlocked (just lettuce with no save), for the
+// rows of vegetables drifting across the main menu.
+std::vector<Crop> Game::unlockedCrops(int slot) const {
+    TechTree tree = tree_;
+    tree.resetLevels();
+    std::string contents;
+    if (slot >= 0 && saves_.readSlot(slot, contents)) {
+        std::istringstream in(contents);
+        std::string line;
+        while (std::getline(in, line)) {
+            std::istringstream ss(line);
+            std::string key, id;
+            int level = 0;
+            ss >> key;
+            if (key != "tech" || !(ss >> id >> level)) continue;
+            if (TechNode* n = tree.find(id)) n->level = std::clamp(level, 0, n->maxLevel);
+        }
+    }
+    const int tier = tree.computeStats().cropTier;
+    std::vector<Crop> crops;
+    for (Crop c = 0; c < cropCount(); ++c)
+        if (cropDef(c).tier <= tier) crops.push_back(c);
+    if (crops.empty()) crops.push_back(0);
+    return crops;
 }
 
 void Game::newGame(int slot) {
