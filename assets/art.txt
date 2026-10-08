@@ -15,6 +15,14 @@ filter nearest
 slice ui/panel 12
 # slice ui/button_primary 24 0.5
 
+# The tooltip and the tech tree tiles: 12-pixel borders (corners and edges
+# stay 12 pixels of the image; only the middle stretches).
+slice ui/tooltip 12
+slice tree/node 12
+slice tree/node_affordable 12
+slice tree/node_locked 12
+slice tree/node_maxed 12
+
 # The main menu draws rows of vegetables drifting across its background.
 # Turn them off if your menu/background already has a field in it:
 menu_crop_rows on
