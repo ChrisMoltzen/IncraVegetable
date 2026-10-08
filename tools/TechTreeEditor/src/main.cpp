@@ -1,7 +1,7 @@
 // TechTreeEditor - design IncraVegetable's tech tree.
 //
 //   make editor            (from the project folder)
-//   build/TechTreeEditor   [optional path to TechTreeData.h]
+//   build/techtree/TechTreeEditor   [optional path to TechTreeData.h]
 //
 // It edits include/TechTreeData.h, which the game compiles in.
 

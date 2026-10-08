@@ -14,17 +14,18 @@ The game builds with the `Makefile` and needs a C++20 compiler and SDL3. Everyth
 
 ```
 make                # the game: build/game
-make editor         # the Tech Tree Editor: build/TechTreeEditor
+make editor         # the Tech Tree Editor: build/techtree/TechTreeEditor
 ```
 
 **Windows** (64-bit MinGW g++ from MSYS2 UCRT64, with the SDL3 *VC* download unzipped to `C:\SDL`, so `C:\SDL\include` and `C:\SDL\lib\x64` exist)
 
 ```
 make win            # the game: build\game.exe
-make editor-win     # the Tech Tree Editor: build\TechTreeEditor.exe
+make editor-win     # the Tech Tree Editor: build\techtree\TechTreeEditor.exe
 ```
 
-- Both copy the 64-bit `SDL3.dll` into `build\` for you, so the .exe runs straight away.
+- Both copy the 64-bit `SDL3.dll` next to their .exe for you, so it runs straight away.
+- The editor has its own folder (`build\techtree\`) with its own copy of `SDL3.dll`, so you can rebuild the game with `make win` while the editor is open.
 - The C++ runtime is built into the .exe, so it doesn't need MSYS2's DLLs: you can run it from any Command Prompt, by double-clicking, or on another PC (with `SDL3.dll` next to it).
 - SDL somewhere else? `make win SDL_DIR=D:/libs/SDL3`.
 - `g++ --version` must be 10 or newer (for C++20).
@@ -187,10 +188,10 @@ The tech tree is data, not code. It lives in **`include/TechTreeData.h`**, which
 
 ```
 make editor
-build/TechTreeEditor
+build/techtree/TechTreeEditor
 ```
 
-On Windows: `make editor-win`, then `build\TechTreeEditor.exe`.
+On Windows: `make editor-win`, then `build\techtree\TechTreeEditor.exe`.
 
 Run it from the project folder (or pass the path to `TechTreeData.h`). It opens the current tree.
 
