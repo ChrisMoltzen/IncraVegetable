@@ -8,6 +8,7 @@
 #include "Art.h"
 #include "DebugMenu.h"
 #include "Draw.h"
+#include "Grass.h"
 #include "Palette.h"
 #include "Farm.h"
 #include "Menus.h"
@@ -28,22 +29,9 @@ namespace art {
 
 namespace {
 
-// A field of grass tufts, the same every time.
+// Plain grass. The tufts are separate sprites (farm/grass_tuft) so they can sway; see Grass.cpp.
 void drawGrassBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     draw::fillRect(r, rc.x, rc.y, rc.w, rc.h, SDL_Color{86, 150, 70, 255});
-    Uint32 seed = 12345u;
-    auto rnd = [&seed] {
-        seed = seed * 1664525u + 1013904223u;
-        return static_cast<float>(seed >> 8) / static_cast<float>(1u << 24);
-    };
-    const SDL_Color c{70, 128, 56, 255};
-    int count = static_cast<int>(160.f * rc.w * rc.h / (1280.f * 720.f)) + 1;
-    for (int i = 0; i < count; ++i) {
-        float x = rc.x + rnd() * rc.w, y = rc.y + 70.f / 720.f * rc.h + rnd() * rc.h * (650.f / 720.f), s = 0.6f + rnd() * 0.8f;
-        draw::fillTriangle(r, {x - 5 * s, y}, {x - 1 * s, y}, {x - 6 * s, y - 10 * s}, c);
-        draw::fillTriangle(r, {x - 2 * s, y}, {x + 2 * s, y}, {x, y - 13 * s}, c);
-        draw::fillTriangle(r, {x + 1 * s, y}, {x + 5 * s, y}, {x + 6 * s, y - 9 * s}, c);
-    }
 }
 
 void drawPanelHeaderBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
@@ -94,7 +82,14 @@ void addNodeStyle(const char* name, SDL_Color fill, SDL_Color border, const char
 
 void registerCatalog(const std::vector<std::pair<std::string, std::string>>& techNodes) {
     // ---------------- Farm ----------------
-    add({"farm/background", 1280, 720, "Everything behind the vegetable patch while farming", false, drawGrassBuiltin});
+    add({"farm/background", 1280, 720,
+         "Everything behind the vegetable patch while farming (leave out the grass tufts: they're drawn on top "
+         "and sway)",
+         false, drawGrassBuiltin});
+    add({"farm/grass_tuft", 16, 16,
+         "One tuft of grass, standing on the bottom edge. Scattered over the farm background at different sizes and "
+         "swayed by the breeze (the top bends, the bottom row stays put)",
+         false, grass::drawTuftBuiltin});
     add({"farm/hud_bar", 1280, 72, "Strip along the top of the farm screen (day, timer, coins sit on it)", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { draw::fillRect(r, rc.x, rc.y, rc.w, rc.h, SDL_Color{20, 28, 18, 210}); }});
     add({"farm/bed", 640, 400,

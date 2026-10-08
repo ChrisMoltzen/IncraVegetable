@@ -3,6 +3,7 @@
 #include "Art.h"
 #include "AssetPack.h"
 #include "Draw.h"
+#include "Grass.h"
 #include "Palette.h"
 #include "Platform.h"
 #include "UI.h"
@@ -767,7 +768,10 @@ void Game::setWindowIcon() {
     SDL_DestroySurface(icon);
 }
 
-void Game::renderBackground() { art::draw(renderer_, "farm/background", SDL_FRect{0, 0, kWidth, kHeight}); }
+void Game::renderBackground() {
+    art::draw(renderer_, "farm/background", SDL_FRect{0, 0, kWidth, kHeight});
+    grass::draw(renderer_, static_cast<float>(SDL_GetTicks()) / 1000.f, mouseX_, mouseY_);
+}
 
 void Game::renderHud() {
     art::draw(renderer_, "farm/hud_bar", SDL_FRect{0, 0, kWidth, 72});
