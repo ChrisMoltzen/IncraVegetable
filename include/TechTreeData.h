@@ -150,8 +150,9 @@ tech patch_8
   max 1
   cost 135
   growth 1
-  pos -2 7
+  pos 1.5 3
   icon patch
+  requires pickspeed 1
   effect patchSize add 1
 end
 
@@ -400,10 +401,10 @@ tech seeds
   desc Sow more seeds. About 25% more vegetables grow at once per level, up to the room in your patch.
   max 1
   cost 6
-  growth 1
-  pos -2 -2
 )TECHTREE",
-R"TECHTREE(  requires patch 1
+R"TECHTREE(  growth 1
+  pos -2 -2
+  requires patch 1
   effect maxCrops add 1
 end
 
@@ -803,10 +804,10 @@ tech daylength_10
   name Longer Days 10
   desc Wake up a little earlier. Each level adds 2 seconds to every day.
   max 1
-  cost 56
-  growth 1
 )TECHTREE",
-R"TECHTREE(  pos 0 9
+R"TECHTREE(  cost 56
+  growth 1
+  pos 0 9
   icon daylength
   requires daylength_9 1
   effect dayLength add 2
@@ -1105,8 +1106,9 @@ tech pickspeed_5
   max 1
   cost 67
   growth 1
-  pos 2 4
+  pos 2.5 4
   icon pickspeed
+  requires patch_8 1
   effect pickTime multiply 0.82
 end
 
@@ -1116,7 +1118,7 @@ tech pickspeed_6
   max 1
   cost 114
   growth 1
-  pos 2 5
+  pos 2 7
   icon pickspeed
   requires pickspeed_5 1
   effect pickTime multiply 0.82
@@ -1128,7 +1130,7 @@ tech pickspeed_7
   max 1
   cost 194
   growth 1
-  pos 2 6
+  pos 2 8
   icon pickspeed
   requires pickspeed_6 1
   effect pickTime multiply 0.82
@@ -1140,7 +1142,7 @@ tech pickspeed_8
   max 1
   cost 329
   growth 1
-  pos 2 7
+  pos 2 9.5
   icon pickspeed
   requires pickspeed_7 1
   effect pickTime multiply 0.82
@@ -1152,7 +1154,7 @@ tech pickspeed_9
   max 1
   cost 559
   growth 1
-  pos 2 8
+  pos 2 11
   icon pickspeed
   requires pickspeed_8 1
   effect pickTime multiply 0.82
@@ -1164,7 +1166,7 @@ tech pickspeed_10
   max 1
   cost 949
   growth 1
-  pos 2 9
+  pos 2 12.5
   icon pickspeed
   requires pickspeed_9 1
   effect pickTime multiply 0.82
@@ -1176,7 +1178,7 @@ tech headstart
   max 1
   cost 60
   growth 1
-  pos -0.5 3
+  pos -1.5 3
   requires pickspeed 1
   effect headStart add 0.2
 end
@@ -1187,9 +1189,9 @@ tech headstart_2
   max 1
   cost 120
   growth 1
-  pos 1 6
+  pos -1.5 6
   icon headstart
-  requires headstart 1
+  requires carrots 1
   effect headStart add 0.2
 end
 
@@ -1223,11 +1225,11 @@ tech headstart_5
   max 1
   cost 960
   growth 1
-  pos 1 9
+)TECHTREE",
+R"TECHTREE(  pos 1 9
   icon headstart
   requires headstart_4 1
-)TECHTREE",
-R"TECHTREE(  effect headStart add 0.2
+  effect headStart add 0.2
 end
 
 tech growspeed
@@ -1330,7 +1332,7 @@ tech value
   max 1
   cost 30
   growth 1
-  pos 0.5 3
+  pos -0 3
   requires pickspeed 1
   effect valueMult add 0.25
 end
@@ -1470,8 +1472,9 @@ tech reach_3
   max 1
   cost 1838
   growth 1
-  pos 3 5
+  pos 4 5.5
   icon reach
+  requires pickspeed_5 1
   effect reach add 1
 end
 
@@ -1481,7 +1484,7 @@ tech carrots
   max 1
   cost 180
   growth 1
-  pos -1 4.5
+  pos -1.5 4.5
   requires headstart 1
   effect cropTier atleast 2
 end
@@ -1647,13 +1650,13 @@ tech autopickcount_2
   pos 6 6
   icon autopickcount
   requires autopickcount 1
-  effect autoPickCount add 1
+)TECHTREE",
+R"TECHTREE(  effect autoPickCount add 1
 end
 
 tech autopickcount_3
   name Bumper Bunch 3
-)TECHTREE",
-R"TECHTREE(  desc Helping Hand picks one more nearby crop per level.
+  desc Helping Hand picks one more nearby crop per level.
   max 1
   cost 1210
   growth 1
