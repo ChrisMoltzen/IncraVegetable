@@ -755,8 +755,8 @@ void Game::renderBackground() { art::draw(renderer_, "farm/background", SDL_FRec
 
 void Game::renderHud() {
     art::draw(renderer_, "farm/hud_bar", SDL_FRect{0, 0, kWidth, 72});
-    art::draw(renderer_, "ui/hud_logo", SDL_FRect{24, 10, 336, 30});
-    draw::text(renderer_, 26, 48, draw::strf("Day %d   -   Slot %d", day_, currentSlot_ + 1), 1.5f, kGrey);
+    draw::textShadow(renderer_, 26, 14, draw::strf("Day %d", day_), 3.f, kWhite);
+    draw::text(renderer_, 28, 50, draw::strf("Slot %d", currentSlot_ + 1), 1.5f, kGrey);
 
     // Day/night dial: half a turn over the day, from the sun at the top to the moon at the top.
     const float dayT = farm_.dayLength() > 0 ? 1.f - std::clamp(farm_.timeLeft() / farm_.dayLength(), 0.f, 1.f) : 1.f;
