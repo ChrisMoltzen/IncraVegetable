@@ -49,8 +49,15 @@ public:
     void setDebugView(bool on) { debugView_ = on; }
     const Stats& stats() const { return stats_; }
 
-    // Crops picked since the last call (used to play sounds).
-    std::vector<Crop> takeHarvests();
+    // Who picked a crop. Only crops you pick yourself can set off an auto-pick.
+    enum class PickedBy { Player, AutoPick, Farmer };
+    struct Harvest {
+        Crop crop = 0;
+        PickedBy by = PickedBy::Player;
+        double coins = 0.0;
+    };
+    // Crops picked since the last call (for sounds and the stats page).
+    std::vector<Harvest> takeHarvests();
 
     // Draws a ripe crop (the artist's image if there is one). Also used by the main menu.
     static void drawCrop(SDL_Renderer* r, Crop crop, float cx, float cy, float size);
@@ -136,8 +143,6 @@ private:
     int plantAt(float x, float y) const;  // nearest plant under the pointer, or -1
     float pickRadius() const;
     bool tileInReach(int index, float mx, float my) const;
-    // Who picked a crop. Only crops you pick yourself can set off an auto-pick.
-    enum class PickedBy { Player, AutoPick, Farmer };
     void harvest(int index, double& coins, std::mt19937& rng, PickedBy by = PickedBy::Player);
     void syncFarmers(std::mt19937& rng);  // adds / removes farmers to match stats_.farmers
     void updateFarmers(float dt, double& coins, std::mt19937& rng);
@@ -155,7 +160,7 @@ private:
     mutable SDL_Renderer* zoomTexRenderer_ = nullptr; // (freed along with the renderer)
     std::vector<Particle> particles_;
     std::vector<FloatText> floatTexts_;
-    std::vector<Crop> harvests_;
+    std::vector<Harvest> harvests_;
     int n_ = 3;                            // patch size: room for n_ x n_ plants
     float plantSize_ = 70.f;               // diameter of one plant
     float bedX_ = 640.f, bedY_ = 398.f;    // centre of the bed

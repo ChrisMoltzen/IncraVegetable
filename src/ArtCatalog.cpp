@@ -9,6 +9,7 @@
 #include "DebugMenu.h"
 #include "Draw.h"
 #include "Grass.h"
+#include "StatsScreen.h"
 #include "Palette.h"
 #include "Farm.h"
 #include "Menus.h"
@@ -173,6 +174,10 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          [](SDL_Renderer* r, const SDL_FRect& rc) { ui::drawPauseIconBuiltin(r, rc, false); }});
     add({"ui/pause_button_hover", 96, 96, "Pause button with the mouse over it (optional)", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { ui::drawPauseIconBuiltin(r, rc, true); }});
+    add({"ui/stats_button", 96, 96, "Stats button, left of the pause button on the farm and in the barn", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { StatsScreen::drawButtonBuiltin(r, rc, false); }});
+    add({"ui/stats_button_hover", 96, 96, "Stats button with the mouse over it (optional)", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { StatsScreen::drawButtonBuiltin(r, rc, true); }});
     add({"ui/debug_button", 80, 80, "Debug screen button, bottom-left", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { DebugMenu::drawOpenButtonBuiltin(r, rc, false); }});
     add({"ui/debug_button_hover", 80, 80, "Debug button with the mouse over it (optional)", false,

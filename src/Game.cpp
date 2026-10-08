@@ -84,7 +84,7 @@ void Game::shutdown() {
 
 bool Game::inGame() const {
     return state_ == State::Farming || state_ == State::DaySummary || state_ == State::TechTree ||
-           state_ == State::Paused || (state_ == State::Settings && settingsFrom_ == State::Paused);
+           state_ == State::Paused || state_ == State::Stats || (state_ == State::Settings && settingsFrom_ == State::Paused);
 }
 
 void Game::goToMainMenu() {
@@ -103,6 +103,7 @@ void Game::newGame(int slot) {
     currentSlot_ = slot;
     coins_ = 0.0;
     lifetimeCoins_ = 0.0;
+    playStats_ = PlayStats{};
     day_ = 1;
     tree_.resetLevels();
     settings_.lastSlot = slot;
@@ -143,6 +144,7 @@ bool Game::loadGame(int slot) {
     tree_.resetLevels();
     coins_ = 0.0;
     lifetimeCoins_ = 0.0;
+    playStats_ = PlayStats{};
     day_ = 1;
     std::string phase = "farming";
     std::vector<std::string> farmLines;
@@ -156,6 +158,7 @@ bool Game::loadGame(int slot) {
         if (key == "coins") ss >> coins_;
         else if (key == "lifetime") ss >> lifetimeCoins_;
         else if (key == "day") ss >> day_;
+        else if (key == "stat") playStats_.parse(ss);
         else if (key == "phase") ss >> phase;
         else if (key == "tech") {
             std::string id;
@@ -208,6 +211,8 @@ void Game::startDay() {
 void Game::endDay() {
     farm_.setTimeLeft(0.f); // ended early: stop the clock so nothing more is picked behind the summary
     lifetimeCoins_ += farm_.earnedToday();
+    playStats_.bestDayCoins = std::max(playStats_.bestDayCoins, farm_.earnedToday());
+    playStats_.bestDayPicked = std::max<long long>(playStats_.bestDayPicked, farm_.pickedToday());
     ++day_;
     state_ = State::DaySummary;
     summaryTimer_ = 0.f;
@@ -227,6 +232,70 @@ void Game::pause() {
     state_ = State::Paused;
     touchDown_ = false;
     saveGame();
+}
+
+void Game::openStats() {
+    if (state_ != State::Farming && state_ != State::TechTree) return;
+    statsFrom_ = state_;
+    statsScreen_.open(statsRows());
+    state_ = State::Stats;
+    touchDown_ = false;
+}
+
+void Game::closeStats() {
+    state_ = statsFrom_;
+    lastTicks_ = SDL_GetTicksNS(); // the day was stopped while the page was open
+}
+
+// What the stats page shows. Coins and vegetables from the day in progress are included.
+std::vector<StatsScreen::Row> Game::statsRows() const {
+    auto duration = [](double seconds) {
+        const long long s = static_cast<long long>(seconds);
+        if (s < 60) return draw::strf("%llds", s);
+        if (s < 3600) return draw::strf("%lldm %02llds", s / 60, s % 60);
+        return draw::strf("%lldh %02lldm", s / 3600, (s / 60) % 60);
+    };
+    auto count = [](long long n) { return draw::number(static_cast<double>(n)); };
+    const bool midDay = statsFrom_ == State::Farming;
+    const int daysDone = day_ - 1;
+    const double earned = lifetimeCoins_ + (midDay ? farm_.earnedToday() : 0.0);
+    int bought = 0, total = 0;
+    for (const auto& n : tree_.nodes()) {
+        total += n.maxLevel;
+        bought += n.level;
+    }
+
+    std::vector<StatsScreen::Row> rows;
+    auto heading = [&](const std::string& t) { rows.push_back({t, "", true, false}); };
+    auto row = [&](const std::string& l, const std::string& v) { rows.push_back({l, v, false, false}); };
+    auto sub = [&](const std::string& l, const std::string& v) { rows.push_back({l, v, false, true}); };
+
+    heading("TIME");
+    row("Time played", duration(playStats_.secondsPlayed));
+    sub("Out in the patch", duration(playStats_.secondsFarming));
+    row("Days farmed", count(daysDone));
+
+    heading("VEGETABLES");
+    row("Vegetables picked", count(playStats_.picked));
+    for (Crop c = 0; c < cropCount(); ++c) {
+        auto it = playStats_.pickedByCrop.find(cropDef(c).id);
+        if (it != playStats_.pickedByCrop.end() && it->second > 0) sub(cropDef(c).name, count(it->second));
+    }
+    if (playStats_.pickedByHelper > 0 || playStats_.pickedByFarmers > 0) {
+        sub("Picked by you", count(playStats_.pickedByHand));
+        if (playStats_.pickedByHelper > 0) sub("Picked by Helping Hand", count(playStats_.pickedByHelper));
+        if (playStats_.pickedByFarmers > 0) sub("Picked by farmers", count(playStats_.pickedByFarmers));
+    }
+    row("Most picked in a day",
+        count(std::max<long long>(playStats_.bestDayPicked, midDay ? farm_.pickedToday() : 0)));
+
+    heading("COINS");
+    row("Coins earned", draw::number(earned));
+    row("Coins spent in the barn", draw::number(playStats_.coinsSpent));
+    row("Best day", draw::number(std::max(playStats_.bestDayCoins, midDay ? farm_.earnedToday() : 0.0)));
+    if (daysDone > 0) sub("Average day", draw::number(lifetimeCoins_ / daysDone));
+    row("Upgrades bought", draw::strf("%d / %d", bought, total));
+    return rows;
 }
 
 void Game::resume() {
@@ -253,7 +322,7 @@ void Game::closeSettings() {
 std::string Game::serialize() const {
     SDL_Time now = 0;
     SDL_GetCurrentTime(&now);
-    State playing = state_ == State::Paused ? pausedFrom_ : state_;
+    State playing = state_ == State::Paused ? pausedFrom_ : state_ == State::Stats ? statsFrom_ : state_;
     if (state_ == State::Settings && settingsFrom_ == State::Paused) playing = pausedFrom_;
     bool midDay = playing == State::Farming;
 
@@ -267,6 +336,7 @@ std::string Game::serialize() const {
     out << "lifetime " << lifetimeCoins_ << "\n";
     out << "phase " << (midDay ? "farming" : "techtree") << "\n";
     for (const auto& n : tree_.nodes()) out << "tech " << n.id << " " << n.level << "\n";
+    playStats_.serialize(out);
     if (midDay) out << farm_.serialize();
     return out.str();
 }
@@ -337,6 +407,31 @@ bool Game::handlePauseButton(const SDL_Event& e) {
             audio_.play(Sfx::Click);
             pause();
         }
+        return true;
+    }
+    return false;
+}
+
+// The stats button sits left of the pause button on the farm and in the barn
+// (Tab opens it too). Returns true if the event was used by it.
+bool Game::handleStatsButton(const SDL_Event& e) {
+    if (state_ != State::Farming && state_ != State::TechTree) return false;
+    if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT &&
+        draw::pointInRect(e.button.x, e.button.y, statsButton_)) {
+        statsButtonDown_ = true;
+        return true;
+    }
+    if (isMouseUp(e) && statsButtonDown_) {
+        statsButtonDown_ = false;
+        if (draw::pointInRect(e.button.x, e.button.y, statsButton_)) {
+            audio_.play(Sfx::Click);
+            openStats();
+        }
+        return true;
+    }
+    if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_TAB && !e.key.repeat) {
+        audio_.play(Sfx::Click);
+        openStats();
         return true;
     }
     return false;
@@ -435,6 +530,7 @@ void Game::handleEvent(SDL_Event& e) {
     }
     if (handleDebugInput(e)) return;
     if (handlePauseButton(e)) return;
+    if (handleStatsButton(e)) return;
     if (handleEndDayButton(e)) return;
 
     switch (state_) {
@@ -512,6 +608,13 @@ void Game::handleEvent(SDL_Event& e) {
         }
         break;
 
+    case State::Stats:
+        if (statsScreen_.handleEvent(e)) {
+            audio_.play(Sfx::Click);
+            closeStats();
+        }
+        break;
+
     case State::Paused:
         switch (pauseMenu_.handleEvent(e)) {
         case PauseMenu::Action::None:
@@ -559,10 +662,12 @@ void Game::handleEvent(SDL_Event& e) {
             pause();
             break;
         }
+        const double coinsBefore = coins_;
         switch (treeScreen_.handleEvent(e, tree_, coins_)) {
         case TechTreeScreen::Action::None:
             break;
         case TechTreeScreen::Action::Purchased:
+            playStats_.coinsSpent += std::max(0.0, coinsBefore - coins_);
             audio_.play(Sfx::Buy);
             saveGame();
             break;
@@ -618,6 +723,7 @@ int Game::loadSounds() {
 void Game::updateMusic() {
     State s = state_;
     if (s == State::Paused) s = pausedFrom_;
+    if (s == State::Stats) s = statsFrom_;
     if (s == State::Settings) s = settingsFrom_ == State::Paused ? pausedFrom_ : settingsFrom_;
     switch (s) {
     case State::Farming:
@@ -636,6 +742,9 @@ void Game::update(float dt) {
         debugMenu_.update(dt); // the game is paused while the debug screen is open
         return;
     }
+    if (state_ == State::Farming || state_ == State::DaySummary || state_ == State::TechTree)
+        playStats_.secondsPlayed += dt; // real time, before any debug speed-up
+    if (state_ == State::Farming) playStats_.secondsFarming += dt;
     if (state_ == State::Farming || state_ == State::DaySummary) dt *= debug_.gameSpeed;
 
     switch (state_) {
@@ -648,7 +757,7 @@ void Game::update(float dt) {
         break;
     case State::Farming:
         farm_.update(dt, mouseX_, mouseY_, pointerActive(), coins_, rng_);
-        playHarvestSounds();
+        takeHarvests();
         autosaveTimer_ += dt;
         if (farm_.dayOver()) endDay();
         else if (autosaveTimer_ >= kAutosaveSeconds) saveGame();
@@ -661,15 +770,27 @@ void Game::update(float dt) {
         treeScreen_.update(dt);
         break;
     case State::Paused:
+    case State::Stats:
         break;
     }
 }
 
-void Game::playHarvestSounds() {
-    std::vector<Crop> picked = farm_.takeHarvests();
+void Game::takeHarvests() {
+    std::vector<Farm::Harvest> picked = farm_.takeHarvests();
+    for (const Farm::Harvest& h : picked) {
+        ++playStats_.picked;
+        ++playStats_.pickedByCrop[cropDef(h.crop).id];
+        switch (h.by) {
+        case Farm::PickedBy::Player: ++playStats_.pickedByHand; break;
+        case Farm::PickedBy::AutoPick: ++playStats_.pickedByHelper; break;
+        case Farm::PickedBy::Farmer: ++playStats_.pickedByFarmers; break;
+        }
+        playStats_.biggestSale = std::max(playStats_.biggestSale, h.coins);
+    }
     std::uniform_real_distribution<float> jitter(0.94f, 1.06f);
     int played = 0;
-    for (Crop c : picked) {
+    for (const Farm::Harvest& h : picked) {
+        const Crop c = h.crop;
         if (played++ >= 3) break; // Wide Reach can pick lots at once; don't deafen anyone
         float pitch = std::max(0.6f, 1.f - 0.14f * static_cast<float>(c)); // later crops sound deeper
         audio_.play(Sfx::Pick, pitch * jitter(rng_));
@@ -700,6 +821,10 @@ void Game::render(bool present) {
     case State::Paused:
         renderPlayScene(pausedFrom_);
         pauseMenu_.render(renderer_);
+        break;
+    case State::Stats:
+        renderPlayScene(statsFrom_);
+        statsScreen_.render(renderer_);
         break;
     default:
         renderPlayScene(state_);
@@ -740,6 +865,8 @@ void Game::renderPlayScene(State s) {
     if (s == State::Farming || s == State::TechTree) {
         bool hover = !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, pauseButton_);
         ui::drawPauseIcon(renderer_, pauseButton_, hover && state_ == s);
+        bool statsHover = !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, statsButton_);
+        StatsScreen::drawButton(renderer_, statsButton_, statsHover && state_ == s);
     }
     if (s == State::Farming) {
         bool live = state_ == s; // not while paused
@@ -862,6 +989,7 @@ const char* Game::stateName(State s) const {
     case State::DaySummary: return "Day summary";
     case State::TechTree: return "The Barn";
     case State::Paused: return "Paused";
+    case State::Stats: return "Stats";
     }
     return "?";
 }

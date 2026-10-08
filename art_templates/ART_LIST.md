@@ -42,6 +42,8 @@ is brightened or darkened automatically.
 | `ui/pick_bar_fill.png` | 128 x 16 |  | Picking progress bar when full (cropped while picking) |
 | `ui/pause_button.png` | 96 x 96 |  | Pause button, top-right while playing |
 | `ui/pause_button_hover.png` | 96 x 96 |  | Pause button with the mouse over it (optional) |
+| `ui/stats_button.png` | 96 x 96 |  | Stats button, left of the pause button on the farm and in the barn |
+| `ui/stats_button_hover.png` | 96 x 96 |  | Stats button with the mouse over it (optional) |
 | `ui/debug_button.png` | 80 x 80 |  | Debug screen button, bottom-left |
 | `ui/debug_button_hover.png` | 80 x 80 |  | Debug button with the mouse over it (optional) |
 | `ui/button_primary.png` | 256 x 80 | yes | Main orange button (New Game, Start Day...) |
