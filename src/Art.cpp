@@ -185,6 +185,48 @@ const Info* infoFor(const std::string& name) {
     return nullptr;
 }
 
+// Where the game's 1280 x 720 lands in the window: screen pixel = offset + game unit x scale.
+// (Identity when drawing into an image, or with no logical presentation.)
+struct ScreenMap {
+    float ox = 0.f, oy = 0.f, sx = 1.f, sy = 1.f;
+};
+ScreenMap screenMap(SDL_Renderer* r) {
+    ScreenMap m;
+    if (SDL_GetRenderTarget(r)) return m;
+    int lw = 0, lh = 0;
+    SDL_RendererLogicalPresentation mode;
+    SDL_FRect out;
+    if (!SDL_GetRenderLogicalPresentation(r, &lw, &lh, &mode) || lw <= 0 || lh <= 0 ||
+        mode == SDL_LOGICAL_PRESENTATION_DISABLED || !SDL_GetRenderLogicalPresentationRect(r, &out) || out.w <= 0.f)
+        return m;
+    m.ox = std::floor(out.x); // SDL draws from a whole-pixel origin
+    m.oy = std::floor(out.y);
+    m.sx = out.w / static_cast<float>(lw);
+    m.sy = out.h / static_cast<float>(lh);
+    return m;
+}
+
+// Draws a 9-slice image so its edges come out crisp and even at any window
+// size: each image pixel of the corners and edges covers a whole number of
+// screen pixels, and the box lines up with the screen's pixel grid.
+// Otherwise (e.g. a 1.4x window) a 2-pixel border shows as 2 pixels on one
+// side and 3 on another, and the rounded corners step unevenly.
+void renderNineSlice(SDL_Renderer* r, SDL_Texture* tex, float corner, float scale, SDL_FRect dst) {
+    const ScreenMap m = screenMap(r);
+    // Snap the box to whole screen pixels.
+    const float x0 = std::round(m.ox + dst.x * m.sx), y0 = std::round(m.oy + dst.y * m.sy);
+    const float x1 = std::round(m.ox + (dst.x + dst.w) * m.sx), y1 = std::round(m.oy + (dst.y + dst.h) * m.sy);
+    dst = SDL_FRect{(x0 - m.ox) / m.sx, (y0 - m.oy) / m.sy, (x1 - x0) / m.sx, (y1 - y0) / m.sy};
+    // Snap the corner scale to a whole number of screen pixels per image pixel. (Shrunk below one
+    // screen pixel per image pixel, e.g. a tile zoomed far out, it stays smooth instead.)
+    float k = scale * m.sx;
+    if (k >= 1.f) {
+        k = std::round(k);
+        while (k > 1.f && (corner * k * 2.f > (x1 - x0) + 0.5f || corner * k * 2.f > (y1 - y0) + 0.5f)) k -= 1.f;
+    }
+    SDL_RenderTexture9Grid(r, tex, nullptr, corner, corner, corner, corner, k / m.sx, &dst);
+}
+
 void renderTexture(SDL_Renderer* r, const std::string& name, SDL_Texture* tex, const SDL_FRect& dst) {
     const Info* info = infoFor(name);
     if (info && info->nineSlice) {
@@ -199,7 +241,7 @@ void renderTexture(SDL_Renderer* r, const std::string& name, SDL_Texture* tex, c
         // Shrink the corners if the box is too small to fit them.
         float scale = std::min({sl.scale, dst.w / (2.f * corner), dst.h / (2.f * corner)});
         if (corner > 0 && scale > 0) {
-            SDL_RenderTexture9Grid(r, tex, nullptr, corner, corner, corner, corner, scale, &dst);
+            renderNineSlice(r, tex, corner, scale, dst);
             return;
         }
     }
