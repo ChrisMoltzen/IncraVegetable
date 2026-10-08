@@ -36,7 +36,6 @@ is brightened or darkened automatically.
 | `ui/hud_logo.png` | 336 x 30 |  | Game name in the top-left of the farm screen |
 | `ui/coin.png` | 64 x 64 |  | Coin icon |
 | `ui/dial_sky.png` | 256 x 256 |  | Day/night dial: the WHOLE sky disc. Day half on top with the sun at the top middle, night half below with the moon at the bottom middle. The game turns it clockwise exactly half a turn over the day: the sun starts at the top and sets on the right, and when the timer runs out the moon is at the top; only the top half shows |
-| `ui/dial_sky_dawn_dusk.png` | 256 x 256 |  | Not used by the game: an example `ui/dial_sky` with a dusk band below the left half of the day/night edge (that half swings up through the window as the sun sets; below the edge, so nothing shows while the sun is up). Copy it to `assets/ui/dial_sky.png` to use it |
 | `ui/dial_frame.png` | 280 x 150 |  | Day/night dial: frame drawn over the sky disc. Leave the half-circle window see-through (it fills the frame's width minus about 6% each side, with the horizon about 79% of the way down); the bottom strip hides the sun as it sets |
 | `ui/pick_bar_back.png` | 128 x 16 |  | Behind the picking progress bar under a vegetable |
 | `ui/pick_bar_fill.png` | 128 x 16 |  | Picking progress bar when full (cropped while picking) |
@@ -99,3 +98,25 @@ is brightened or darkened automatically.
 | `tree/icons/crop_carrot.png` | 64 x 64 |  | Tech icon 'crop_carrot' (the Carrot crop) |
 | `tree/icons/crop_pumpkin.png` | 64 x 64 |  | Tech icon 'crop_pumpkin' (the Pumpkin crop) |
 | `tree/icons/crop_turnip.png` | 64 x 64 |  | Tech icon 'crop_turnip' (the Turnip crop) |
+
+## Sounds
+
+Put your sounds in `assets/audio/` using these names. WAV, OGG or MP3, any sample rate, mono or stereo.
+Anything you leave out uses the built-in sound. The built-in ones are in `audio/` here to listen to or replace.
+Sound effects can have up to 9 takes, picked at random: `pick.wav`, `pick2.wav`, `pick3.wav`...
+Music loops; when the screen changes it crossfades to that screen's track. F5 in game reloads your sounds.
+
+| File | What it is |
+|---|---|
+| `audio/music` | Music on the farm, and anywhere without its own track (loops) |
+| `audio/music_menu` | Main menu, save slots and settings (optional: else `music`) |
+| `audio/music_barn` | The Barn (optional: else `music`) |
+| `audio/pick` | Picking a vegetable (played slightly higher or lower each time) |
+| `audio/coin` | Coins for a pick (quietly, under `pick`), and the sound-volume preview |
+| `audio/buy` | Buying an upgrade in The Barn |
+| `audio/deny` | Clicking an upgrade you can't buy yet |
+| `audio/click` | Buttons |
+| `audio/sunset` | The day ending |
+
+Your own effects get the same small random pitch changes as the built-in ones. To turn that off,
+put `sound_pitch_variation off` in `assets/art.txt`.

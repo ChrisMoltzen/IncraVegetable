@@ -41,6 +41,8 @@ private:
     void newGame(int slot);
     bool loadGame(int slot);
     void loadTechLevel(const std::string& id, int level);
+    int loadSounds();
+    void updateMusic();
     void startDay();
     void endDay();
     void openTechTree();
