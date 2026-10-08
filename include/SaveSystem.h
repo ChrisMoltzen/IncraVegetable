@@ -1,7 +1,7 @@
 // SaveSystem.h - save slots and the settings file.
 //
 // Everything lives in SDL's per-user preference folder (see README):
-//   slot1.sav, slot2.sav, slot3.sav   game saves (plain text)
+//   slot1.sav, slot2.sav, slot3.sav   game saves (scrambled, with a tamper check: see encodeSave)
 //   slotN.sav.bak                      the previous good save, used if the main one is damaged
 //   settings.txt                       volumes, resolution, last played slot
 //
@@ -51,6 +51,16 @@ private:
     static bool readFile(const std::string& path, std::string& out);
     static bool writeFileAtomic(const std::string& path, const std::string& contents, bool keepBackup);
     static bool looksValid(const std::string& contents);
+
+public:
+    // Saves are stored scrambled, with a check value, so they can't simply be
+    // opened in a text editor and changed: an edited file fails the check and
+    // is treated as damaged (the .bak backup is used instead, if it's good).
+    // Like the release build's asset packing, this keeps honest players honest;
+    // it isn't encryption. Development builds still read old plain-text saves
+    // (and re-save them scrambled); release builds don't.
+    static std::string encodeSave(const std::string& text);
+    static bool decodeSave(const std::string& file, std::string& text);
 
     std::string dir_;
 };

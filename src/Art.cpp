@@ -1,4 +1,5 @@
 #include "Art.h"
+#include "AssetPack.h"
 
 #include "Draw.h"
 
@@ -84,6 +85,8 @@ bool dirExists(const std::string& path) {
 //  2. assets/ next to the executable (or inside the app bundle on iOS/macOS);
 //  3. assets/ in the current working directory.
 std::string findAssetDir() {
+    // A release build only ever uses the assets compiled into it.
+    if (assetpack::embedded()) return assetpack::kPrefix;
     std::vector<std::string> candidates;
 #ifdef INCRA_SOURCE_ASSETS_DIR
     candidates.push_back(std::string(INCRA_SOURCE_ASSETS_DIR) + "/");
@@ -106,7 +109,7 @@ void loadConfig() {
     if (s.dir.empty()) return;
 
     size_t size = 0;
-    void* data = SDL_LoadFile((s.dir + "art.txt").c_str(), &size);
+    void* data = assetpack::load(s.dir + "art.txt", &size);
     if (!data) return;
     std::istringstream in(std::string(static_cast<const char*>(data), size));
     SDL_free(data);
@@ -145,7 +148,7 @@ SDL_Texture* loadTexture(const std::string& name) {
     for (const char* ext : kExtensions) {
         std::string path = s.dir + name + ext;
         size_t size = 0;
-        void* file = SDL_LoadFile(path.c_str(), &size);
+        void* file = assetpack::load(path, &size);
         if (!file) continue;
         int w = 0, h = 0, channels = 0;
         unsigned char* pixels = stbi_load_from_memory(static_cast<const stbi_uc*>(file), static_cast<int>(size), &w,
@@ -390,7 +393,7 @@ bool option(const std::string& key, bool defaultValue) {
 static void findUnknownFiles() {
     State& s = S();
     s.unknownFiles.clear();
-    if (s.dir.empty()) return;
+    if (s.dir.empty() || assetpack::embedded()) return; // the packer only packs what's there
     struct Ctx {
         std::string root;
         std::vector<std::string> found;
