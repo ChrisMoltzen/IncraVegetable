@@ -5,6 +5,7 @@
 #include "TileShapes.h"
 #include "Draw.h"
 #include "Palette.h"
+#include "Platform.h"
 #include "Farm.h"
 #include "UI.h"
 
@@ -25,6 +26,22 @@ constexpr float kDragThreshold = 6.f;
 constexpr float kMinZoom = 0.12f, kMaxZoom = 1.6f; // far enough out to fit a fully grown tree
 constexpr float kPivotX = 640.f;
 constexpr float kPivotY = kTop + kTile * 0.5f; // the top row stays put when zooming from Home
+
+// A small padlock (demo builds: techs outside the demo), centred on (cx, cy), s = its height.
+void drawPadlock(SDL_Renderer* r, float cx, float cy, float s) {
+    const float w = s * 0.8f, bodyH = s * 0.55f, t = std::max(1.5f, s * 0.12f);
+    const float bx = cx - w * 0.5f, by = cy + s * 0.5f - bodyH;
+    const float sw = w * 0.62f, sx = cx - sw * 0.5f, sy = cy - s * 0.5f; // shackle
+    for (int pass = 0; pass < 2; ++pass) {
+        const float o = pass == 0 ? std::max(1.f, s * 0.07f) : 0.f; // dark outline first
+        const SDL_Color c = pass == 0 ? pal::NightSoil : pal::Coin;
+        draw::fillRect(r, sx - o, sy - o, t + 2 * o, by - sy + 2 * o, c);
+        draw::fillRect(r, sx + sw - t - o, sy - o, t + 2 * o, by - sy + 2 * o, c);
+        draw::fillRect(r, sx - o, sy - o, sw + 2 * o, t + 2 * o, c);
+        draw::fillRoundRect(r, bx - o, by - o, w + 2 * o, bodyH + 2 * o, s * 0.1f, pass == 0 ? pal::NightSoil : pal::Mustard);
+    }
+    draw::fillRect(r, cx - s * 0.06f, by + bodyH * 0.3f, s * 0.12f, bodyH * 0.4f, pal::NightSoil); // keyhole
+}
 
 // `rc` (laid out at zoom 1) scaled by z about its own centre.
 SDL_FRect scaled(const SDL_FRect& rc, float cx, float cy, float z) {
@@ -304,6 +321,25 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         }
     }
 
+    // Demo builds: a dotted ring around The Barn marks how far the demo goes.
+    if (kIsDemo) {
+        const TechNode* root = nullptr;
+        for (const auto& n : nodes)
+            if (n.prereqs.empty()) { root = &n; break; }
+        if (root) {
+            SDL_FRect rc = nodeRect(*root);
+            const float cx = rc.x + rc.w * 0.5f, cy = rc.y + rc.h * 0.5f;
+            const float rad = (kDemoRadius + 0.6f) * kSpacingY * zoom_;
+            const int dots = std::max(24, static_cast<int>(rad * 6.2832f / 22.f));
+            const float d = std::max(3.f, 6.f * zoom_);
+            for (int k = 0; k < dots; ++k) {
+                const float a = k * 6.2832f / dots;
+                draw::fillRect(r, cx + std::cos(a) * rad - d * 0.5f, cy + std::sin(a) * rad - d * 0.5f, d, d,
+                               pal::alpha(pal::Coin, 210));
+            }
+        }
+    }
+
     int hovered = touchMode_ ? selected_ : nodeAt(tree, mouseX_, mouseY_);
     if (pressing_ && dragged_) hovered = -1;
 
@@ -312,7 +348,8 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         if (!isVisible(tree, n)) continue;
         SDL_FRect rc = nodeRect(n);
         bool maxed = tree.isMaxed(n);
-        bool unlocked = tree.prereqsMet(n);
+        const bool demoLocked = !maxed && tree.demoLocked(n); // demo builds: past the ring
+        bool unlocked = tree.prereqsMet(n) && !demoLocked;
         bool affordable = tree.canBuy(n, coins);
 
         const char* artName = maxed ? "tree/node_maxed"
@@ -359,6 +396,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         SDL_FRect ic = scaled(tileshape::iconRect(shape, base, kIcon), cx, cy, z);
         art::draw(r, "tree/icons/" + (n.icon.empty() ? n.id : n.icon), ic);
         if (locked) draw::fillRoundRect(r, ic.x - 2, ic.y - 2, ic.w + 4, ic.h + 4, 8, draw::withAlpha(fill, 165));
+        if (demoLocked) drawPadlock(r, rc.x + rc.w * 0.78f, rc.y + rc.h * 0.24f, 30.f * z);
 
         // A thin bar near the bottom shows how many levels are bought (techs with
         // more than one level only; a one-level tech's frame already shows if it's bought).
@@ -383,6 +421,14 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
     float coinX = 1136.f - draw::textWidth(coinText, 3.f); // clear of the stats and pause buttons
     ui::drawCoin(r, coinX - 22, 32, 12);
     draw::textShadow(r, coinX, 21, coinText, 3.f, kGold);
+    if (tree.demoComplete()) {
+        const SDL_FRect b{260, 76, 760, 74};
+        ui::drawPanel(r, b);
+        draw::text(r, 640, b.y + 16, "You've finished the demo!", 2.5f, pal::DeepSoil, draw::Align::Center);
+        draw::text(r, 640, b.y + 44, draw::strf("Thanks for playing. The full game has %d upgrades.",
+                                                static_cast<int>(nodes.size())),
+                   1.25f, pal::Tilled, draw::Align::Center);
+    }
     draw::text(r, 64, 690,
                touchMode_ ? "Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom."
                           : "Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit.",
@@ -423,6 +469,7 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
     };
     std::vector<Line> lines;
     const bool maxed = tree.isMaxed(n), unlocked = tree.prereqsMet(n);
+    const bool demoLocked = !maxed && tree.demoLocked(n);
     lines.push_back({n.name, 2.5f, maxed ? kTipGold : kTipTitle});
     if (n.maxLevel > 1) // a one-level tech is either bought or not; no level line
         lines.push_back({maxed ? draw::strf("Level %d / %d  -  MAX", n.level, n.maxLevel)
@@ -460,6 +507,9 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
     lines.push_back({"", 0.8f, kWhite});
     if (maxed) {
         lines.push_back({n.maxLevel > 1 ? "Fully upgraded!" : "UNLOCKED", 2.f, kTipGold});
+    } else if (demoLocked) {
+        lines.push_back({"Full game only", 2.f, kTipGold});
+        lines.push_back({"This one's past the edge of the demo", 1.25f, kTipDim});
     } else {
         double c = tree.cost(n);
         lines.push_back({"Price: " + draw::number(c) + " coins", 2.f, coins >= c ? kTipGold : kTipBad});

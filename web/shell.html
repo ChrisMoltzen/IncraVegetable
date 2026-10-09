@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IncraVegetable</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1f2421; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; font-family: monospace; color: #f4efe1; }
+  /* The game draws at 1280 x 720; fit that inside the page, letterboxed. */
+  #canvas {
+    display: block;
+    width: min(100vw, calc(100vh * 16 / 9)) !important;
+    height: min(100vh, calc(100vw * 9 / 16)) !important;
+    image-rendering: pixelated;
+    outline: none;
+    background: #1f2421;
+  }
+  #status {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px; pointer-events: none;
+    font-size: 18px; letter-spacing: 1px;
+  }
+  #bar { width: 260px; height: 10px; background: #2e3530; border: 2px solid #48514a; }
+  #fill { height: 100%; width: 0; background: #d4b25e; transition: width .2s; }
+  /* Tucked in the bottom-left corner; it only shows when the pointer goes near it. */
+  #fullscreen {
+    position: absolute; left: 8px; bottom: 8px; padding: 6px 10px;
+    background: #2e3530; color: #f4efe1; border: 2px solid #48514a; font: inherit; font-size: 13px;
+    cursor: pointer; opacity: 0; transition: opacity .2s;
+  }
+  #fullscreen.near, #fullscreen:hover, #fullscreen:focus-visible { opacity: .9; }
+</style>
+</head>
+<body>
+<canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+<div id="status"><div id="label">Loading the farm...</div><div id="bar"><div id="fill"></div></div></div>
+<button id="fullscreen" title="Fullscreen">&#x26F6; Fullscreen</button>
+<script>
+  var label = document.getElementById('label'), fill = document.getElementById('fill'), statusEl = document.getElementById('status');
+  var canvas = document.getElementById('canvas');
+  document.getElementById('fullscreen').onclick = function () {
+    var el = document.documentElement;
+    if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen();
+    canvas.focus();
+  };
+  // Keys go to the game, not the page (Tab opens the stats page, not the next link).
+  canvas.addEventListener('pointerdown', function () { canvas.focus(); });
+  var fsButton = document.getElementById('fullscreen');
+  document.addEventListener('pointermove', function (e) {
+    fsButton.classList.toggle('near', e.clientX < 170 && e.clientY > window.innerHeight - 70);
+  });
+  var Module = {
+    canvas: canvas,
+    setStatus: function (text) {
+      var m = text && text.match(/\((\d+(\.\d+)?)\/(\d+)\)/);
+      if (m) fill.style.width = (100 * m[1] / m[3]) + '%';
+      if (!text) statusEl.style.display = 'none';
+    },
+    onRuntimeInitialized: function () { statusEl.style.display = 'none'; canvas.focus(); },
+    printErr: function (t) { console.warn(t); }
+  };
+  window.onerror = function () { label.textContent = 'Something went wrong loading the game. Try reloading the page.'; };
+</script>
+{{{ SCRIPT }}}
+</body>
+</html>

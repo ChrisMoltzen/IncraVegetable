@@ -13,14 +13,14 @@ The game builds with the `Makefile` and needs a C++20 compiler and SDL3. Everyth
 **macOS** (clang, with SDL3.framework in `/Library/Frameworks`)
 
 ```
-make                # the game: build/game
+make                # the game: build/IncraVegetable
 make editor         # the Tech Tree Editor: build/techtree/TechTreeEditor
 ```
 
 **Windows** (64-bit MinGW g++ from MSYS2 UCRT64, with the SDL3 *VC* download unzipped to `C:\SDL`, so `C:\SDL\include` and `C:\SDL\lib\x64` exist)
 
 ```
-make win            # the game: build\game.exe
+make win            # the game: build\IncraVegetable.exe
 make editor-win     # the Tech Tree Editor: build\techtree\TechTreeEditor.exe
 ```
 
@@ -36,17 +36,48 @@ make editor-win     # the Tech Tree Editor: build\techtree\TechTreeEditor.exe
 A release build is the version to give to players:
 
 ```
-make release        # macOS: build/release/game
-make release-win    # Windows: build\release\game.exe (with SDL3.dll next to it)
+make release        # macOS: build/release/IncraVegetable
+make release-win    # Windows: build\release\IncraVegetable.exe (with SDL3.dll next to it)
 ```
 
 - **Art and sounds are built in.** Everything in `assets/` (images, `art.txt` and `audio/`) is compiled into the game, scrambled, so it can't simply be copied out of the .exe. The game never looks at an `assets` folder, so swapping files next to it changes nothing. To ship new art, rebuild.
 - **No debug tools.** The debug screen (F1 / the bug button) and F5 reload are left out.
 - **Saves.** Release builds only load scrambled saves (see Saving).
-- **To give it to someone,** send the files in `build/release/`: `game.exe` and `SDL3.dll`. Leave out `AssetPacker.exe` and `AssetPack.cpp`; those are only used to make the build.
+- **To give it to someone,** send the files in `build/release/`: `IncraVegetable.exe` and `SDL3.dll`. Leave out `AssetPacker.exe` and `AssetPack.cpp`; those are only used to make the build.
 - **No console.** On Windows the release game opens without a console window.
 
 How it works: `tools/AssetPacker` (built and run by `make release`) turns `assets/` into `build/release/AssetPack.cpp`, which is compiled in. The scrambling keeps casual players from extracting or editing files, but it isn't encryption. Someone determined, with a debugger, could still get at them.
+
+## Demo builds
+
+A demo is the whole game, but only the upgrades within a set distance of The Barn can be bought. The rest of the tree still shows, past a dotted ring, with a padlock and "Full game only" on them. When everything inside the ring is bought, the barn says the demo's finished.
+
+```
+make demo               # macOS dev build:  build/demo/IncraVegetable Demo
+make demo-release       # macOS release:    build/demo-release/IncraVegetable Demo
+make demo-win           # Windows dev:      build\demo\IncraVegetable Demo.exe
+make demo-release-win   # Windows release:  build\demo-release\IncraVegetable Demo.exe
+```
+
+- **How much is in it.** `DEMO_RADIUS` (default 6) is the radius in tech tree rows; one step along an arm is about 1.2 rows. 6 gives 55 of the 166 upgrades, including carrots, pumpkins, a farmhand and the first Helping Hand upgrades. Pick another with e.g. `make demo-release DEMO_RADIUS=4`.
+- **Saves carry over.** The demo uses the same save slots as the full game, so a player's demo farm continues in the full game.
+- The window title, main menu ("DEMO" tag) and version text say it's the demo.
+
+## Web builds (play in a browser / itch.io)
+
+The game (or the demo) can be built for the web with [Emscripten](https://emscripten.org). The art and sounds are packed in like a release build, and saves are kept in the browser's own storage, so a farm is still there next visit.
+
+```
+brew install emscripten   # once (or install the emsdk)
+make web-sdl              # once: builds SDL3 for the web into build/web-sdl/
+make demo-web             # the demo:      build/demo-web/index.html, index.js, index.wasm
+make web                  # the full game: build/web/
+```
+
+- **Try it locally:** `cd build/demo-web && python3 -m http.server`, then open http://localhost:8000. Opening `index.html` straight from the disk doesn't work (browsers block loading the `.wasm` that way).
+- **itch.io:** zip the three files so `index.html` is at the top of the zip, upload it, and tick *This file will be played in the browser*. Set the embed size to 1280 x 720 and turn on *Fullscreen button*.
+- The page around the game (`web/shell.html`) fits the game to the window, shows a loading bar, and has a small fullscreen button that appears in the bottom-left corner when the pointer is near it.
+- In the browser there's no Quit button or window size setting; sound starts after the first click or key press (browsers require it).
 
 ## Building for iPhone and iPad
 
@@ -125,15 +156,17 @@ Every sound has a built-in version, so the game always has sound. Put your own f
 
 | Name | When it plays |
 |---|---|
-| `music` | On the farm, and on any screen without its own track. Loops. |
-| `music_menu` | Main menu, save slots and settings. Optional: without it, `music` plays. |
-| `music_barn` | The Barn. Optional: without it, `music` plays. |
+| `farm_1`, `farm_2`, `farm_3`... | Music on the farm, as many tracks as you like (gaps in the numbers are fine). The game picks one at random and changes to a different one every couple of days (`kDaysPerFarmTrack` in `Game.h`). Loops. |
+| `menu` | Main menu, save slots and settings. Optional: without it, the farm music plays. |
+| `barn` | The Barn. Optional: without it, the farm music plays. |
 | `pick` | Picking a vegetable |
 | `coin` | The coins for a pick (quietly, under `pick`), and the sound-volume preview in Settings |
 | `buy` | Buying an upgrade |
 | `deny` | Clicking an upgrade you can't buy yet |
 | `click` | Buttons |
 | `sunset` | The day ending |
+
+The old music names (`music`, `music_menu`, `music_barn`) still work if the new ones aren't there.
 
 - The file name is the name plus its extension, e.g. `assets/audio/music.ogg` or `assets/audio/pick.wav`. If there's more than one, `.wav` wins, then `.ogg`, then `.mp3`.
 - **Takes:** a sound effect can have up to 9 versions, picked at random each time it plays: `pick.wav`, `pick2.wav`, `pick3.wav`... This helps sounds that play a lot, like `pick`.

@@ -47,6 +47,7 @@ private:
     int loadSounds();
     void updateMusic();
     void startDay();
+    void pickFarmMusic(); // a new random farm track every kDaysPerFarmTrack days
     void endDay();
     void openTechTree();
     void pause();
@@ -124,6 +125,8 @@ private:
     double coins_ = 0.0;
     double lifetimeCoins_ = 0.0;
     int day_ = 1;
+    static constexpr int kDaysPerFarmTrack = 2; // farm music changes every this many days
+    int farmTrackPeriod_ = -1;                   // which run of days the current farm track is for
     float summaryTimer_ = 0.f;
     float autosaveTimer_ = 0.f;
     std::string toast_;

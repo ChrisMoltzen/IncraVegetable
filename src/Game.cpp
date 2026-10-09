@@ -32,7 +32,7 @@ Game::~Game() {
 }
 
 bool Game::init() {
-    SDL_SetAppMetadata("IncraVegetable", kGameVersion, "com.incravegetable.game");
+    SDL_SetAppMetadata(kGameTitle, kGameVersion, "com.incravegetable.game");
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());
@@ -45,7 +45,7 @@ bool Game::init() {
     SDL_WindowFlags flags = SDL_WINDOW_HIGH_PIXEL_DENSITY;
     if (kIsMobile) flags |= SDL_WINDOW_FULLSCREEN;
     else flags |= SDL_WINDOW_RESIZABLE;
-    if (!SDL_CreateWindowAndRenderer("IncraVegetable", settings_.windowWidth, settings_.windowHeight, flags, &window_,
+    if (!SDL_CreateWindowAndRenderer(kGameTitle, settings_.windowWidth, settings_.windowHeight, flags, &window_,
                                      &renderer_)) {
         SDL_Log("Could not create window: %s", SDL_GetError());
         return false;
@@ -132,6 +132,7 @@ void Game::newGame(int slot) {
     lifetimeCoins_ = 0.0;
     playStats_ = PlayStats{};
     day_ = 1;
+    farmTrackPeriod_ = -1;
     tree_.resetLevels();
     settings_.lastSlot = slot;
     saveSettings();
@@ -173,6 +174,7 @@ bool Game::loadGame(int slot) {
     lifetimeCoins_ = 0.0;
     playStats_ = PlayStats{};
     day_ = 1;
+    farmTrackPeriod_ = -1;
     std::string phase = "farming";
     std::vector<std::string> farmLines;
 
@@ -218,6 +220,7 @@ bool Game::loadGame(int slot) {
     settings_.lastSlot = slot;
     saveSettings();
 
+    pickFarmMusic();
     if (phase == "techtree") {
         openTechTree();
     } else if (farm_.restore(farmLines, currentStats())) {
@@ -229,7 +232,21 @@ bool Game::loadGame(int slot) {
     return true;
 }
 
+// With several farm tracks (assets/audio/farm_1, farm_2 ...), play a random one,
+// and pick a different one every kDaysPerFarmTrack days.
+void Game::pickFarmMusic() {
+    const int period = (std::max(1, day_) - 1) / kDaysPerFarmTrack;
+    if (period == farmTrackPeriod_) return;
+    farmTrackPeriod_ = period;
+    const int n = audio_.farmTrackCount();
+    if (n <= 1) return;
+    int pick = std::uniform_int_distribution<int>(0, n - 2)(rng_);
+    if (pick >= audio_.farmTrack()) ++pick; // never the same track twice in a row
+    audio_.setFarmTrack(pick);
+}
+
 void Game::startDay() {
+    pickFarmMusic();
     farm_.startDay(currentStats(), rng_);
     state_ = State::Farming;
     autosaveTimer_ = 0.f;
@@ -1038,6 +1055,7 @@ std::vector<std::string> Game::debugInfo() const {
                                    st.autoPickCount, st.autoPickRadius));
         lines.push_back(draw::strf("Farmers %d   walk %.2f plants/s   pick %.2fs", st.farmers, st.farmerSpeed,
                                    st.farmerPickTime));
+        lines.push_back("Farm music: " + audio_.farmTrackName());
         if (dayRunning())
             lines.push_back(draw::strf("Today: %.1fs left, %d picked, %.2f coins earned", farm_.timeLeft(),
                                        farm_.pickedToday(), farm_.earnedToday()));
