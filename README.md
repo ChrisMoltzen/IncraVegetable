@@ -63,6 +63,22 @@ make demo-release-win   # Windows release:  build\demo-release\IncraVegetable De
 - **Saves carry over.** The demo uses the same save slots as the full game, so a player's demo farm continues in the full game.
 - The window title, main menu ("DEMO" tag) and version text say it's the demo.
 
+## Web builds (play in a browser / itch.io)
+
+The game (or the demo) can be built for the web with [Emscripten](https://emscripten.org). The art and sounds are packed in like a release build, and saves are kept in the browser's own storage, so a farm is still there next visit.
+
+```
+brew install emscripten   # once (or install the emsdk)
+make web-sdl              # once: builds SDL3 for the web into build/web-sdl/
+make demo-web             # the demo:      build/demo-web/index.html, index.js, index.wasm
+make web                  # the full game: build/web/
+```
+
+- **Try it locally:** `cd build/demo-web && python3 -m http.server`, then open http://localhost:8000. Opening `index.html` straight from the disk doesn't work (browsers block loading the `.wasm` that way).
+- **itch.io:** zip the three files so `index.html` is at the top of the zip, upload it, and tick *This file will be played in the browser*. Set the embed size to 1280 x 720 and turn on *Fullscreen button*.
+- The page around the game (`web/shell.html`) fits the game to the window, shows a loading bar, and has a small fullscreen button that appears in the bottom-left corner when the pointer is near it.
+- In the browser there's no Quit button or window size setting; sound starts after the first click or key press (browsers require it).
+
 ## Building for iPhone and iPad
 
 You need a Mac with Xcode 15 or newer and CMake 3.21+ (`brew install cmake`).

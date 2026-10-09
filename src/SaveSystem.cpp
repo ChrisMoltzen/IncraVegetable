@@ -1,5 +1,9 @@
 #include "SaveSystem.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include "Draw.h"
 
 #include <algorithm>
@@ -131,6 +135,14 @@ bool SaveSystem::writeFileAtomic(const std::string& path, const std::string& con
             return false;
         }
     }
+#ifdef __EMSCRIPTEN__
+    // In a browser the save folder lives in the page's IndexedDB storage (web/pre.js
+    // mounts it); copy the change out there so it's still there next visit.
+    EM_ASM({
+        if (typeof FS !== 'undefined' && FS.syncfs)
+            FS.syncfs(false, function(err) { if (err) console.warn('IncraVegetable: saving failed', err); });
+    });
+#endif
     return true;
 }
 
