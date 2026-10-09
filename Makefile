@@ -96,3 +96,47 @@ release-win:
 	$(WIN_COPY_DLL_RELEASE)
 
 .PHONY: default editor win editor-win release release-win
+
+# ---------------------------------------------------------------------------
+# Demo builds: the whole game, but only the techs within DEMO_RADIUS of The
+# Barn can be bought (the rest show with a padlock, past a dotted ring).
+# DEMO_RADIUS is in tech tree rows; one step along an arm is about 1.2 rows.
+# The default, 6, gives 55 of the 166 techs: carrots, pumpkins, farmhands and
+# the first Helping Hand upgrades, about 45 minutes of play.
+#   make demo                  macOS dev build:      build/demo/game
+#   make demo-win              Windows dev build:    build\demo\game.exe
+#   make demo-release          macOS release:        build/demo-release/game
+#   make demo-release-win      Windows release:      build\demo-release\game.exe
+#   make demo DEMO_RADIUS=4    ...a smaller demo (any of the four)
+# Saves are shared with the full game, so a demo farm carries straight over.
+# ---------------------------------------------------------------------------
+DEMO_RADIUS ?= 6
+DEMO_DEFS = -DINCRA_DEMO=1 -DINCRA_DEMO_RADIUS=$(DEMO_RADIUS)
+DEMO_DIR = $(OUTPUT_DIR)/demo
+DEMO_RELEASE_DIR = $(OUTPUT_DIR)/demo-release
+
+demo:
+	mkdir -p $(DEMO_DIR)
+	clang++ $(SRC) -o $(DEMO_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(ASSETS_DEF) $(DEMO_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
+
+demo-release:
+	mkdir -p $(DEMO_RELEASE_DIR)
+	clang++ $(PACKER_SRC) -o $(DEMO_RELEASE_DIR)/AssetPacker $(INCLUDE_DIRS) -std=c++20 -O2
+	$(DEMO_RELEASE_DIR)/AssetPacker assets $(DEMO_RELEASE_DIR)/AssetPack.cpp
+	clang++ $(SRC) $(DEMO_RELEASE_DIR)/AssetPack.cpp -o $(DEMO_RELEASE_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(RELEASE_DEFS) $(DEMO_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
+
+demo-win:
+	powershell -NoProfile -Command "New-Item -ItemType Directory -Force '$(DEMO_DIR)' | Out-Null"
+	$(WIN_ICON)
+	g++ $(SRC) $(WIN_ICON_RES) -o $(DEMO_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(DEMO_DEFS) $(WIN_LIBS) -std=c++20 $(OPT)
+	powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(DEMO_DIR)/'"
+
+demo-release-win:
+	powershell -NoProfile -Command "New-Item -ItemType Directory -Force '$(DEMO_RELEASE_DIR)' | Out-Null"
+	g++ $(PACKER_SRC) -o $(DEMO_RELEASE_DIR)/AssetPacker.exe $(INCLUDE_DIRS) -static -std=c++20 -O2
+	powershell -NoProfile -Command "& './$(DEMO_RELEASE_DIR)/AssetPacker.exe' assets '$(DEMO_RELEASE_DIR)/AssetPack.cpp'"
+	$(WIN_ICON)
+	g++ $(SRC) $(DEMO_RELEASE_DIR)/AssetPack.cpp $(WIN_ICON_RES) -o $(DEMO_RELEASE_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(RELEASE_DEFS) $(DEMO_DEFS) $(WIN_LIBS) -std=c++20 $(OPT) -mwindows
+	powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(DEMO_RELEASE_DIR)/'"
+
+.PHONY: demo demo-win demo-release demo-release-win

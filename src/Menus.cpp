@@ -135,7 +135,15 @@ void MainMenu::render(SDL_Renderer* r) const {
     art::draw(r, "menu/logo", SDL_FRect{190.f, 64.f + bounce, 900.f, 112.f});
 
     buttons_.render(r);
-    draw::text(r, 1270, 704, std::string("v") + kGameVersion, 1.5f, pal::alpha(pal::Cream, 180), draw::Align::Right);
+    draw::text(r, 1270, 704, std::string("v") + kGameVersion + (kIsDemo ? " demo" : ""), 1.5f,
+               pal::alpha(pal::Cream, 180), draw::Align::Right);
+    if (kIsDemo) { // a little "DEMO" tag tucked under the end of the logo
+        const float x = 1010.f, y = 160.f + bounce;
+        draw::fillRoundRect(r, x - 70, y, 140, 40, 10, pal::Carrot);
+        draw::fillRoundRect(r, x - 66, y + 4, 132, 32, 8, pal::Pumpkin);
+        draw::text(r, x + 2, y + 10, "DEMO", 2.5f, pal::DeepSoil, draw::Align::Center);
+        draw::text(r, x, y + 8, "DEMO", 2.5f, pal::Cream, draw::Align::Center);
+    }
 }
 
 // ===========================================================================

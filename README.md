@@ -48,6 +48,21 @@ make release-win    # Windows: build\release\game.exe (with SDL3.dll next to it)
 
 How it works: `tools/AssetPacker` (built and run by `make release`) turns `assets/` into `build/release/AssetPack.cpp`, which is compiled in. The scrambling keeps casual players from extracting or editing files, but it isn't encryption. Someone determined, with a debugger, could still get at them.
 
+## Demo builds
+
+A demo is the whole game, but only the upgrades within a set distance of The Barn can be bought. The rest of the tree still shows, past a dotted ring, with a padlock and "Full game only" on them. When everything inside the ring is bought, the barn says the demo's finished.
+
+```
+make demo               # macOS dev build:  build/demo/game
+make demo-release       # macOS release:    build/demo-release/game
+make demo-win           # Windows dev:      build\demo\game.exe
+make demo-release-win   # Windows release:  build\demo-release\game.exe
+```
+
+- **How much is in it.** `DEMO_RADIUS` (default 6) is the radius in tech tree rows; one step along an arm is about 1.2 rows. 6 gives 55 of the 166 upgrades, including carrots, pumpkins, a farmhand and the first Helping Hand upgrades. Pick another with e.g. `make demo-release DEMO_RADIUS=4`.
+- **Saves carry over.** The demo uses the same save slots as the full game, so a player's demo farm continues in the full game.
+- The window title, main menu ("DEMO" tag) and version text say it's the demo.
+
 ## Building for iPhone and iPad
 
 You need a Mac with Xcode 15 or newer and CMake 3.21+ (`brew install cmake`).
