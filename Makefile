@@ -1,4 +1,7 @@
-PROJECTNAME = game
+# The game's file name (build/IncraVegetable, IncraVegetable.exe). Demo builds
+# get " Demo" on the end: "IncraVegetable Demo" / "IncraVegetable Demo.exe".
+PROJECTNAME = IncraVegetable
+DEMO_NAME = $(PROJECTNAME) Demo
 OUTPUT_DIR = build
 
 RPATH = -rpath /Library/Frameworks
@@ -29,7 +32,7 @@ editor:
 # ---------------------------------------------------------------------------
 # Windows: 64-bit MinGW g++ (MSYS2 UCRT64) with the SDL3 Visual C++ download
 # unzipped to C:/SDL (so C:/SDL/include and C:/SDL/lib/x64 exist).
-#   make win          builds build/game.exe
+#   make win          builds build/IncraVegetable.exe
 #   make editor-win   builds build/techtree/TechTreeEditor.exe
 # Both copy the 64-bit SDL3.dll next to their .exe so it runs straight away.
 # The editor has its own folder and its own copy of the DLL, so you can run
@@ -69,8 +72,8 @@ editor-win:
 # reads an assets folder, so players can't swap the art or sounds. The debug
 # screen (F1 / bug button) and F5 reload are left out, and saves must be the
 # scrambled kind. Everything goes in build/release/.
-#   make release        macOS: build/release/game
-#   make release-win    Windows: build/release/game.exe (+ SDL3.dll)
+#   make release        macOS: build/release/IncraVegetable
+#   make release-win    Windows: build/release/IncraVegetable.exe (+ SDL3.dll)
 # tools/AssetPacker (built and run first) turns assets/ into AssetPack.cpp.
 # ---------------------------------------------------------------------------
 RELEASE_DIR = $(OUTPUT_DIR)/release
@@ -103,10 +106,10 @@ release-win:
 # DEMO_RADIUS is in tech tree rows; one step along an arm is about 1.2 rows.
 # The default, 6, gives 55 of the 166 techs: carrots, pumpkins, farmhands and
 # the first Helping Hand upgrades, about 45 minutes of play.
-#   make demo                  macOS dev build:      build/demo/game
-#   make demo-win              Windows dev build:    build\demo\game.exe
-#   make demo-release          macOS release:        build/demo-release/game
-#   make demo-release-win      Windows release:      build\demo-release\game.exe
+#   make demo                  macOS dev build:      "build/demo/IncraVegetable Demo"
+#   make demo-win              Windows dev build:    "build\demo\IncraVegetable Demo.exe"
+#   make demo-release          macOS release:        "build/demo-release/IncraVegetable Demo"
+#   make demo-release-win      Windows release:      "build\demo-release\IncraVegetable Demo.exe"
 #   make demo DEMO_RADIUS=4    ...a smaller demo (any of the four)
 # Saves are shared with the full game, so a demo farm carries straight over.
 # ---------------------------------------------------------------------------
@@ -117,18 +120,18 @@ DEMO_RELEASE_DIR = $(OUTPUT_DIR)/demo-release
 
 demo:
 	mkdir -p $(DEMO_DIR)
-	clang++ $(SRC) -o $(DEMO_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(ASSETS_DEF) $(DEMO_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
+	clang++ $(SRC) -o "$(DEMO_DIR)/$(DEMO_NAME)" $(INCLUDE_DIRS) $(ASSETS_DEF) $(DEMO_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
 
 demo-release:
 	mkdir -p $(DEMO_RELEASE_DIR)
 	clang++ $(PACKER_SRC) -o $(DEMO_RELEASE_DIR)/AssetPacker $(INCLUDE_DIRS) -std=c++20 -O2
 	$(DEMO_RELEASE_DIR)/AssetPacker assets $(DEMO_RELEASE_DIR)/AssetPack.cpp
-	clang++ $(SRC) $(DEMO_RELEASE_DIR)/AssetPack.cpp -o $(DEMO_RELEASE_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(RELEASE_DEFS) $(DEMO_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
+	clang++ $(SRC) $(DEMO_RELEASE_DIR)/AssetPack.cpp -o "$(DEMO_RELEASE_DIR)/$(DEMO_NAME)" $(INCLUDE_DIRS) $(RELEASE_DEFS) $(DEMO_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
 
 demo-win:
 	powershell -NoProfile -Command "New-Item -ItemType Directory -Force '$(DEMO_DIR)' | Out-Null"
 	$(WIN_ICON)
-	g++ $(SRC) $(WIN_ICON_RES) -o $(DEMO_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(DEMO_DEFS) $(WIN_LIBS) -std=c++20 $(OPT)
+	g++ $(SRC) $(WIN_ICON_RES) -o "$(DEMO_DIR)/$(DEMO_NAME).exe" $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(DEMO_DEFS) $(WIN_LIBS) -std=c++20 $(OPT)
 	powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(DEMO_DIR)/'"
 
 demo-release-win:
@@ -136,7 +139,7 @@ demo-release-win:
 	g++ $(PACKER_SRC) -o $(DEMO_RELEASE_DIR)/AssetPacker.exe $(INCLUDE_DIRS) -static -std=c++20 -O2
 	powershell -NoProfile -Command "& './$(DEMO_RELEASE_DIR)/AssetPacker.exe' assets '$(DEMO_RELEASE_DIR)/AssetPack.cpp'"
 	$(WIN_ICON)
-	g++ $(SRC) $(DEMO_RELEASE_DIR)/AssetPack.cpp $(WIN_ICON_RES) -o $(DEMO_RELEASE_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(RELEASE_DEFS) $(DEMO_DEFS) $(WIN_LIBS) -std=c++20 $(OPT) -mwindows
+	g++ $(SRC) $(DEMO_RELEASE_DIR)/AssetPack.cpp $(WIN_ICON_RES) -o "$(DEMO_RELEASE_DIR)/$(DEMO_NAME).exe" $(WIN_INCLUDE_DIRS) $(RELEASE_DEFS) $(DEMO_DEFS) $(WIN_LIBS) -std=c++20 $(OPT) -mwindows
 	powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(DEMO_RELEASE_DIR)/'"
 
 .PHONY: demo demo-win demo-release demo-release-win
