@@ -24,6 +24,8 @@ public:
     void update(float dt) { clock_ += dt; }
     void render(SDL_Renderer* r) const;
     void renderBackground(SDL_Renderer* r) const; // also used behind the settings screen
+    // Which vegetables drift across the background: the ones your save has unlocked.
+    void setCrops(std::vector<int> crops) { crops_ = std::move(crops); }
 
     static void drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
     static void drawLogoBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
@@ -31,6 +33,7 @@ public:
 private:
     ui::ButtonList buttons_;
     std::vector<Action> actions_;
+    std::vector<int> crops_{0}; // crop indices (see Farm.h)
     float clock_ = 0.f;
 };
 

@@ -40,6 +40,7 @@ private:
 
     // Flow
     void goToMainMenu();
+    std::vector<Crop> unlockedCrops(int slot) const;
     void newGame(int slot);
     bool loadGame(int slot);
     void loadTechLevel(const std::string& id, int level);
