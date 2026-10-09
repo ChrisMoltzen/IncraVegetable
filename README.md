@@ -13,14 +13,14 @@ The game builds with the `Makefile` and needs a C++20 compiler and SDL3. Everyth
 **macOS** (clang, with SDL3.framework in `/Library/Frameworks`)
 
 ```
-make                # the game: build/game
+make                # the game: build/IncraVegetable
 make editor         # the Tech Tree Editor: build/techtree/TechTreeEditor
 ```
 
 **Windows** (64-bit MinGW g++ from MSYS2 UCRT64, with the SDL3 *VC* download unzipped to `C:\SDL`, so `C:\SDL\include` and `C:\SDL\lib\x64` exist)
 
 ```
-make win            # the game: build\game.exe
+make win            # the game: build\IncraVegetable.exe
 make editor-win     # the Tech Tree Editor: build\techtree\TechTreeEditor.exe
 ```
 
@@ -36,14 +36,14 @@ make editor-win     # the Tech Tree Editor: build\techtree\TechTreeEditor.exe
 A release build is the version to give to players:
 
 ```
-make release        # macOS: build/release/game
-make release-win    # Windows: build\release\game.exe (with SDL3.dll next to it)
+make release        # macOS: build/release/IncraVegetable
+make release-win    # Windows: build\release\IncraVegetable.exe (with SDL3.dll next to it)
 ```
 
 - **Art and sounds are built in.** Everything in `assets/` (images, `art.txt` and `audio/`) is compiled into the game, scrambled, so it can't simply be copied out of the .exe. The game never looks at an `assets` folder, so swapping files next to it changes nothing. To ship new art, rebuild.
 - **No debug tools.** The debug screen (F1 / the bug button) and F5 reload are left out.
 - **Saves.** Release builds only load scrambled saves (see Saving).
-- **To give it to someone,** send the files in `build/release/`: `game.exe` and `SDL3.dll`. Leave out `AssetPacker.exe` and `AssetPack.cpp`; those are only used to make the build.
+- **To give it to someone,** send the files in `build/release/`: `IncraVegetable.exe` and `SDL3.dll`. Leave out `AssetPacker.exe` and `AssetPack.cpp`; those are only used to make the build.
 - **No console.** On Windows the release game opens without a console window.
 
 How it works: `tools/AssetPacker` (built and run by `make release`) turns `assets/` into `build/release/AssetPack.cpp`, which is compiled in. The scrambling keeps casual players from extracting or editing files, but it isn't encryption. Someone determined, with a debugger, could still get at them.
@@ -53,10 +53,10 @@ How it works: `tools/AssetPacker` (built and run by `make release`) turns `asset
 A demo is the whole game, but only the upgrades within a set distance of The Barn can be bought. The rest of the tree still shows, past a dotted ring, with a padlock and "Full game only" on them. When everything inside the ring is bought, the barn says the demo's finished.
 
 ```
-make demo               # macOS dev build:  build/demo/game
-make demo-release       # macOS release:    build/demo-release/game
-make demo-win           # Windows dev:      build\demo\game.exe
-make demo-release-win   # Windows release:  build\demo-release\game.exe
+make demo               # macOS dev build:  build/demo/IncraVegetable Demo
+make demo-release       # macOS release:    build/demo-release/IncraVegetable Demo
+make demo-win           # Windows dev:      build\demo\IncraVegetable Demo.exe
+make demo-release-win   # Windows release:  build\demo-release\IncraVegetable Demo.exe
 ```
 
 - **How much is in it.** `DEMO_RADIUS` (default 6) is the radius in tech tree rows; one step along an arm is about 1.2 rows. 6 gives 55 of the 166 upgrades, including carrots, pumpkins, a farmhand and the first Helping Hand upgrades. Pick another with e.g. `make demo-release DEMO_RADIUS=4`.

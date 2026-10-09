@@ -3,7 +3,7 @@
 | File | Used for |
 |---|---|
 | `../assets/ui/app_icon.png` | The source art (32 x 32 pixel art). The game puts it on its window, the taskbar and the Mac Dock when it starts, scaled up crisply. It's packed into release builds like any other art. |
-| `IncraVegetable.ico` | Windows: built into `game.exe` by `make win` / `make release-win` (via `IncraVegetable.rc` and `windres`), so the file itself shows the icon in Explorer. |
+| `IncraVegetable.ico` | Windows: built into `IncraVegetable.exe` by `make win` / `make release-win` (via `IncraVegetable.rc` and `windres`), so the file itself shows the icon in Explorer. |
 | `IncraVegetable.icns` | macOS: for a `.app` bundle (put it in `Contents/Resources/` and name it in `Info.plist` as `CFBundleIconFile`). |
 | `IncraVegetable_1024.png` | Big copy for store pages (Steam, itch.io, App Store). |
 
