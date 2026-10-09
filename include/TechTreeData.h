@@ -51,6 +51,46 @@ crop turnip
   look round
 end
 
+crop chilli
+  name Chilli
+  value 60
+  grow 5.2
+  pick 3.2
+  weight 15
+  tier 4
+  look round
+end
+
+crop broccoli
+  name Broccoli
+  value 70
+  grow 6
+  pick 3.5
+  weight 15
+  tier 5
+  look round
+end
+
+crop corn
+  name Corn
+  value 80
+  grow 6.8
+  pick 3.8
+  weight 15
+  tier 6
+  look round
+end
+
+crop eggplant
+  name Eggplant
+  value 90
+  grow 7.6
+  pick 4.1
+  weight 15
+  tier 7
+  look round
+end
+
 tech barn
   name The Barn
   desc Unlocks the barn.
@@ -426,7 +466,8 @@ tech patch_8
 end
 
 tech growspeed_3
-  name Fertile Soil 3
+)TECHTREE",
+R"TECHTREE(  name Fertile Soil 3
   desc Richer compost: vegetables grow 12% faster.
   max 1
   cost 84
@@ -444,8 +485,7 @@ tech autopick
   cost 85
   growth 1
   pos 1.633 -1.179
-)TECHTREE",
-R"TECHTREE(  requires daylength 1
+  requires daylength 1
   effect autoPickChance add 10
   effect autoPickCount add 1
   effect autoPickRadius add 1.5
@@ -835,7 +875,8 @@ tech autopickradius_2
   cost 2600
   growth 1
   pos 4.899 -4.714
-  icon autopickradius
+)TECHTREE",
+R"TECHTREE(  icon autopickradius
   requires patch_11 1
   effect autoPickRadius add 0.5
 end
@@ -857,8 +898,7 @@ tech farmerspeed_2
   max 1
   cost 2800
   growth 1
-)TECHTREE",
-R"TECHTREE(  pos -3.266 -4.714
+  pos -3.266 -4.714
   icon farmerspeed
   requires pickspeed_5 1
   effect farmerSpeed add 0.4
@@ -990,7 +1030,7 @@ tech headstart_3
   max 1
   cost 4300
   growth 1
-  pos 4.899 3.536
+  pos 5 3.5
   icon headstart
   requires farmcrew 1
   effect headStart add 0.2
@@ -1050,7 +1090,7 @@ tech value_6
   max 1
   cost 5100
   growth 1
-  pos 5.716 4.125
+  pos 6.5 4.5
   icon value
   requires headstart_3 1
   effect valueMult add 0.25
@@ -1134,9 +1174,9 @@ tech growspeed_6
   max 1
   cost 6800
   growth 1
-  pos 6.532 -4.714
+  pos 9.5 -7
   icon growspeed
-  requires autopickchance_3 1
+  requires eggplant 1
   effect growTime multiply 0.88
 end
 
@@ -1241,9 +1281,9 @@ tech seeds_17
   max 1
   cost 8800
   growth 1
-  pos 6.532 4.714
+  pos 9.5 6.5
   icon seeds
-  requires value_6 1
+  requires chilli 1
   effect maxCrops add 36
 end
 
@@ -1253,10 +1293,11 @@ tech autopickchance_6
   max 1
   cost 9200
   growth 1
-  pos 7.349 -5.304
+  pos 10.316999 -7.5899997
   icon autopickchance
   requires growspeed_6 1
-  effect autoPickChance add 5
+)TECHTREE",
+R"TECHTREE(  effect autoPickChance add 5
 end
 
 tech autopickcount
@@ -1276,9 +1317,8 @@ tech autopickcount_2
   max 1
   cost 10000
   growth 1
-  pos 6.532 -5.893
-)TECHTREE",
-R"TECHTREE(  icon autopickcount
+  pos 9.5 -8.179
+  icon autopickcount
   requires growspeed_6 1
   effect autoPickCount add 1
 end
@@ -1289,7 +1329,7 @@ tech autopickcount_3
   max 1
   cost 11000
   growth 1
-  pos 8.165 -5.893
+  pos 11.132999 -8.179
   icon autopickcount
   requires autopickchance_6 1
   effect autoPickCount add 1
@@ -1337,7 +1377,7 @@ tech turnip
   max 1
   cost 13000
   growth 1
-  pos -0 10.607
+  pos 0 12.5
   icon crop_turnip
   requires seeds_11 1
   effect cropTier atleast 3
@@ -1349,7 +1389,7 @@ tech headstart_4
   max 1
   cost 24000
   growth 1
-  pos -5.716 4.125
+  pos -6 4.5
   icon headstart
   requires seeds_4 1
   effect headStart add 0.2
@@ -1361,7 +1401,7 @@ tech autopickradius_4
   max 1
   cost 25000
   growth 1
-  pos 7.349 -4.125
+  pos 10.316999 -6.411
   icon autopickradius
   requires growspeed_6 1
   effect autoPickRadius add 0.5
@@ -1409,9 +1449,9 @@ tech farmerpick_5
   max 1
   cost 28000
   growth 1
-  pos -7.349 -5.304
+  pos -9.5 -7.5
   icon farmerpick
-  requires farmerspeed_4 1
+  requires corn 1
   effect farmerPickTime multiply 0.85
 end
 
@@ -1433,7 +1473,7 @@ tech autopickchance_7
   max 1
   cost 31000
   growth 1
-  pos 6.532 -7.071
+  pos 9.5 -9.357
   icon autopickchance
   requires autopickcount_2 1
   effect autoPickChance add 5
@@ -1457,9 +1497,9 @@ tech growspeed_7
   max 1
   cost 32000
   growth 1
-  pos -6.532 4.714
+  pos -9 6.5
   icon growspeed
-  requires headstart_4 1
+  requires broccoli 1
   effect growTime multiply 0.88
 end
 
@@ -1493,7 +1533,7 @@ tech daylength_22
   max 1
   cost 47000
   growth 1
-  pos 6.532 5.893
+  pos 9.5 7.679
   icon daylength
   requires seeds_17 1
   effect dayLength add 2
@@ -1529,7 +1569,7 @@ tech patch_21
   max 1
   cost 52000
   growth 1
-  pos -6.532 5.893
+  pos -9 7.679
   icon patch
   requires growspeed_7 1
   effect patchSize add 1
@@ -1553,7 +1593,7 @@ tech farmerspeed_6
   max 1
   cost 58000
   growth 1
-  pos -8.165 -5.893
+  pos -10.316 -8.089001
   icon farmerspeed
   requires farmerpick_5 1
   effect farmerSpeed add 0.4
@@ -1565,7 +1605,7 @@ tech seeds_20
   max 1
   cost 58000
   growth 1
-  pos -7.349 5.304
+  pos -9.816999 7.0899997
   icon seeds
   requires growspeed_7 1
   effect maxCrops add 69
@@ -1577,7 +1617,7 @@ tech autopickcount_4
   max 1
   cost 61000
   growth 1
-  pos 8.165 -3.536
+  pos 11.132999 -5.8219995
   icon autopickcount
   requires autopickradius_4 1
   effect autoPickCount add 1
@@ -1589,7 +1629,7 @@ tech farmerpick_6
   max 1
   cost 64000
   growth 1
-  pos -8.982 -5.304
+  pos -11.133 -7.5
   icon farmerpick
   requires farmerspeed_6 1
   effect farmerPickTime multiply 0.85
@@ -1601,7 +1641,7 @@ tech autopickchance_8
   max 1
   cost 65000
   growth 1
-  pos 8.982 -2.946
+  pos 11.950001 -5.232
   icon autopickchance
   requires autopickcount_4 1
   effect autoPickChance add 5
@@ -1637,7 +1677,7 @@ tech autopickradius_5
   max 1
   cost 69000
   growth 1
-  pos 8.982 -6.482
+  pos 11.950001 -8.768
   icon autopickradius
   requires autopickcount_3 1
   effect autoPickRadius add 0.5
@@ -1672,8 +1712,9 @@ tech daylength_25
   desc Wake up a little earlier: 2 more seconds of picking every day.
   max 1
   cost 78000
-  growth 1
-  pos -7.349 4.125
+)TECHTREE",
+R"TECHTREE(  growth 1
+  pos -9.816999 5.911
   icon daylength
   requires growspeed_7 1
   effect dayLength add 2
@@ -1685,15 +1726,14 @@ tech patch_23
   max 1
   cost 81000
   growth 1
-  pos 7.349 5.304
+  pos 10.316999 7.0899997
   icon patch
   requires seeds_17 1
   effect patchSize add 1
 end
 
 tech growspeed_8
-)TECHTREE",
-R"TECHTREE(  name Fertile Soil 8
+  name Fertile Soil 8
   desc Richer compost: vegetables grow 12% faster.
   max 1
   cost 81000
@@ -1734,7 +1774,7 @@ tech seeds_22
   max 1
   cost 87000
   growth 1
-  pos -6.532 7.071
+  pos -9 8.857
   icon seeds
   requires patch_21 1
   effect maxCrops add 108
@@ -1746,7 +1786,7 @@ tech autopickchance_9
   max 1
   cost 93000
   growth 1
-  pos 9.798 -7.071
+  pos 12.766001 -9.357
   icon autopickchance
   requires autopickradius_5 1
   effect autoPickChance add 5
@@ -1758,7 +1798,7 @@ tech value_9
   max 1
   cost 95000
   growth 1
-  pos 6.532 7.071
+  pos 9.5 8.857
   icon value
   requires daylength_22 1
   effect valueMult add 0.25
@@ -1770,7 +1810,7 @@ tech farmcrew_4
   max 1
   cost 100000
   growth 1
-  pos -0 11.786
+  pos 0 13.786
   icon farmcrew
   requires turnip 1
   effect farmers add 1
@@ -1782,7 +1822,7 @@ tech farmerpick_7
   max 1
   cost 110000
   growth 1
-  pos -8.982 -6.482
+  pos -11.133 -8.6779995
   icon farmerpick
   requires farmerspeed_6 1
   effect farmerPickTime multiply 0.85
@@ -1794,7 +1834,7 @@ tech daylength_26
   max 1
   cost 110000
   growth 1
-  pos 8.165 5.893
+  pos 11.132999 7.679
   icon daylength
   requires patch_23 1
   effect dayLength add 2
@@ -1806,7 +1846,7 @@ tech patch_24
   max 1
   cost 110000
   growth 1
-  pos -8.165 3.536
+  pos -10.632999 5.3219995
   icon patch
   requires daylength_25 1
   effect patchSize add 1
@@ -1818,7 +1858,7 @@ tech seeds_23
   max 1
   cost 110000
   growth 1
-  pos -0.817 12.375
+  pos -0.817 14.375
   icon seeds
   requires farmcrew_4 1
   effect maxCrops add 136
@@ -1830,7 +1870,7 @@ tech daylength_27
   max 1
   cost 120000
   growth 1
-  pos -8.165 5.893
+  pos -10.632999 7.679
   icon daylength
   requires seeds_20 1
   effect dayLength add 2
@@ -1842,7 +1882,7 @@ tech pickspeed_10
   max 1
   cost 120000
   growth 1
-  pos 7.349 4.125
+  pos 10.316999 5.911
   icon pickspeed
   requires seeds_17 1
   effect pickTime multiply 0.82
@@ -1854,7 +1894,7 @@ tech patch_25
   max 1
   cost 130000
   growth 1
-  pos 8.165 3.536
+  pos 11.132999 5.3219995
   icon patch
   requires pickspeed_10 1
   effect patchSize add 1
@@ -1866,7 +1906,7 @@ tech autopickcount_5
   max 1
   cost 130000
   growth 1
-  pos 6.532 -8.25
+  pos 9.5 -10.5
   icon autopickcount
   requires autopickchance_7 1
   effect autoPickCount add 1
@@ -1878,7 +1918,7 @@ tech autopickradius_6
   max 1
   cost 140000
   growth 1
-  pos 8.165 -7.071
+  pos 11.132999 -9.357
   icon autopickradius
   requires autopickcount_3 1
   effect autoPickRadius add 0.5
@@ -1902,7 +1942,7 @@ tech autopickchance_10
   max 1
   cost 140000
   growth 1
-  pos 8.982 -5.304
+  pos 11.950001 -7.5899997
   icon autopickchance
   requires autopickcount_3 1
   effect autoPickChance add 5
@@ -1914,7 +1954,7 @@ tech seeds_24
   max 1
   cost 140000
   growth 1
-  pos 8.165 7.071
+  pos 11.132999 8.857
   icon seeds
   requires daylength_26 1
   effect maxCrops add 169
@@ -1938,7 +1978,7 @@ tech farmerpick_8
   max 1
   cost 150000
   growth 1
-  pos -8.165 -7.071
+  pos -10.316 -9.267
   icon farmerpick
   requires farmerspeed_6 1
   effect farmerPickTime multiply 0.85
@@ -1962,7 +2002,7 @@ tech value_10
   max 1
   cost 160000
   growth 1
-  pos -8.165 7.071
+  pos -10.632999 8.857
   icon value
   requires daylength_27 1
   effect valueMult add 0.25
@@ -1998,7 +2038,7 @@ tech patch_27
   max 1
   cost 170000
   growth 1
-  pos 0.817 12.375
+  pos 0.817 14.375
   icon patch
   requires farmcrew_4 1
   effect patchSize add 1
@@ -2010,7 +2050,7 @@ tech daylength_30
   max 1
   cost 180000
   growth 1
-  pos -0 12.964
+  pos 0 14.964
   icon daylength
   requires farmcrew_4 1
   effect dayLength add 2
@@ -2022,10 +2062,58 @@ tech patch_28
   max 1
   cost 180000
   growth 1
-  pos 8.982 5.304
+  pos 11.950001 7.0899997
   icon patch
   requires daylength_26 1
   effect patchSize add 1
+end
+
+tech chilli
+  name Chilli
+  desc Unlocks Chilli. Sells for 60 coins each.
+  max 1
+  cost 100000
+  growth 1
+  pos 8 5.5
+  icon crop_chilli
+  requires value_6 1
+  effect cropTier atleast 4
+end
+
+tech broccoli
+  name Broccoli
+  desc Unlocks Broccoli. Sells for 70 coins each.
+  max 1
+  cost 250000
+  growth 1
+  pos -7.5 5.5
+  icon crop_broccoli
+  requires headstart_4 1
+  effect cropTier atleast 5
+end
+
+tech corn
+  name Corn
+  desc Unlocks Corn. Sells for 80 coins each.
+  max 1
+  cost 15000
+  growth 1
+  pos -8 -6
+  icon crop_corn
+  requires farmerspeed_4 1
+  effect cropTier atleast 6
+end
+
+tech eggplant
+  name Eggplant
+  desc Unlocks Eggplant. Sells for 90 coins each.
+  max 1
+  cost 9000
+  growth 1
+  pos 7.5 -5.5
+  icon crop_eggplant
+  requires autopickchance_3 1
+  effect cropTier atleast 7
 end
 
 )TECHTREE",
