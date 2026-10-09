@@ -41,12 +41,15 @@ private:
 class SlotMenu {
 public:
     enum class Mode { NewGame, LoadGame };
-    enum class Action { None, Back, Chosen };
+    enum class Action { None, Back, Chosen, Renamed };
 
     void open(Mode mode, const std::array<SlotInfo, SaveSystem::kSlotCount>& slots);
+    void refresh(const std::array<SlotInfo, SaveSystem::kSlotCount>& slots); // after a rename
     Action handleEvent(const SDL_Event& e);
     void render(SDL_Renderer* r) const;
     int chosenSlot() const { return chosen_; }
+    // The name typed for a new farm (Chosen, in New Game) or a rename (Renamed). "" = unnamed.
+    const std::string& chosenName() const { return chosenName_; }
     static void drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
 
 private:
@@ -58,6 +61,14 @@ private:
     ui::ButtonList confirmButtons_; // Overwrite / Cancel
     int confirming_ = -1;          // slot waiting for "overwrite?" confirmation
     int chosen_ = -1;
+    // Naming a farm: a new one (after picking its slot) or renaming one.
+    void startNaming(int slot, bool forNewFarm);
+    void stopNaming();
+    int naming_ = -1;              // slot being named, -1 = not naming
+    bool namingNew_ = false;
+    std::string nameText_, chosenName_;
+    ui::ButtonList nameButtons_;   // OK / Cancel
+    std::vector<int> renameSlotOf_; // buttons_ index -> slot, for the Rename buttons (-1 = not one)
 };
 
 // ---------------------------------------------------------------------------

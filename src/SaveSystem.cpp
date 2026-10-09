@@ -166,6 +166,37 @@ bool SaveSystem::readSlot(int slot, std::string& out) const {
     return false;
 }
 
+std::string SaveSystem::cleanName(const std::string& raw) {
+    std::string out;
+    for (char c : raw) {
+        if (c >= 32 && c < 127) out += c; // the pixel font is plain ASCII
+        if (static_cast<int>(out.size()) >= kMaxNameLength) break;
+    }
+    const size_t a = out.find_first_not_of(' '), b = out.find_last_not_of(' ');
+    return a == std::string::npos ? std::string() : out.substr(a, b - a + 1);
+}
+
+bool SaveSystem::renameSlot(int slot, const std::string& rawName) const {
+    std::string contents;
+    if (!readSlot(slot, contents)) return false;
+    const std::string name = cleanName(rawName);
+    std::istringstream in(contents);
+    std::ostringstream out;
+    std::string line;
+    bool first = true, done = false;
+    while (std::getline(in, line)) {
+        if (line.rfind("name ", 0) == 0 || line == "name") continue; // the old name
+        out << line << "\n";
+        if (first && !name.empty()) { // right after the header line, with the other summary fields
+            out << "name " << name << "\n";
+            done = true;
+        }
+        first = false;
+    }
+    (void)done;
+    return writeSlot(slot, out.str());
+}
+
 SlotInfo SaveSystem::slotInfo(int slot) const {
     SlotInfo info;
     std::string contents;
@@ -178,6 +209,7 @@ SlotInfo SaveSystem::slotInfo(int slot) const {
         std::string key;
         ss >> key;
         if (key == "day") ss >> info.day;
+        else if (key == "name") std::getline(ss >> std::ws, info.name);
         else if (key == "coins") ss >> info.coins;
         else if (key == "saved") {
             long long t = 0;
