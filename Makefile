@@ -95,4 +95,18 @@ release-win:
 	g++ $(SRC) $(RELEASE_DIR)/AssetPack.cpp $(WIN_ICON_RES) -o $(RELEASE_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(RELEASE_DEFS) $(WIN_LIBS) -std=c++20 $(OPT) -mwindows
 	$(WIN_COPY_DLL_RELEASE)
 
-.PHONY: default editor win editor-win release release-win
+# ---------------------------------------------------------------------------
+# Short vertical videos for Instagram / TikTok (see tools/Reels/main.cpp).
+# Needs ffmpeg on your PATH. The videos land in build/reels/.
+#   make reels                     the end card says "Play it on itch.io"
+#   make reels LINE="Out now!"     ...or whatever you like
+# ---------------------------------------------------------------------------
+REELS_DIR = $(OUTPUT_DIR)/reels
+LINE ?= Play it on itch.io
+
+reels:
+	mkdir -p $(REELS_DIR)
+	clang++ $(filter-out src/main.cpp,$(SRC)) tools/Reels/main.cpp -o $(REELS_DIR)/Reels $(INCLUDE_DIRS) $(ASSETS_DEF) -DINCRA_DEBUG_TOOLS=0 $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
+	cd $(REELS_DIR) && SDL_AUDIODRIVER=dummy ./Reels "$(LINE)"
+
+.PHONY: default editor win editor-win release release-win reels
