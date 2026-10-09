@@ -231,6 +231,7 @@ void Editor::undo() {
     redo_.push_back({techs_, sel_, crops_, crop_});
     techs_ = std::move(undo_.back().techs);
     sel_ = std::min(undo_.back().sel, static_cast<int>(techs_.size()) - 1);
+    selectOnly(sel_);
     crops_ = std::move(undo_.back().crops);
     crop_ = std::min(undo_.back().crop, static_cast<int>(crops_.size()) - 1);
     undo_.pop_back();
@@ -242,6 +243,7 @@ void Editor::redo() {
     undo_.push_back({techs_, sel_, crops_, crop_});
     techs_ = std::move(redo_.back().techs);
     sel_ = std::min(redo_.back().sel, static_cast<int>(techs_.size()) - 1);
+    selectOnly(sel_);
     crops_ = std::move(redo_.back().crops);
     crop_ = std::min(redo_.back().crop, static_cast<int>(crops_.size()) - 1);
     redo_.pop_back();
@@ -332,6 +334,50 @@ void Editor::deleteTech(int index) {
     sel_ = -1;
     toast(refs ? strf("Deleted '%s' and removed it from %d requirement(s). Ctrl+Z to undo", id.c_str(), refs)
                : strf("Deleted '%s'. Ctrl+Z to undo", id.c_str()));
+}
+
+void Editor::deleteTechs(std::vector<int> indices) {
+    std::sort(indices.begin(), indices.end());
+    indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
+    std::erase_if(indices, [&](int i) { return i < 0 || i >= static_cast<int>(techs_.size()); });
+    if (indices.empty()) return;
+    if (indices.size() == 1) return deleteTech(indices[0]);
+    pushUndo();
+    std::unordered_set<std::string> ids;
+    for (int i : indices) ids.insert(techs_[i].id);
+    for (auto it = indices.rbegin(); it != indices.rend(); ++it) techs_.erase(techs_.begin() + *it);
+    int refs = 0;
+    for (auto& t : techs_) {
+        size_t before = t.needs.size();
+        std::erase_if(t.needs, [&](const Requirement& q) { return ids.count(q.id) != 0; });
+        refs += static_cast<int>(before - t.needs.size());
+    }
+    selectOnly(-1);
+    toast(strf("Deleted %d techs%s. Ctrl+Z to undo", static_cast<int>(indices.size()),
+               refs ? strf(" and %d requirement(s) on them", refs).c_str() : ""));
+}
+
+void Editor::selectOnly(int i) {
+    picked_.clear();
+    sel_ = i;
+    if (i >= 0) picked_.insert(i);
+}
+
+void Editor::syncSelection() {
+    const int n = static_cast<int>(techs_.size());
+    std::erase_if(picked_, [&](int i) { return i < 0 || i >= n; });
+    if (sel_ >= n) sel_ = -1;
+    if (sel_ < 0) {
+        picked_.clear(); // nothing in the panel = nothing selected
+    } else if (!picked_.count(sel_)) {
+        selectOnly(sel_); // something else picked a new tech (added, duplicated...): just that one
+    }
+}
+
+std::vector<int> Editor::pickedList() const {
+    std::vector<int> v(picked_.begin(), picked_.end());
+    std::sort(v.begin(), v.end());
+    return v;
 }
 
 bool Editor::renameTech(int index, const std::string& newIdRaw) {
@@ -491,11 +537,17 @@ void Editor::globalKeys() {
         addTech(gx, gy);
     } else if (ctrl && in_.key(SDLK_D)) {
         duplicateTech(sel_);
+    } else if (ctrl && in_.key(SDLK_A)) {
+        picked_.clear();
+        for (int i = 0; i < static_cast<int>(techs_.size()); ++i) picked_.insert(i);
+        if (sel_ < 0 && !techs_.empty()) sel_ = 0;
+        toast(strf("Selected all %d techs", static_cast<int>(techs_.size())));
     } else if (in_.key(SDLK_DELETE) || in_.key(SDLK_BACKSPACE)) {
-        deleteTech(sel_);
+        if (picked_.size() > 1) deleteTechs(pickedList());
+        else deleteTech(sel_);
     } else if (in_.key(SDLK_ESCAPE)) {
         if (linkMode_) linkMode_ = false;
-        else sel_ = -1;
+        else selectOnly(-1);
     } else if (in_.key(SDLK_F) || in_.key(SDLK_HOME)) {
         fitView();
     } else if (sel_ >= 0) {
@@ -503,8 +555,10 @@ void Editor::globalKeys() {
         float dy = in_.key(SDLK_UP) ? -0.5f : in_.key(SDLK_DOWN) ? 0.5f : 0.f;
         if (dx != 0.f || dy != 0.f) {
             pushUndo();
-            techs_[sel_].gridX += dx;
-            techs_[sel_].gridY += dy;
+            for (int i : pickedList()) { // every selected tech moves together
+                techs_[i].gridX += dx;
+                techs_[i].gridY += dy;
+            }
         }
     }
 }
@@ -526,13 +580,28 @@ void Editor::canvasInput() {
         camY_ += in_.dy;
     }
 
+    syncSelection();
+    const bool space = SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_SPACE];
     if (in_.pressed && over) {
         int hit = nodeAt(in_.mx, in_.my);
-        if (linkMode_ || (in_.shift() && sel_ >= 0)) {
+        if (linkMode_ || (in_.shift() && sel_ >= 0 && hit >= 0)) {
             if (hit >= 0 && hit != sel_) toggleRequirement(sel_, hit);
             linkMode_ = false;
+        } else if (space) {
+            panning_ = true; // Space + drag pans, even over a tech
+        } else if (hit >= 0 && in_.ctrl()) {
+            // Ctrl (Cmd) + click adds a tech to the selection, or takes it out.
+            if (isPicked(hit)) {
+                picked_.erase(hit);
+                if (sel_ == hit) sel_ = picked_.empty() ? -1 : *std::min_element(picked_.begin(), picked_.end());
+            } else {
+                picked_.insert(hit);
+                sel_ = hit;
+            }
+            panelScroll_ = 0.f;
         } else if (hit >= 0) {
             if (hit != sel_) panelScroll_ = 0.f;
+            if (!isPicked(hit)) selectOnly(hit); // dragging one of a selection moves them all
             sel_ = hit;
             drag_ = hit;
             dragMoved_ = false;
@@ -543,8 +612,13 @@ void Editor::canvasInput() {
             SDL_FPoint g = gridAt(in_.mx, in_.my);
             addTech(g.x, g.y);
         } else {
-            sel_ = -1;
-            panning_ = true;
+            // Drag on empty space: draw a box to select everything in it
+            // (with Ctrl / Cmd, add to the selection).
+            boxing_ = true;
+            boxAdds_ = in_.ctrl();
+            boxX0_ = in_.mx;
+            boxY0_ = in_.my;
+            if (!boxAdds_) selectOnly(-1);
         }
     }
 
@@ -552,17 +626,36 @@ void Editor::canvasInput() {
         SDL_FPoint g = gridAt(in_.mx, in_.my);
         float gx = snapHalf(g.x - grabX_), gy = snapHalf(g.y - grabY_);
         TechDef& t = techs_[drag_];
-        if (gx != t.gridX || gy != t.gridY) {
+        const float ddx = gx - t.gridX, ddy = gy - t.gridY;
+        if (ddx != 0.f || ddy != 0.f) {
             if (!dragMoved_) {
                 pushUndo();
                 dragMoved_ = true;
             }
-            techs_[drag_].gridX = gx;
-            techs_[drag_].gridY = gy;
+            for (int i : pickedList()) { // the whole selection moves by the same amount
+                techs_[i].gridX += ddx;
+                techs_[i].gridY += ddy;
+            }
         }
     } else if (panning_ && in_.down) {
         camX_ += in_.dx;
         camY_ += in_.dy;
+    }
+    if (boxing_ && !in_.down) {
+        const float x1 = std::min(boxX0_, in_.mx), x2 = std::max(boxX0_, in_.mx);
+        const float y1 = std::min(boxY0_, in_.my), y2 = std::max(boxY0_, in_.my);
+        if (x2 - x1 > 4.f || y2 - y1 > 4.f) {
+            int added = 0;
+            for (int i = 0; i < static_cast<int>(techs_.size()); ++i) {
+                SDL_FRect rc = nodeRect(techs_[i]);
+                if (rc.x + rc.w < x1 || rc.x > x2 || rc.y + rc.h < y1 || rc.y > y2) continue;
+                if (picked_.insert(i).second) ++added;
+                if (sel_ < 0) sel_ = i;
+            }
+            if (picked_.size() > 1) toast(strf("%d techs selected: drag one to move them all", static_cast<int>(picked_.size())));
+            (void)added;
+        }
+        boxing_ = false;
     }
     if (!in_.down) {
         drag_ = -1;
@@ -706,7 +799,7 @@ void Editor::drawCanvas() {
         const TechDef& t = techs_[i];
         SDL_FRect rc = nodeRect(t);
         if (!onScreen(rc.x, rc.y, rc.x + rc.w, rc.y + rc.h)) continue;
-        bool selected = i == sel_;
+        bool selected = i == sel_ || isPicked(i);
         bool hover = inside(in_.mx, in_.my, rc) && inside(in_.mx, in_.my, c);
         SDL_Color border = selected ? col::accent : hasProblem[i] ? col::bad : hover ? SDL_Color{180, 186, 190, 255} : SDL_Color{110, 120, 128, 255};
         SDL_Color fill = t.needs.empty() ? SDL_Color{34, 62, 40, 255} : SDL_Color{44, 50, 56, 255};
@@ -731,12 +824,22 @@ void Editor::drawCanvas() {
         text(r_, c.x + c.w / 2, c.y + c.h / 2 - 10, "No techs yet - double-click to add one", 2.f, col::dim, Align::Center);
     }
 
+    // The selection box being drawn.
+    if (boxing_) {
+        SDL_FRect b{std::min(boxX0_, in_.mx), std::min(boxY0_, in_.my), std::fabs(in_.mx - boxX0_), std::fabs(in_.my - boxY0_)};
+        fillRect(r_, b, alpha(col::accent, 40));
+        fillRect(r_, {b.x, b.y, b.w, 1}, col::accent);
+        fillRect(r_, {b.x, b.y + b.h - 1, b.w, 1}, col::accent);
+        fillRect(r_, {b.x, b.y, 1, b.h}, col::accent);
+        fillRect(r_, {b.x + b.w - 1, b.y, 1, b.h}, col::accent);
+    }
+
     // Hints.
     if (linkMode_ && sel_ >= 0) {
         text(r_, in_.mx + 16, in_.my + 10, "click the tech it needs", 1.5f, col::accent);
     }
-    std::string help = strf("Zoom %d%%   Double-click: new tech   Drag: move   Shift+click: add/remove requirement   "
-                            "Right-drag or drag empty space: pan   Wheel: zoom   F: fit",
+    std::string help = strf("Zoom %d%%   Double-click: new tech   Drag: move   Drag empty space: select a box   "
+                            "Ctrl+click: add to selection   Shift+click: requirement   Right-drag / Space+drag: pan   F: fit",
                             static_cast<int>(zoom_ * 100));
     fillRect(r_, {c.x, c.y + c.h - 26, c.w, 26}, SDL_Color{18, 21, 20, 230});
     text(r_, c.x + 10, c.y + c.h - 18, fit(help, 1.25f, c.w - 20), 1.25f, col::dim);
@@ -794,6 +897,25 @@ void Editor::drawPanel() {
 
     ui_.setClip(&p);
     float x = p.x + 20, w = p.w - 40, y = p.y + 18 - panelScroll_, top = y;
+    if (picked_.size() > 1) {
+        // Several techs selected: say so above the panel for the one clicked last.
+        const int n = static_cast<int>(picked_.size());
+        text(r_, x, y, strf("%d techs selected", n), 2.f, col::accent);
+        y += 26;
+        text(r_, x, y, "Drag one, or use the arrow keys, to move them all.", 1.25f, col::dim);
+        y += 18;
+        text(r_, x, y, "Ctrl+click adds or removes one. Esc clears.", 1.25f, col::dim);
+        y += 24;
+        const float bw = (w - 10) / 2;
+        if (ui_.button("multi_delete", {x, y, bw, 32}, strf("Delete all %d", n), true, false, 1.5f)) {
+            deleteTechs(pickedList());
+        } else if (ui_.button("multi_clear", {x + bw + 10, y, bw, 32}, "Clear selection", true, false, 1.5f)) {
+            selectOnly(-1);
+        }
+        y += 44;
+        fillRect(r_, {x, y, w, 1}, col::panelLine);
+        y += 12;
+    }
     if (sel_ >= 0 && sel_ < static_cast<int>(techs_.size())) {
         crop_ = -1; // selecting a tech closes the crop panel
         drawTechPanel(x, y, w);
@@ -1553,13 +1675,18 @@ void Editor::drawTreePanel(float x, float& y, float w) {
         "",
         "Double-click empty space   new tech",
         "Drag a tech                move it",
+        "Drag empty space           select techs in a box",
+        "Ctrl+click a tech          add to / remove from selection",
+        "Ctrl+A                     select all",
+        "(Drag, arrows and Delete act on all selected)",
         "Shift+click another tech   add/remove requirement",
         "Delete                     delete selected",
         "Arrow keys                 nudge selected",
         "Ctrl+D                     duplicate",
         "Ctrl+Z / Ctrl+Y            undo / redo",
         "Ctrl+S                     save",
-        "Right-drag / wheel         pan / zoom",
+        "Right-drag / Space+drag    pan",
+        "Wheel                      zoom",
         "(On a Mac, Cmd works instead of Ctrl.)",
     };
     for (const char* l : lines) {
