@@ -126,6 +126,8 @@ private:
 
     SlotMenu::Mode slotMode_ = SlotMenu::Mode::NewGame;
     int currentSlot_ = -1;
+    std::string farmName_; // "" = not named
+    std::string slotTitle(int slot, const std::string& name) const; // the name, or "Slot N"
     double coins_ = 0.0;
     double lifetimeCoins_ = 0.0;
     int day_ = 1;

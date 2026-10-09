@@ -93,7 +93,7 @@ void Game::goToMainMenu() {
                                                                                         : saves_.mostRecentSlot();
     if (slot >= 0) {
         SlotInfo s = saves_.slotInfo(slot);
-        info = draw::strf("Slot %d  -  Day %d  -  %s coins", slot + 1, s.day, draw::number(s.coins).c_str());
+        info = draw::strf("%s  -  Day %d  -  %s coins", slotTitle(slot, s.name).c_str(), s.day, draw::number(s.coins).c_str());
     }
     mainMenu_.refresh(slot >= 0, info);
     mainMenu_.setCrops(unlockedCrops(slot));
@@ -126,8 +126,13 @@ std::vector<Crop> Game::unlockedCrops(int slot) const {
     return crops;
 }
 
+std::string Game::slotTitle(int slot, const std::string& name) const {
+    return name.empty() ? draw::strf("Slot %d", slot + 1) : name;
+}
+
 void Game::newGame(int slot) {
     currentSlot_ = slot;
+    farmName_.clear();
     coins_ = 0.0;
     lifetimeCoins_ = 0.0;
     playStats_ = PlayStats{};
@@ -178,6 +183,7 @@ bool Game::loadGame(int slot) {
     day_ = 1;
     farmTrackPeriod_ = -1;
     std::string phase = "farming";
+    farmName_.clear();
     std::vector<std::string> farmLines;
 
     std::istringstream in(contents);
@@ -189,6 +195,7 @@ bool Game::loadGame(int slot) {
         if (key == "coins") ss >> coins_;
         else if (key == "lifetime") ss >> lifetimeCoins_;
         else if (key == "day") ss >> day_;
+        else if (key == "name") std::getline(ss >> std::ws, farmName_);
         else if (key == "stat") playStats_.parse(ss);
         else if (key == "completed") completionSeen_ = true;
         else if (key == "phase") ss >> phase;
@@ -406,6 +413,7 @@ std::string Game::serialize() const {
     out.precision(17);
     out << "incravegetable-save 2\n";
     // The summary fields come first; the slot picker only reads this far.
+    if (!farmName_.empty()) out << "name " << farmName_ << "\n";
     out << "day " << day_ << "\n";
     out << "coins " << coins_ << "\n";
     out << "saved " << static_cast<long long>(now) << "\n";
@@ -655,9 +663,22 @@ void Game::handleEvent(SDL_Event& e) {
             break;
         case SlotMenu::Action::Chosen:
             audio_.play(Sfx::Click);
-            if (slotMode_ == SlotMenu::Mode::NewGame) newGame(slotMenu_.chosenSlot());
-            else if (!loadGame(slotMenu_.chosenSlot())) goToMainMenu();
+            if (slotMode_ == SlotMenu::Mode::NewGame) {
+                newGame(slotMenu_.chosenSlot());
+                farmName_ = SaveSystem::cleanName(slotMenu_.chosenName());
+                saveGame();
+            } else if (!loadGame(slotMenu_.chosenSlot())) {
+                goToMainMenu();
+            }
             break;
+        case SlotMenu::Action::Renamed: {
+            audio_.play(Sfx::Click);
+            saves_.renameSlot(slotMenu_.chosenSlot(), slotMenu_.chosenName());
+            std::array<SlotInfo, SaveSystem::kSlotCount> slots;
+            for (int i = 0; i < SaveSystem::kSlotCount; ++i) slots[i] = saves_.slotInfo(i);
+            slotMenu_.refresh(slots);
+            break;
+        }
         }
         break;
 
@@ -1006,7 +1027,7 @@ void Game::renderBackground() {
 void Game::renderHud() {
     art::draw(renderer_, "farm/hud_bar", SDL_FRect{0, 0, kWidth, 72});
     draw::textShadow(renderer_, 26, 14, draw::strf("Day %d", day_), 3.f, kWhite);
-    draw::text(renderer_, 28, 50, draw::strf("Slot %d", currentSlot_ + 1), 1.5f, kGrey);
+    draw::text(renderer_, 28, 50, slotTitle(currentSlot_, farmName_), 1.5f, kGrey);
 
     // Day/night dial: half a turn over the day, from the sun at the top to the moon at the top.
     const float dayT = farm_.dayLength() > 0 ? 1.f - std::clamp(farm_.timeLeft() / farm_.dayLength(), 0.f, 1.f) : 1.f;
@@ -1123,7 +1144,7 @@ std::vector<std::string> Game::debugInfo() const {
     lines.push_back(std::string("Screen: ") + stateName(state_) +
                     (state_ == State::Paused ? std::string(" (over ") + stateName(pausedFrom_) + ")" : ""));
     if (inGame()) {
-        lines.push_back(draw::strf("Slot %d   Day %d   Coins %.2f   Lifetime %.2f", currentSlot_ + 1, day_, coins_,
+        lines.push_back(draw::strf("%s   Day %d   Coins %.2f   Lifetime %.2f", slotTitle(currentSlot_, farmName_).c_str(), day_, coins_,
                                    lifetimeCoins_));
         Stats st = currentStats();
         lines.push_back(draw::strf("Crops %d of %d (patch room %d)   Day %.1fs   Grow %.3fs   Pick %.3fs", Farm::plantCount(st), st.maxCrops, st.patchSize * st.patchSize,

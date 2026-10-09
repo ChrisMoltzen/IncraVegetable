@@ -155,7 +155,36 @@ void SlotMenu::open(Mode mode, const std::array<SlotInfo, SaveSystem::kSlotCount
     slots_ = slots;
     confirming_ = -1;
     chosen_ = -1;
+    stopNaming();
     buildButtons();
+}
+
+void SlotMenu::refresh(const std::array<SlotInfo, SaveSystem::kSlotCount>& slots) {
+    slots_ = slots;
+    buildButtons();
+}
+
+void SlotMenu::startNaming(int slot, bool forNewFarm) {
+    naming_ = slot;
+    namingNew_ = forNewFarm;
+    nameText_ = forNewFarm ? std::string() : slots_[slot].name;
+    nameButtons_.buttons.clear();
+    ui::Button ok;
+    ok.rect = {400.f, 430.f, 220.f, 60.f};
+    ok.label = forNewFarm ? "Start" : "Rename";
+    ok.style = ui::Style::Secondary;
+    ui::Button cancel;
+    cancel.rect = {660.f, 430.f, 220.f, 60.f};
+    cancel.label = "Cancel";
+    cancel.style = ui::Style::Ghost;
+    nameButtons_.buttons = {ok, cancel};
+    nameButtons_.clearPress();
+    SDL_StartTextInput(SDL_GetKeyboardFocus()); // (shows the on-screen keyboard on phones)
+}
+
+void SlotMenu::stopNaming() {
+    if (naming_ >= 0) SDL_StopTextInput(SDL_GetKeyboardFocus());
+    naming_ = -1;
 }
 
 void SlotMenu::buildButtons() {
@@ -168,7 +197,7 @@ void SlotMenu::buildButtons() {
         b.enabled = s.exists || mode_ == Mode::NewGame;
         b.textScale = 3.f;
         b.subScale = 1.75f;
-        b.label = draw::strf("Slot %d", i + 1);
+        b.label = s.exists && !s.name.empty() ? s.name : draw::strf("Slot %d", i + 1);
         if (s.exists) {
             b.subLabel = draw::strf("Day %d   -   %s coins", s.day, draw::number(s.coins).c_str());
             std::string when = SaveSystem::formatTime(s.savedAt);
@@ -183,6 +212,18 @@ void SlotMenu::buildButtons() {
     back.label = "< Back";
     back.style = ui::Style::Ghost;
     buttons_.buttons.push_back(back);
+    // A Rename button beside each farm.
+    renameSlotOf_.assign(buttons_.buttons.size(), -1);
+    for (int i = 0; i < SaveSystem::kSlotCount; ++i) {
+        if (!slots_[i].exists) continue;
+        ui::Button rn;
+        rn.rect = {1006.f, 160.f + i * 135.f + 30.f, 150.f, 52.f};
+        rn.label = "Rename";
+        rn.style = ui::Style::Ghost;
+        rn.textScale = 2.f;
+        buttons_.buttons.push_back(rn);
+        renameSlotOf_.push_back(i);
+    }
 
     confirmButtons_.buttons.clear();
     ui::Button yes;
@@ -197,16 +238,42 @@ void SlotMenu::buildButtons() {
 }
 
 SlotMenu::Action SlotMenu::handleEvent(const SDL_Event& e) {
+    if (naming_ >= 0) {
+        auto finish = [&]() {
+            chosen_ = naming_;
+            chosenName_ = SaveSystem::cleanName(nameText_);
+            const bool isNew = namingNew_;
+            stopNaming();
+            return isNew ? Action::Chosen : Action::Renamed;
+        };
+        if (e.type == SDL_EVENT_TEXT_INPUT) {
+            for (const char* c = e.text.text; *c; ++c) // plain letters, numbers and punctuation (what the font has)
+                if (*c >= 32 && *c < 127 && static_cast<int>(nameText_.size()) < SaveSystem::kMaxNameLength)
+                    nameText_ += *c;
+            return Action::None;
+        }
+        if (e.type == SDL_EVENT_KEY_DOWN) {
+            if (e.key.key == SDLK_BACKSPACE && !nameText_.empty()) nameText_.pop_back();
+            else if (e.key.key == SDLK_RETURN || e.key.key == SDLK_KP_ENTER) return finish();
+            else if (isBack(e)) stopNaming();
+            return Action::None;
+        }
+        int i = nameButtons_.handleEvent(e);
+        if (i == 0) return finish();
+        if (i == 1) stopNaming();
+        return Action::None;
+    }
     if (confirming_ >= 0) {
         if (isBack(e)) {
             confirming_ = -1;
             return Action::None;
         }
         int i = confirmButtons_.handleEvent(e);
-        if (i == 0) {
-            chosen_ = confirming_;
+        if (i == 0) { // overwrite: then name the new farm
+            const int slot = confirming_;
             confirming_ = -1;
-            return Action::Chosen;
+            startNaming(slot, true);
+            return Action::None;
         }
         if (i == 1) confirming_ = -1;
         return Action::None;
@@ -216,9 +283,17 @@ SlotMenu::Action SlotMenu::handleEvent(const SDL_Event& e) {
     int i = buttons_.handleEvent(e);
     if (i < 0) return Action::None;
     if (i == SaveSystem::kSlotCount) return Action::Back;
+    if (i < static_cast<int>(renameSlotOf_.size()) && renameSlotOf_[i] >= 0) {
+        startNaming(renameSlotOf_[i], false);
+        return Action::None;
+    }
     if (mode_ == Mode::NewGame && slots_[i].exists) {
         confirming_ = i; // ask before wiping an existing farm
         confirmButtons_.clearPress();
+        return Action::None;
+    }
+    if (mode_ == Mode::NewGame) {
+        startNaming(i, true); // name it first
         return Action::None;
     }
     chosen_ = i;
@@ -238,12 +313,35 @@ void SlotMenu::render(SDL_Renderer* r) const {
         ui::dim(r, 150);
         SDL_FRect panel{340.f, 220.f, 600.f, 290.f};
         ui::drawPanel(r, panel);
-        draw::text(r, 640, 255, draw::strf("Overwrite Slot %d?", confirming_ + 1), 3.f, kInk, draw::Align::Center);
+        const std::string what = slots_[confirming_].name.empty() ? draw::strf("Slot %d", confirming_ + 1)
+                                                                  : "\"" + slots_[confirming_].name + "\"";
+        draw::text(r, 640, 255, "Overwrite " + what + "?", 3.f, kInk, draw::Align::Center);
         const SlotInfo& s = slots_[confirming_];
         draw::text(r, 640, 315, draw::strf("The farm on day %d with %s coins", s.day, draw::number(s.coins).c_str()),
                    1.75f, kInkSoft, draw::Align::Center);
         draw::text(r, 640, 345, "will be lost for good.", 1.75f, kInkSoft, draw::Align::Center);
         confirmButtons_.render(r);
+    }
+
+    if (naming_ >= 0) {
+        ui::dim(r, 150);
+        SDL_FRect panel{340.f, 200.f, 600.f, 320.f};
+        ui::drawPanel(r, panel);
+        draw::text(r, 640, 235, namingNew_ ? "Name your farm" : "Rename your farm", 3.f, kInk, draw::Align::Center);
+        // The text box, with a blinking caret.
+        SDL_FRect box{400.f, 300.f, 480.f, 60.f};
+        draw::fillRoundRect(r, box.x, box.y, box.w, box.h, 10.f, pal::DeepSoil);
+        draw::fillRoundRect(r, box.x + 3, box.y + 3, box.w - 6, box.h - 6, 8.f, pal::Parchment);
+        const std::string placeholder = draw::strf("Slot %d", naming_ + 1);
+        const bool empty = nameText_.empty();
+        const float tx = box.x + 18, ty = box.y + 20;
+        draw::text(r, tx, ty, empty ? placeholder : nameText_, 2.5f, empty ? pal::alpha(pal::Tilled, 140) : kInk);
+        if ((SDL_GetTicks() / 500) % 2 == 0)
+            draw::fillRect(r, tx + (empty ? 0.f : draw::textWidth(nameText_, 2.5f)) + 2, ty - 2, 3, 24, kInk);
+        draw::text(r, 640, 380, draw::strf("Up to %d letters. Leave it blank for \"%s\".", SaveSystem::kMaxNameLength,
+                                           placeholder.c_str()),
+                   1.25f, kInkSoft, draw::Align::Center);
+        nameButtons_.render(r);
     }
 }
 

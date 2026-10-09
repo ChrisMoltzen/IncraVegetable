@@ -26,6 +26,7 @@ struct SlotInfo {
     int day = 0;
     double coins = 0.0;
     SDL_Time savedAt = 0; // nanoseconds since 1970
+    std::string name;     // the farm's name ("" = not named: shown as "Slot N")
 };
 
 class SaveSystem {
@@ -36,6 +37,9 @@ public:
 
     bool writeSlot(int slot, const std::string& contents) const;
     bool readSlot(int slot, std::string& out) const; // falls back to the .bak file
+    bool renameSlot(int slot, const std::string& name) const; // changes just the farm's name in a save
+    static std::string cleanName(const std::string& name);  // trims, drops characters the font hasn't got, max kMaxNameLength
+    static constexpr int kMaxNameLength = 20;
     SlotInfo slotInfo(int slot) const;
     bool anySaves() const;
     int mostRecentSlot() const; // -1 if there are no saves
