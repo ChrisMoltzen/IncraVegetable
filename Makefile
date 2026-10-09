@@ -190,3 +190,19 @@ demo-web:
 	rm -f $(DEMO_WEB_DIR)/AssetPacker $(DEMO_WEB_DIR)/AssetPack.cpp
 
 .PHONY: web-sdl web demo-web
+
+# ---------------------------------------------------------------------------
+# Short vertical videos for Instagram / TikTok (see tools/Reels/main.cpp).
+# Needs ffmpeg on your PATH. The videos land in build/reels/.
+#   make reels                     the end card says "Play it on itch.io"
+#   make reels LINE="Out now!"     ...or whatever you like
+# ---------------------------------------------------------------------------
+REELS_DIR = $(OUTPUT_DIR)/reels
+LINE ?= Play it on itch.io
+
+reels:
+	mkdir -p $(REELS_DIR)
+	clang++ $(filter-out src/main.cpp,$(SRC)) tools/Reels/main.cpp -o $(REELS_DIR)/Reels $(INCLUDE_DIRS) $(ASSETS_DEF) -DINCRA_DEBUG_TOOLS=0 $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
+	cd $(REELS_DIR) && SDL_AUDIODRIVER=dummy ./Reels "$(LINE)"
+
+.PHONY: reels
