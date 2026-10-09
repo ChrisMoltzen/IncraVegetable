@@ -32,7 +32,7 @@ Game::~Game() {
 }
 
 bool Game::init() {
-    SDL_SetAppMetadata("IncraVegetable", kGameVersion, "com.incravegetable.game");
+    SDL_SetAppMetadata(kGameTitle, kGameVersion, "com.incravegetable.game");
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());
@@ -45,7 +45,7 @@ bool Game::init() {
     SDL_WindowFlags flags = SDL_WINDOW_HIGH_PIXEL_DENSITY;
     if (kIsMobile) flags |= SDL_WINDOW_FULLSCREEN;
     else flags |= SDL_WINDOW_RESIZABLE;
-    if (!SDL_CreateWindowAndRenderer("IncraVegetable", settings_.windowWidth, settings_.windowHeight, flags, &window_,
+    if (!SDL_CreateWindowAndRenderer(kGameTitle, settings_.windowWidth, settings_.windowHeight, flags, &window_,
                                      &renderer_)) {
         SDL_Log("Could not create window: %s", SDL_GetError());
         return false;

@@ -2,6 +2,7 @@
 
 #include "TechData.h"
 #include "TechTreeData.h"
+#include "Platform.h"
 
 #include <SDL3/SDL.h>
 
@@ -78,7 +79,7 @@ double TechTree::cost(const TechNode& n) const {
 }
 
 bool TechTree::canBuy(const TechNode& n, double coins) const {
-    return !isMaxed(n) && prereqsMet(n) && coins >= cost(n);
+    return !isMaxed(n) && prereqsMet(n) && !demoLocked(n) && coins >= cost(n);
 }
 
 bool TechTree::tryBuy(size_t index, double& coins) {
@@ -104,4 +105,26 @@ Stats TechTree::computeStatsWith(const TechNode& node, int level) const {
 
 void TechTree::resetLevels() {
     for (auto& n : nodes_) n.level = 0;
+}
+
+// The first tech with no requirements is the middle of the tree (The Barn).
+float TechTree::distanceFromRoot(const TechNode& n) const {
+    const TechNode* root = nullptr;
+    for (const auto& o : nodes_)
+        if (o.prereqs.empty()) { root = &o; break; }
+    if (!root) return 0.f;
+    // Grid columns are 140 px apart and rows 112, so measure in rows.
+    const float dx = (n.gridX - root->gridX) * (140.f / 112.f), dy = n.gridY - root->gridY;
+    return std::sqrt(dx * dx + dy * dy);
+}
+
+bool TechTree::demoLocked(const TechNode& n) const {
+    return kIsDemo && distanceFromRoot(n) > kDemoRadius + 0.01f;
+}
+
+bool TechTree::demoComplete() const {
+    if (!kIsDemo) return false;
+    for (const auto& n : nodes_)
+        if (!demoLocked(n) && !isMaxed(n)) return false;
+    return true;
 }

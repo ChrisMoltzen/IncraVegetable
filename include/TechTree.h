@@ -81,6 +81,13 @@ public:
     bool isMaxed(const TechNode& n) const { return n.level >= n.maxLevel; }
     double cost(const TechNode& n) const;
     bool canBuy(const TechNode& n, double coins) const;
+    // Demo builds only: true for techs outside the demo's radius around The Barn
+    // (they show, but can't be bought). Always false in the full game.
+    bool demoLocked(const TechNode& n) const;
+    // How far a tech is from The Barn, in tech tree rows (see Platform.h).
+    float distanceFromRoot(const TechNode& n) const;
+    // Demo builds: every tech the demo allows has been bought.
+    bool demoComplete() const;
 
     // Buys one level of node `index` if possible. Returns true on success.
     bool tryBuy(size_t index, double& coins);
