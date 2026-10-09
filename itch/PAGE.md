@@ -30,6 +30,12 @@ Everything for the game's itch.io page: what goes in each box of the
 |---|---|
 | `IncraVegetable-windows.zip` | Windows |
 | `IncraVegetable-mac.zip` | macOS |
+| `IncraVegetable-demo-windows.zip` *(optional)* | Windows. Tick **This file is a demo** |
+| `IncraVegetable-demo-mac.zip` *(optional)* | macOS. Tick **This file is a demo** |
+
+If you sell the game, itch lets people download files marked as a demo for
+free while the full game stays paid. The demo builds come from
+`make demo-release` / `make demo-release-win`.
 
 See **Before you upload** at the bottom: the Mac build needs one change first.
 
@@ -53,7 +59,7 @@ fit (you hover, not click), so leave those unticked.
 
 | Theme setting | Colour |
 |---|---|
-| Background | `#56964A` (only shows if you don't use the tile) |
+| Background | `#627F50` Leaf, the farm grass (only shows if you don't use the tile) |
 | Background 2 (page panel) | `#2E3530` Panel |
 | Text | `#F4EFE1` Cream |
 | Link | `#D4B25E` Coin |
@@ -100,6 +106,7 @@ IncraVegetable is a cosy incremental farming game. Each day you get a few second
 - A stats page with time played, vegetables picked, best day and more
 - Hand-made pixel art, swaying grass and a day that turns to dusk as you play
 - About three hours to buy every upgrade
+- *(If you upload the demo:)* **Try the free demo**: the first 55 upgrades, and your farm carries over to the full game
 
 ### Controls
 
@@ -125,4 +132,5 @@ IncraVegetable is a cosy incremental farming game. Each day you get a few second
 2. **The Mac build won't run on other people's Macs yet.** `make release` links SDL3 from `/Library/Frameworks`, which players won't have. It needs packaging as an `IncraVegetable.app` with `SDL3.framework` inside it (and the `.icns` from `icon/`). I can add a `make mac-app` target for that.
 3. **Try the zips on a computer that's never had SDL or the source on it**, if you can.
 4. **Version number.** The game says `v0.2` on the main menu. Bump it if this is a bigger release, and use the same number in the upload's display name.
-5. **Optional: butler.** itch's command-line uploader (`butler push`) makes updates painless and lets players' itch app patch instead of re-downloading.
+5. **Demo (optional).** `make demo-release-win` / `make demo-release` build it into `build/demo-release/`. Zip it the same way, as `IncraVegetable-demo-windows.zip`.
+6. **Optional: butler.** itch's command-line uploader (`butler push`) makes updates painless and lets players' itch app patch instead of re-downloading.
