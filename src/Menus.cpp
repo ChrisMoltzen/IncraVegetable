@@ -4,6 +4,7 @@
 #include "Draw.h"
 #include "Palette.h"
 #include "Farm.h"
+#include "Grass.h"
 #include "Platform.h"
 
 #include <algorithm>
@@ -301,7 +302,7 @@ SlotMenu::Action SlotMenu::handleEvent(const SDL_Event& e) {
 }
 
 void SlotMenu::render(SDL_Renderer* r) const {
-    art::draw(r, "menu/slots_background", SDL_FRect{0, 0, 1280, 720});
+    grass::drawField(r); // the farm's field, a little darker
 
     const char* title = mode_ == Mode::NewGame ? "New Game" : "Load Game";
     draw::textShadow(r, 640, 50, title, 5.f, kWhite, draw::Align::Center);
@@ -525,13 +526,6 @@ void PauseMenu::render(SDL_Renderer* r) const {
 // ===========================================================================
 // Built-in art (used when there's no image in assets/, and for the templates)
 // ===========================================================================
-
-void SlotMenu::drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
-    draw::fillRect(r, rc.x, rc.y, rc.w, rc.h, SDL_Color{40, 70, 38, 255});
-    float sy = rc.h / 720.f;
-    for (int y = 0; y < 720; y += 48)
-        draw::fillRect(r, rc.x, rc.y + y * sy, rc.w, 22 * sy, SDL_Color{46, 78, 43, 255});
-}
 
 void SettingsMenu::drawSliderBarBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool fill) {
     draw::fillRoundRect(r, rc.x, rc.y, rc.w, rc.h, rc.h * 0.5f,

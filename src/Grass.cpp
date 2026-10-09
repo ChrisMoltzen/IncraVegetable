@@ -107,4 +107,16 @@ void draw(SDL_Renderer* r, float seconds, float mouseX, float mouseY) {
     SDL_RenderGeometry(r, tex, verts.data(), static_cast<int>(verts.size()), idx.data(), static_cast<int>(idx.size()));
 }
 
+void drawField(SDL_Renderer* r, Uint8 darken) {
+    art::draw(r, "farm/background", SDL_FRect{0, 0, 1280, 720});
+    float wx = -1000.f, wy = -1000.f, mx = -1000.f, my = -1000.f;
+    SDL_Window* win = SDL_GetRenderWindow(r);
+    if (win && SDL_GetMouseFocus() == win && SDL_GetRenderTarget(r) == nullptr) {
+        SDL_GetMouseState(&wx, &wy);
+        SDL_RenderCoordinatesFromWindow(r, wx, wy, &mx, &my); // into the game's 1280 x 720
+    }
+    draw(r, static_cast<float>(SDL_GetTicks()) / 1000.f, mx, my);
+    if (darken > 0) draw::fillRect(r, 0, 0, 1280, 720, SDL_Color{0, 0, 0, darken});
+}
+
 } // namespace grass

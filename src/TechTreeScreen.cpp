@@ -4,6 +4,7 @@
 #include "CropLooks.h"
 #include "TileShapes.h"
 #include "Draw.h"
+#include "Grass.h"
 #include "Palette.h"
 #include "Platform.h"
 #include "Farm.h"
@@ -292,9 +293,7 @@ void TechTreeScreen::update(float dt) {
 
 void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins, int nextDay) const {
     // Background. The built-in one is a grid that moves when you pan.
-    if (art::has("tree/background")) art::draw(r, "tree/background", SDL_FRect{0, 0, 1280, 720});
-    else drawBackgroundBuiltin(r, SDL_FRect{0, 0, 1280, 720}, camX_ + kPivotX * (1.f - zoom_),
-                               camY_ + kPivotY * (1.f - zoom_), zoom_);
+    grass::drawField(r); // the farm's field, a little darker, tufts swaying as on the farm
 
     const auto& nodes = tree.nodes();
 
@@ -310,7 +309,9 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
             SDL_Color c = met ? pal::FreshLeaf : pal::Slate; // palette: green once the requirement is met
             float x1 = fr.x + fr.w * 0.5f, y1 = fr.y + fr.h * 0.5f;
             float x2 = to.x + to.w * 0.5f, y2 = to.y + to.h * 0.5f;
-            draw::thickLine(r, x1, y1, x2, y2, std::max(2.f, 4.f * zoom_), c);
+            const float lw = std::max(2.f, 4.f * zoom_);
+            draw::thickLine(r, x1, y1, x2, y2, lw + 3.f, pal::alpha(pal::NightSoil, 200)); // dark edge: reads on the grass
+            draw::thickLine(r, x1, y1, x2, y2, lw, c);
             // Show the level needed at the midpoint of the line when it isn't met yet.
             if (!met && zoom_ >= 0.6f) {
                 float mx = (x1 + x2) * 0.5f, my = (y1 + y2) * 0.5f;
@@ -429,7 +430,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
                                                 static_cast<int>(nodes.size())),
                    1.25f, pal::Tilled, draw::Align::Center);
     }
-    draw::text(r, 64, 690,
+    draw::textShadow(r, 64, 690,
                touchMode_ ? "Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom."
                           : "Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit.",
                1.5f, kGrey);
@@ -550,19 +551,6 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
 // ---------------------------------------------------------------------------
 // Built-in art (used when there's no image in assets/, and for the templates)
 // ---------------------------------------------------------------------------
-
-void TechTreeScreen::drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc, float panX, float panY, float zoom) {
-    draw::fillRect(r, rc.x, rc.y, rc.w, rc.h, SDL_Color{24, 30, 28, 255});
-    float grid = 40.f * zoom;
-    while (grid < 16.f) grid *= 2.f; // zoomed far out: fewer lines, not a solid fill
-    float ox = std::fmod(panX, grid), oy = std::fmod(panY, grid);
-    if (ox < 0) ox += grid;
-    if (oy < 0) oy += grid;
-    for (float x = rc.x + ox - grid; x < rc.x + rc.w; x += grid)
-        if (x >= rc.x) draw::fillRect(r, x, rc.y, 1, rc.h, SDL_Color{34, 42, 39, 255});
-    for (float y = rc.y + oy - grid; y < rc.y + rc.h; y += grid)
-        if (y >= rc.y) draw::fillRect(r, rc.x, y, rc.w, 1, SDL_Color{34, 42, 39, 255});
-}
 
 void TechTreeScreen::drawNodeBuiltin(SDL_Renderer* r, const SDL_FRect& outer, SDL_Color fill, SDL_Color border) {
     // Corners and border keep their size however big the tile is (like 9-slice art), and follow the zoom.

@@ -13,6 +13,11 @@ namespace grass {
 // coordinates (tufts near it get brushed aside). Pass a far-away pointer to ignore it.
 void draw(SDL_Renderer* r, float seconds, float mouseX, float mouseY);
 
+// The farm's field (farm/background + swaying tufts), darkened a little: the
+// background of The Barn and the New Game / Load Game screens. The pointer and
+// the clock are read here, so any screen can call it.
+void drawField(SDL_Renderer* r, Uint8 darken = 70);
+
 // The built-in tuft (used when assets/farm/grass_tuft.png is missing, and for its art template).
 void drawTuftBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
 

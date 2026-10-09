@@ -205,12 +205,8 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
     add({"menu/background", 1280, 720, "Main menu background (vegetable rows drift over it; turn them off in art.txt)", false,
          MainMenu::drawBackgroundBuiltin});
     add({"menu/logo", 900, 112, "Game title on the main menu", false, MainMenu::drawLogoBuiltin});
-    add({"menu/slots_background", 1280, 720, "Background of the New Game / Load Game slot screen", false,
-         SlotMenu::drawBackgroundBuiltin});
 
     // ---------------- Tech tree ----------------
-    add({"tree/background", 1280, 720, "Background of The Barn (tech tree)", false,
-         [](SDL_Renderer* r, const SDL_FRect& rc) { TechTreeScreen::drawBackgroundBuiltin(r, rc, 0.f, 0.f); }});
     add({"tree/header_bar", 1280, 64, "Strip along the top of The Barn (tech tree)", false, TechTreeScreen::drawHeaderBuiltin});
     addNodeStyle("tree/node", {44, 50, 56, 255}, {120, 128, 135, 255}, "Upgrade you can't afford yet");
     addNodeStyle("tree/node_affordable", {32, 72, 38, 255}, {130, 220, 120, 255}, "Upgrade you can buy now");
