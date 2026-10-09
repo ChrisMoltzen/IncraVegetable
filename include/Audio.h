@@ -5,11 +5,14 @@
 // assets/audio/ to replace any of them (WAV, OGG or MP3, any sample rate,
 // mono or stereo):
 //
-//   music        the farm (and anywhere without its own track)
-//   music_menu   main menu, save slots and settings   (optional: else music)
-//   music_barn   The Barn (tech tree)                 (optional: else music)
+//   farm_1, farm_2, farm_3 ...  music while farming: as many as you like. The
+//                               game picks one at random and changes it every
+//                               couple of days (Game::kDaysPerFarmTrack)
+//   menu         main menu, save slots and settings   (optional: else the farm music)
+//   barn         The Barn (tech tree)                 (optional: else the farm music)
 //   pick, coin, buy, deny, click, sunset              sound effects
 //
+// (The old names still work: music = a farm track, music_menu, music_barn.)
 // Sound effects can have up to 9 takes, picked at random each time:
 // pick.wav, pick2.wav, pick3.wav ... Music loops, and crossfades when the
 // screen changes. F5 in game reloads the files.
@@ -49,6 +52,13 @@ public:
     static const char* sfxName(Sfx s);
     static const char* musicName(Music m);
 
+    // Farm music: how many farm_N tracks were loaded (0 = the built-in tune), and
+    // which one to play (0-based; crossfades if the farm music is playing).
+    int farmTrackCount() const { return static_cast<int>(farmTracks_.size()); }
+    void setFarmTrack(int index);
+    int farmTrack() const { return farmChoice_; }
+    std::string farmTrackName() const; // "farm_2", or "built-in" (for the debug screen)
+
 private:
     static void SDLCALL callback(void* userdata, SDL_AudioStream* stream, int additional, int total);
     void mix(float* out, int frames); // stereo, interleaved
@@ -76,7 +86,11 @@ private:
     // All sound data is 44.1 kHz stereo, interleaved (L, R, L, R...).
     std::vector<std::vector<std::vector<float>>> sfx_; // [sfx][take]
     std::vector<bool> sfxFromFile_;
-    std::vector<std::vector<float>> music_; // [Music]; empty = not provided
+    std::vector<std::vector<float>> music_; // every loaded track (farm ones, menu, barn)
+    std::vector<int> farmTracks_;            // indices into music_, in farm_1, farm_2 ... order
+    std::vector<std::string> farmNames_;     // their file names
+    int menuTrack_ = -1, barnTrack_ = -1;    // indices into music_, -1 = not provided
+    int farmChoice_ = 0;                     // which farm track (into farmTracks_)
     std::vector<Voice> voices_;
     std::vector<float> scratch_;
     std::vector<std::string> errors_;

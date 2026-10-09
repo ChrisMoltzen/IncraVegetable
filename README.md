@@ -140,15 +140,17 @@ Every sound has a built-in version, so the game always has sound. Put your own f
 
 | Name | When it plays |
 |---|---|
-| `music` | On the farm, and on any screen without its own track. Loops. |
-| `music_menu` | Main menu, save slots and settings. Optional: without it, `music` plays. |
-| `music_barn` | The Barn. Optional: without it, `music` plays. |
+| `farm_1`, `farm_2`, `farm_3`... | Music on the farm, as many tracks as you like (gaps in the numbers are fine). The game picks one at random and changes to a different one every couple of days (`kDaysPerFarmTrack` in `Game.h`). Loops. |
+| `menu` | Main menu, save slots and settings. Optional: without it, the farm music plays. |
+| `barn` | The Barn. Optional: without it, the farm music plays. |
 | `pick` | Picking a vegetable |
 | `coin` | The coins for a pick (quietly, under `pick`), and the sound-volume preview in Settings |
 | `buy` | Buying an upgrade |
 | `deny` | Clicking an upgrade you can't buy yet |
 | `click` | Buttons |
 | `sunset` | The day ending |
+
+The old music names (`music`, `music_menu`, `music_barn`) still work if the new ones aren't there.
 
 - The file name is the name plus its extension, e.g. `assets/audio/music.ogg` or `assets/audio/pick.wav`. If there's more than one, `.wav` wins, then `.ogg`, then `.mp3`.
 - **Takes:** a sound effect can have up to 9 versions, picked at random each time it plays: `pick.wav`, `pick2.wav`, `pick3.wav`... This helps sounds that play a lot, like `pick`.
