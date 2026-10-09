@@ -192,9 +192,9 @@ const char* Audio::sfxName(Sfx s) {
 
 const char* Audio::musicName(Music m) {
     switch (m) {
-    case Music::Farm: return "music";
-    case Music::Menu: return "music_menu";
-    case Music::Barn: return "music_barn";
+    case Music::Farm: return "farm_1";
+    case Music::Menu: return "menu";
+    case Music::Barn: return "barn";
     case Music::Count: break;
     }
     return "";
@@ -205,7 +205,7 @@ Audio::~Audio() { shutdown(); }
 bool Audio::init() {
     buildSfx();
     sfxFromFile_.assign(sfx_.size(), false);
-    music_.assign(static_cast<size_t>(Music::Count), {});
+    music_.clear();
     if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
         SDL_Log("Audio unavailable: %s", SDL_GetError());
         return false;
@@ -232,7 +232,10 @@ int Audio::loadFiles(const std::string& folder) {
     // Decode everything first (slow), then swap it in under the lock (quick).
     std::vector<std::vector<std::vector<float>>> sfx = builtinSfx();
     std::vector<bool> fromFile(sfx.size(), false);
-    std::vector<std::vector<float>> music(static_cast<size_t>(Music::Count));
+    std::vector<std::vector<float>> music;
+    std::vector<int> farmTracks;
+    std::vector<std::string> farmNames;
+    int menuTrack = -1, barnTrack = -1;
     int loaded = 0;
     auto load = [&](const std::string& name, std::vector<float>& out) {
         std::string path = findSound(folder, name);
@@ -259,12 +262,38 @@ int Audio::loadFiles(const std::string& folder) {
                 fromFile[i] = true;
             }
         }
-        for (int m = 0; m < static_cast<int>(Music::Count); ++m) load(musicName(static_cast<Music>(m)), music[m]);
+        // Music: farm_1, farm_2 ... (gaps are fine), then menu and barn. The old single-track
+        // names (music, music_menu, music_barn) still work when the new ones aren't there.
+        auto loadTrack = [&](const std::string& name) {
+            std::vector<float> buf;
+            if (!load(name, buf)) return -1;
+            music.push_back(std::move(buf));
+            return static_cast<int>(music.size()) - 1;
+        };
+        for (int k = 1; k <= 99; ++k) {
+            const std::string name = "farm_" + std::to_string(k);
+            if (findSound(folder, name).empty()) continue;
+            int t = loadTrack(name);
+            if (t >= 0) { farmTracks.push_back(t); farmNames.push_back(name); }
+        }
+        if (farmTracks.empty()) {
+            int t = loadTrack("music");
+            if (t >= 0) { farmTracks.push_back(t); farmNames.push_back("music"); }
+        }
+        menuTrack = loadTrack("menu");
+        if (menuTrack < 0) menuTrack = loadTrack("music_menu");
+        barnTrack = loadTrack("barn");
+        if (barnTrack < 0) barnTrack = loadTrack("music_barn");
     }
     if (stream_) SDL_LockAudioStream(stream_);
     sfx_ = std::move(sfx);
     sfxFromFile_ = std::move(fromFile);
     music_ = std::move(music);
+    farmTracks_ = std::move(farmTracks);
+    farmNames_ = std::move(farmNames);
+    menuTrack_ = menuTrack;
+    barnTrack_ = barnTrack;
+    if (farmChoice_ >= static_cast<int>(farmTracks_.size())) farmChoice_ = 0;
     voices_.clear();
     current_ = previous_ = sourceFor(wanted_);
     currentPos_ = previousPos_ = 0.0;
@@ -289,11 +318,31 @@ void Audio::play(Sfx sfx, float pitch, float gain) {
 }
 
 int Audio::sourceFor(Music m) const {
-    int i = static_cast<int>(m);
-    if (i < static_cast<int>(music_.size()) && !music_[i].empty()) return i;
-    int farm = static_cast<int>(Music::Farm);
-    if (farm < static_cast<int>(music_.size()) && !music_[farm].empty()) return farm;
+    if (m == Music::Menu && menuTrack_ >= 0) return menuTrack_;
+    if (m == Music::Barn && barnTrack_ >= 0) return barnTrack_;
+    // The farm, and anywhere without its own track: today's farm track.
+    if (!farmTracks_.empty()) return farmTracks_[std::clamp(farmChoice_, 0, static_cast<int>(farmTracks_.size()) - 1)];
     return -1; // the built-in tune
+}
+
+void Audio::setFarmTrack(int index) {
+    if (stream_) SDL_LockAudioStream(stream_);
+    if (!farmTracks_.empty()) farmChoice_ = std::clamp(index, 0, static_cast<int>(farmTracks_.size()) - 1);
+    // If the farm track is what's playing, crossfade to the new one.
+    int src = sourceFor(wanted_);
+    if (src != current_) {
+        previous_ = current_;
+        previousPos_ = currentPos_;
+        current_ = src;
+        currentPos_ = 0.0;
+        fade_ = 0.f;
+    }
+    if (stream_) SDL_UnlockAudioStream(stream_);
+}
+
+std::string Audio::farmTrackName() const {
+    if (farmNames_.empty()) return "built-in";
+    return farmNames_[std::clamp(farmChoice_, 0, static_cast<int>(farmNames_.size()) - 1)];
 }
 
 void Audio::setMusic(Music m) {
@@ -560,7 +609,7 @@ int Audio::exportTemplates(const std::string& folderIn) {
         musicClock_ = clock;
         lastStep_ = step;
         if (stream_) SDL_UnlockAudioStream(stream_);
-        if (writeWav(dir + "music.wav", monoToStereo(mono))) ++written;
+        if (writeWav(dir + "farm_1.wav", monoToStereo(mono))) ++written;
     }
     // Add them to the art list.
     std::ofstream list(folder + "ART_LIST.md", std::ios::app);
@@ -570,9 +619,10 @@ int Audio::exportTemplates(const std::string& folderIn) {
          << "Sound effects can have up to 9 takes, picked at random: `pick.wav`, `pick2.wav`, `pick3.wav`...\n"
          << "Music loops; when the screen changes it crossfades to that screen's track. F5 in game reloads your sounds.\n\n"
          << "| File | What it is |\n|---|---|\n"
-         << "| `audio/music` | Music on the farm, and anywhere without its own track (loops) |\n"
-         << "| `audio/music_menu` | Main menu, save slots and settings (optional: else `music`) |\n"
-         << "| `audio/music_barn` | The Barn (optional: else `music`) |\n"
+         << "| `audio/farm_1`, `audio/farm_2`, ... | Music on the farm: as many tracks as you like. One is picked at "
+            "random and changed every couple of days (loops) |\n"
+         << "| `audio/menu` | Main menu, save slots and settings (optional: else the farm music) |\n"
+         << "| `audio/barn` | The Barn (optional: else the farm music) |\n"
          << "| `audio/pick` | Picking a vegetable (played slightly higher or lower each time) |\n"
          << "| `audio/coin` | Coins for a pick (quietly, under `pick`), and the sound-volume preview |\n"
          << "| `audio/buy` | Buying an upgrade in The Barn |\n"

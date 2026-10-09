@@ -111,9 +111,9 @@ Music loops; when the screen changes it crossfades to that screen's track. F5 in
 
 | File | What it is |
 |---|---|
-| `audio/music` | Music on the farm, and anywhere without its own track (loops) |
-| `audio/music_menu` | Main menu, save slots and settings (optional: else `music`) |
-| `audio/music_barn` | The Barn (optional: else `music`) |
+| `audio/farm_1`, `audio/farm_2`, ... | Music on the farm: as many tracks as you like. One is picked at random and changed every couple of days (loops) |
+| `audio/menu` | Main menu, save slots and settings (optional: else the farm music) |
+| `audio/barn` | The Barn (optional: else the farm music) |
 | `audio/pick` | Picking a vegetable (played slightly higher or lower each time) |
 | `audio/coin` | Coins for a pick (quietly, under `pick`), and the sound-volume preview |
 | `audio/buy` | Buying an upgrade in The Barn |
