@@ -141,7 +141,13 @@ private:
     bool statsButtonDown_ = false;
     bool endDayButtonDown_ = false;
 
-    SDL_FRect summaryButton_{640.f - 150.f, 470.f, 300.f, 62.f};
+    // The day summary grows with the number of crops picked; summaryLayout() works out
+    // where the panel and its button go (used for drawing and for clicks).
+    struct SummaryLayout {
+        SDL_FRect panel, button;
+        int columns, rows; // the crop list
+    };
+    SummaryLayout summaryLayout() const;
     SDL_FRect pauseButton_{1280.f - 62.f, 12.f, 48.f, 48.f};
     SDL_FRect statsButton_{1280.f - 118.f, 12.f, 48.f, 48.f}; // left of the pause button
     static constexpr float kDialX = 640.f, kDialHorizon = 56.f, kDialRadius = 48.f; // day/night dial in the HUD

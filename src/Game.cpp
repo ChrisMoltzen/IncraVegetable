@@ -692,7 +692,7 @@ void Game::handleEvent(SDL_Event& e) {
             break;
         }
         if (summaryTimer_ < 0.6f) break; // ignore frantic clicks right as the day ends
-        bool clicked = isMouseUp(e) && draw::pointInRect(e.button.x, e.button.y, summaryButton_);
+        bool clicked = isMouseUp(e) && draw::pointInRect(e.button.x, e.button.y, summaryLayout().button);
         bool key = e.type == SDL_EVENT_KEY_DOWN && (e.key.key == SDLK_RETURN || e.key.key == SDLK_SPACE);
         if (clicked || key) {
             audio_.play(Sfx::Click);
@@ -967,12 +967,29 @@ void Game::renderHud() {
     }
 }
 
+Game::SummaryLayout Game::summaryLayout() const {
+    int kinds = 0;
+    for (Crop c = 0; c < cropCount(); ++c)
+        if (farm_.pickedOf(c) > 0) ++kinds;
+    SummaryLayout L;
+    L.columns = kinds > 4 ? 2 : 1; // a long list of crops goes in two columns
+    L.rows = (kinds + L.columns - 1) / L.columns;
+    const float w = 560.f;
+    // header + "Vegetables picked" + crop rows + gap + two coin lines + gap + button + margin
+    const float h = 100.f + 30.f + L.rows * 22.f + 10.f + 60.f + 24.f + 62.f + 26.f;
+    const float x = (kWidth - w) * 0.5f, y = std::max(20.f, (kHeight - h) * 0.5f + 20.f);
+    L.panel = SDL_FRect{x, y, w, h};
+    L.button = SDL_FRect{640.f - 150.f, y + h - 26.f - 62.f, 300.f, 62.f};
+    return L;
+}
+
 void Game::renderSummary() {
     Uint8 fade = static_cast<Uint8>(150 * std::min(1.f, summaryTimer_ * 3.f));
     draw::fillRect(renderer_, 0, 0, kWidth, kHeight, SDL_Color{0, 0, 0, fade});
 
-    const float w = 560, h = 360, x = (kWidth - w) * 0.5f, y = 180;
-    ui::drawPanel(renderer_, SDL_FRect{x, y, w, h});
+    const SummaryLayout L = summaryLayout();
+    const float w = L.panel.w, x = L.panel.x, y = L.panel.y;
+    ui::drawPanel(renderer_, L.panel);
     art::draw(renderer_, "ui/panel_header", SDL_FRect{x, y, w, 70});
     draw::textShadow(renderer_, kWidth * 0.5f, y + 22, draw::strf("Sunset - Day %d done!", day_ - 1), 3.f, kWhite,
                      draw::Align::Center);
@@ -981,21 +998,23 @@ void Game::renderSummary() {
     float ty = y + 100;
     draw::text(renderer_, x + 50, ty, draw::strf("Vegetables picked: %d", farm_.pickedToday()), 2.f, ink);
     ty += 30;
+    int k = 0;
     for (Crop c = 0; c < cropCount(); ++c) {
         if (farm_.pickedOf(c) == 0) continue;
-        draw::text(renderer_, x + 80, ty, draw::strf("%s x%d", cropDef(c).name.c_str(), farm_.pickedOf(c)), 1.5f,
-                   pal::Tilled);
-        ty += 22;
+        const int col = k / L.rows, row = k % L.rows; // fill down the first column, then the second
+        draw::text(renderer_, x + 80 + col * 230.f, ty + row * 22.f,
+                   draw::strf("%s x%d", cropDef(c).name.c_str(), farm_.pickedOf(c)), 1.5f, pal::Tilled);
+        ++k;
     }
-    ty += 10;
+    ty += L.rows * 22.f + 10.f;
     draw::text(renderer_, x + 50, ty, "Coins earned: " + draw::number(farm_.earnedToday()), 2.f, ink);
     ty += 30;
     draw::text(renderer_, x + 50, ty, "Total coins:  " + draw::number(coins_), 2.f, ink);
 
     bool ready = summaryTimer_ >= 0.6f;
-    bool over = ready && !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, summaryButton_);
+    bool over = ready && !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, L.button);
     ui::Button b;
-    b.rect = summaryButton_;
+    b.rect = L.button;
     b.label = "The Barn >";
     b.style = ui::Style::Secondary;
     b.enabled = ready;
