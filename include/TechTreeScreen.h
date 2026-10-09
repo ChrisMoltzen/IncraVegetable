@@ -19,7 +19,6 @@ public:
     void render(SDL_Renderer* r, const TechTree& tree, double coins, int nextDay) const;
 
     // Built-in art, used when there's no image in assets/ (see ArtCatalog.cpp).
-    static void drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc, float panX, float panY, float zoom = 1.f);
     static void drawNodeBuiltin(SDL_Renderer* r, const SDL_FRect& outer, SDL_Color fill, SDL_Color border);
     // Picture for a tech's tile when there's no assets/tree/icons/<id>.png.
     // The shipped techs have their own; any other tech gets its initials.

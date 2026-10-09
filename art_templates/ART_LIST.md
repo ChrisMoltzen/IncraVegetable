@@ -71,8 +71,6 @@ is brightened or darkened automatically.
 | `ui/font.png` | 256 x 96 |  | Optional font: 16 x 6 grid of equal-sized characters, ASCII 32 (space) to 127 in order, drawn WHITE (the game colours them). Leave it out to keep the built-in font |
 | `menu/background.png` | 1280 x 720 |  | Main menu background (vegetable rows drift over it; turn them off in art.txt) |
 | `menu/logo.png` | 900 x 112 |  | Game title on the main menu |
-| `menu/slots_background.png` | 1280 x 720 |  | Background of the New Game / Load Game slot screen |
-| `tree/background.png` | 1280 x 720 |  | Background of The Barn (tech tree) |
 | `tree/header_bar.png` | 1280 x 64 |  | Strip along the top of The Barn (tech tree) |
 | `tree/node.png` | 96 x 96 | yes | Upgrade you can't afford yet |
 | `tree/node_affordable.png` | 96 x 96 | yes | Upgrade you can buy now |

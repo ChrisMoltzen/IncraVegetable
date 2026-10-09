@@ -50,7 +50,6 @@ public:
     int chosenSlot() const { return chosen_; }
     // The name typed for a new farm (Chosen, in New Game) or a rename (Renamed). "" = unnamed.
     const std::string& chosenName() const { return chosenName_; }
-    static void drawBackgroundBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
 
 private:
     void buildButtons();
