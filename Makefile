@@ -143,3 +143,50 @@ demo-release-win:
 	powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(DEMO_RELEASE_DIR)/'"
 
 .PHONY: demo demo-win demo-release demo-release-win
+
+# ---------------------------------------------------------------------------
+# Web builds (browser / itch.io HTML5), with Emscripten. Assets are packed in
+# like a release build; saves go in the browser's storage (web/pre.js).
+#   1. Install Emscripten once:   brew install emscripten   (or the emsdk)
+#   2. make web-sdl               builds SDL3 for the web into build/web-sdl/ (once)
+#   3. make demo-web              the demo:      build/demo-web/index.html (+ .js, .wasm)
+#      make web                   the full game: build/web/index.html
+# Try it locally: cd build/demo-web && python3 -m http.server, then open
+# http://localhost:8000 (opening index.html straight from disk won't work).
+# For itch.io, zip the three files in the folder (index.html at the top of the
+# zip) and upload it as "This file will be played in the browser", 1280 x 720.
+# ---------------------------------------------------------------------------
+EMCC ?= emcc
+EMCMAKE ?= emcmake
+HOST_CXX ?= clang++
+SDL_WEB_TAG ?= release-3.2.24
+WEB_SDL_DIR = $(OUTPUT_DIR)/web-sdl
+WEB_SDL = $(WEB_SDL_DIR)/install
+WEB_FLAGS = -I$(WEB_SDL)/include $(WEB_SDL)/lib/libSDL3.a -std=c++20 -O2 \
+	-sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=1048576 -sFORCE_FILESYSTEM=1 -sGL_ENABLE_GET_PROC_ADDRESS -sMINIFY_HTML=0 -lidbfs.js \
+	--pre-js web/pre.js --shell-file web/shell.html
+WEB_DIR = $(OUTPUT_DIR)/web
+DEMO_WEB_DIR = $(OUTPUT_DIR)/demo-web
+
+web-sdl:
+	mkdir -p $(WEB_SDL_DIR)
+	if [ ! -d $(WEB_SDL_DIR)/src ]; then git clone --depth 1 --branch $(SDL_WEB_TAG) https://github.com/libsdl-org/SDL.git $(WEB_SDL_DIR)/src; fi
+	$(EMCMAKE) cmake -S $(WEB_SDL_DIR)/src -B $(WEB_SDL_DIR)/cmake -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=OFF -DSDL_STATIC=ON -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=$(abspath $(WEB_SDL))
+	cmake --build $(WEB_SDL_DIR)/cmake -j8
+	cmake --install $(WEB_SDL_DIR)/cmake
+
+web:
+	mkdir -p $(WEB_DIR)
+	$(HOST_CXX) $(PACKER_SRC) -o $(WEB_DIR)/AssetPacker $(INCLUDE_DIRS) -std=c++20 -O2
+	$(WEB_DIR)/AssetPacker assets $(WEB_DIR)/AssetPack.cpp
+	$(EMCC) $(SRC) $(WEB_DIR)/AssetPack.cpp -o $(WEB_DIR)/index.html $(INCLUDE_DIRS) $(RELEASE_DEFS) $(WEB_FLAGS)
+	rm -f $(WEB_DIR)/AssetPacker $(WEB_DIR)/AssetPack.cpp
+
+demo-web:
+	mkdir -p $(DEMO_WEB_DIR)
+	$(HOST_CXX) $(PACKER_SRC) -o $(DEMO_WEB_DIR)/AssetPacker $(INCLUDE_DIRS) -std=c++20 -O2
+	$(DEMO_WEB_DIR)/AssetPacker assets $(DEMO_WEB_DIR)/AssetPack.cpp
+	$(EMCC) $(SRC) $(DEMO_WEB_DIR)/AssetPack.cpp -o $(DEMO_WEB_DIR)/index.html $(INCLUDE_DIRS) $(RELEASE_DEFS) $(DEMO_DEFS) $(WEB_FLAGS)
+	rm -f $(DEMO_WEB_DIR)/AssetPacker $(DEMO_WEB_DIR)/AssetPack.cpp
+
+.PHONY: web-sdl web demo-web

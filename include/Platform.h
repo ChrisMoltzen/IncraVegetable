@@ -9,9 +9,17 @@ inline constexpr bool kIsMobile = true;
 inline constexpr bool kIsMobile = false;
 #endif
 
+// Web builds (make web / make demo-web, with Emscripten): the game runs in a
+// browser tab. The page around it does fullscreen, and there's nothing to quit.
+#if defined(SDL_PLATFORM_EMSCRIPTEN)
+inline constexpr bool kIsWeb = true;
+#else
+inline constexpr bool kIsWeb = false;
+#endif
+
 // Desktop-only options: window resolution, fullscreen toggle and a Quit button.
 // (Mobile apps are always fullscreen and are closed by the OS, not the app.)
-inline constexpr bool kIsDesktop = !kIsMobile;
+inline constexpr bool kIsDesktop = !kIsMobile && !kIsWeb;
 
 inline constexpr const char* kGameVersion = "0.2";
 
