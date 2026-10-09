@@ -234,19 +234,19 @@ static void endCard(Reel& v, int frames) {
             SDL_SetRenderDrawColor(r, sky.r, sky.g, sky.b, 255);
             SDL_FRect top{0, 0, (float)W, 482};
             SDL_RenderFillRect(r, &top);
-            SDL_FRect src{600, 0, 540, 720}, dst{0, 480, 1080, 1440}; // with the sun in
+            SDL_FRect src{700, 0, 540, 720}, dst{0, 480, 1080, 1440}; // with the sun in
             SDL_RenderTexture(r, v.gameTex, &src, &dst);
             const float sc = 9.f, bounce = std::round(std::sin(i * 0.12f) * 6.f);
-            const float tw = draw::textWidth("IncraVegetable", sc), x = (W - tw) * 0.5f, y = 560 + bounce;
+            const float tw = draw::textWidth("IncraVegetable", sc), x = (W - tw) * 0.5f, y = 470 + bounce;
             Uint8 a = static_cast<Uint8>(255 * t);
-            draw::text(r, x + 9, y + 9, "IncraVegetable", sc, pal::alpha(pal::DeepSoil, a));
-            draw::text(r, x, y, "Incra", sc, pal::alpha(pal::FreshLeaf, a));
+            draw::text(r, x + 9, y + 9, "IncraVegetable", sc, pal::alpha(pal::DeepSoil, static_cast<Uint8>(a * 0.63f)));
+            draw::text(r, x, y, "Incra", sc, pal::alpha(pal::Leaf, a)); // the logo's own colours
             draw::text(r, x + draw::textWidth("Incra", sc), y, "Vegetable", sc, pal::alpha(pal::Pumpkin, a));
-            draw::text(r, W * 0.5f, y + 110, "an incremental farming game", 3.f, pal::alpha(pal::Burnt, a), draw::Align::Center);
+            draw::text(r, W * 0.5f, y + 110, "an incremental farming game", 3.f, pal::alpha(pal::Dusk, a), draw::Align::Center);
             float t2 = std::clamp((i - 12) / 10.f, 0.f, 1.f);
             Uint8 a2 = static_cast<Uint8>(255 * t2);
-            draw::text(r, W * 0.5f + 5, 820 + 5, kEndLine.c_str(), 5.f, pal::alpha(pal::DeepSoil, a2), draw::Align::Center);
-            draw::text(r, W * 0.5f, 820, kEndLine.c_str(), 5.f, pal::alpha(pal::Cream, a2), draw::Align::Center);
+            draw::text(r, W * 0.5f + 5, 680 + 5, kEndLine.c_str(), 5.f, pal::alpha(pal::DeepSoil, a2), draw::Align::Center);
+            draw::text(r, W * 0.5f, 680, kEndLine.c_str(), 5.f, pal::alpha(pal::Cream, a2), draw::Align::Center);
         });
     }
 }
