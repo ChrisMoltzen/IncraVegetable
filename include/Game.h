@@ -8,6 +8,7 @@
 #include "PlayStats.h"
 #include "SaveSystem.h"
 #include "StatsScreen.h"
+#include "CompleteScreen.h"
 #include "TechTree.h"
 #include "TechTreeScreen.h"
 
@@ -36,7 +37,7 @@ public:
     int exportArtTemplates(const std::string& folder);
 
 private:
-    enum class State { MainMenu, SlotSelect, Settings, Farming, DaySummary, TechTree, Paused, Stats };
+    enum class State { MainMenu, SlotSelect, Settings, Farming, DaySummary, TechTree, Paused, Stats, Complete };
 
     // Flow
     void goToMainMenu();
@@ -52,6 +53,7 @@ private:
     void openTechTree();
     void pause();
     void openStats();
+    void openCompletion(); // the "Barn fully unlocked" pop-up
     void closeStats();
     std::vector<StatsScreen::Row> statsRows() const;
     void resume();
@@ -110,6 +112,8 @@ private:
     SettingsMenu settingsMenu_;
     PauseMenu pauseMenu_;
     StatsScreen statsScreen_;
+    CompleteScreen completeScreen_;
+    bool completionSeen_ = false; // the pop-up shows once per farm (saved)
     PlayStats playStats_;
     DebugMenu debugMenu_;
     DebugOptions debug_;

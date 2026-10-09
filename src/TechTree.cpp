@@ -128,3 +128,9 @@ bool TechTree::demoComplete() const {
         if (!demoLocked(n) && !isMaxed(n)) return false;
     return true;
 }
+
+bool TechTree::allBought() const {
+    for (const auto& n : nodes_)
+        if (!isMaxed(n)) return false;
+    return !nodes_.empty();
+}

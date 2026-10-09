@@ -84,7 +84,7 @@ void Game::shutdown() {
 
 bool Game::inGame() const {
     return state_ == State::Farming || state_ == State::DaySummary || state_ == State::TechTree ||
-           state_ == State::Paused || state_ == State::Stats || (state_ == State::Settings && settingsFrom_ == State::Paused);
+           state_ == State::Paused || state_ == State::Stats || state_ == State::Complete || (state_ == State::Settings && settingsFrom_ == State::Paused);
 }
 
 void Game::goToMainMenu() {
@@ -131,6 +131,7 @@ void Game::newGame(int slot) {
     coins_ = 0.0;
     lifetimeCoins_ = 0.0;
     playStats_ = PlayStats{};
+    completionSeen_ = false;
     day_ = 1;
     farmTrackPeriod_ = -1;
     tree_.resetLevels();
@@ -173,6 +174,7 @@ bool Game::loadGame(int slot) {
     coins_ = 0.0;
     lifetimeCoins_ = 0.0;
     playStats_ = PlayStats{};
+    completionSeen_ = false;
     day_ = 1;
     farmTrackPeriod_ = -1;
     std::string phase = "farming";
@@ -188,6 +190,7 @@ bool Game::loadGame(int slot) {
         else if (key == "lifetime") ss >> lifetimeCoins_;
         else if (key == "day") ss >> day_;
         else if (key == "stat") playStats_.parse(ss);
+        else if (key == "completed") completionSeen_ = true;
         else if (key == "phase") ss >> phase;
         else if (key == "tech") {
             std::string id;
@@ -286,6 +289,32 @@ void Game::openStats() {
     touchDown_ = false;
 }
 
+// Bought the last upgrade: say thanks, once per farm.
+void Game::openCompletion() {
+    completionSeen_ = true;
+    int bought = 0;
+    for (const auto& n : tree_.nodes()) bought += n.level;
+    auto duration = [](double seconds) {
+        const long long s = static_cast<long long>(seconds);
+        return s < 3600 ? draw::strf("%lldm", s / 60) : draw::strf("%lldh %02lldm", s / 3600, (s / 60) % 60);
+    };
+    std::vector<std::string> facts = {
+        draw::strf("%d upgrades bought in %d days", bought, std::max(1, day_ - 1)),
+        draw::number(lifetimeCoins_) + " coins earned  -  " + draw::number(static_cast<double>(playStats_.picked)) +
+            " vegetables picked",
+        "Time played: " + duration(playStats_.secondsPlayed),
+    };
+    if (kIsDemo)
+        completeScreen_.open("You've finished the demo!", "Thank you for playing my game.",
+                             {facts[0], draw::strf("The full game has %d upgrades to unlock.",
+                                                   static_cast<int>(tree_.nodes().size())),
+                              "Your farm carries over to it."});
+    else completeScreen_.open("The Barn is fully unlocked!", "Thank you for playing my game.", facts);
+    audio_.play(Sfx::Sunset);
+    treeScreen_.clearHover();
+    state_ = State::Complete;
+}
+
 void Game::closeStats() {
     state_ = statsFrom_;
     lastTicks_ = SDL_GetTicksNS(); // the day was stopped while the page was open
@@ -366,7 +395,10 @@ void Game::closeSettings() {
 std::string Game::serialize() const {
     SDL_Time now = 0;
     SDL_GetCurrentTime(&now);
-    State playing = state_ == State::Paused ? pausedFrom_ : state_ == State::Stats ? statsFrom_ : state_;
+    State playing = state_ == State::Paused  ? pausedFrom_
+                    : state_ == State::Stats  ? statsFrom_
+                    : state_ == State::Complete ? State::TechTree
+                                                : state_;
     if (state_ == State::Settings && settingsFrom_ == State::Paused) playing = pausedFrom_;
     bool midDay = playing == State::Farming;
 
@@ -381,6 +413,7 @@ std::string Game::serialize() const {
     out << "phase " << (midDay ? "farming" : "techtree") << "\n";
     for (const auto& n : tree_.nodes()) out << "tech " << n.id << " " << n.level << "\n";
     playStats_.serialize(out);
+    if (completionSeen_) out << "completed 1\n";
     if (midDay) out << farm_.serialize();
     return out.str();
 }
@@ -652,6 +685,22 @@ void Game::handleEvent(SDL_Event& e) {
         }
         break;
 
+    case State::Complete:
+        switch (completeScreen_.handleEvent(e)) {
+        case CompleteScreen::Action::None: break;
+        case CompleteScreen::Action::KeepPlaying:
+            audio_.play(Sfx::Click);
+            state_ = State::TechTree;
+            break;
+        case CompleteScreen::Action::MainMenu:
+            audio_.play(Sfx::Click);
+            state_ = State::TechTree; // so the save is taken from the barn
+            saveGame();
+            goToMainMenu();
+            break;
+        }
+        break;
+
     case State::Stats:
         if (statsScreen_.handleEvent(e)) {
             audio_.play(Sfx::Click);
@@ -713,6 +762,7 @@ void Game::handleEvent(SDL_Event& e) {
         case TechTreeScreen::Action::Purchased:
             playStats_.coinsSpent += std::max(0.0, coinsBefore - coins_);
             audio_.play(Sfx::Buy);
+            if (!completionSeen_ && (tree_.allBought() || tree_.demoComplete())) openCompletion();
             saveGame();
             break;
         case TechTreeScreen::Action::Denied:
@@ -768,6 +818,7 @@ void Game::updateMusic() {
     State s = state_;
     if (s == State::Paused) s = pausedFrom_;
     if (s == State::Stats) s = statsFrom_;
+    if (s == State::Complete) s = State::TechTree;
     if (s == State::Settings) s = settingsFrom_ == State::Paused ? pausedFrom_ : settingsFrom_;
     switch (s) {
     case State::Farming:
@@ -811,6 +862,10 @@ void Game::update(float dt) {
         farm_.update(dt, -1000.f, -1000.f, false, coins_, rng_); // let particles finish
         break;
     case State::TechTree:
+        treeScreen_.update(dt);
+        break;
+    case State::Complete:
+        completeScreen_.update(dt);
         treeScreen_.update(dt);
         break;
     case State::Paused:
@@ -869,6 +924,10 @@ void Game::render(bool present) {
     case State::Stats:
         renderPlayScene(statsFrom_);
         statsScreen_.render(renderer_);
+        break;
+    case State::Complete:
+        renderPlayScene(State::TechTree);
+        completeScreen_.render(renderer_);
         break;
     default:
         renderPlayScene(state_);
@@ -1053,6 +1112,7 @@ const char* Game::stateName(State s) const {
     case State::TechTree: return "The Barn";
     case State::Paused: return "Paused";
     case State::Stats: return "Stats";
+    case State::Complete: return "Barn complete";
     }
     return "?";
 }
