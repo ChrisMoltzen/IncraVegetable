@@ -38,6 +38,7 @@ private:
     int addTech(float gx, float gy);
     int duplicateTech(int index);
     void deleteTech(int index);
+    void deleteTechs(std::vector<int> indices); // several at once, one undo step
     bool renameTech(int index, const std::string& newId);
     void toggleRequirement(int tech, int needed);
     std::string uniqueId(const std::string& base) const;
@@ -93,7 +94,15 @@ private:
     int winW_ = 1440, winH_ = 860;
 
     std::vector<TechDef> techs_;
-    int sel_ = -1;
+    int sel_ = -1;                 // the tech shown in the panel
+    std::unordered_set<int> picked_; // every selected tech (sel_ among them); drag/arrows/Delete act on all
+    bool isPicked(int i) const { return picked_.count(i) != 0; }
+    void selectOnly(int i);        // -1 = nothing
+    void syncSelection();          // keeps picked_ and sel_ consistent after other edits
+    std::vector<int> pickedList() const;
+    // Box selection: drag on empty canvas.
+    bool boxing_ = false, boxAdds_ = false;
+    float boxX0_ = 0.f, boxY0_ = 0.f;
     std::vector<techdata::CropDef> crops_;
     int crop_ = -1; // crop being edited (-1 = none)
     std::unordered_map<std::string, SDL_Texture*> cropTex_; // assets/crops/<id>.png
