@@ -15,6 +15,7 @@ public:
     // `e` must already be in game coordinates (SDL_ConvertEventToRenderCoordinates).
     Action handleEvent(const SDL_Event& e, TechTree& tree, double& coins);
     void update(float dt);
+    void clearHover() { mouseX_ = mouseY_ = -1000.f; selected_ = -1; } // no tooltip (under a pop-up)
     void render(SDL_Renderer* r, const TechTree& tree, double coins, int nextDay) const;
 
     // Built-in art, used when there's no image in assets/ (see ArtCatalog.cpp).

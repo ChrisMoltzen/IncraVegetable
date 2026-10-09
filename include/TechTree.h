@@ -88,6 +88,8 @@ public:
     float distanceFromRoot(const TechNode& n) const;
     // Demo builds: every tech the demo allows has been bought.
     bool demoComplete() const;
+    // Every tech bought to its max level.
+    bool allBought() const;
 
     // Buys one level of node `index` if possible. Returns true on success.
     bool tryBuy(size_t index, double& coins);
