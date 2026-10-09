@@ -128,9 +128,9 @@ IncraVegetable is a cosy incremental farming game. Each day you get a few second
 
 ## Before you upload
 
-1. **Build the release versions.** `make release-win` makes `build\release\game.exe` and `SDL3.dll`. Rename the exe to `IncraVegetable.exe`, zip the two files as `IncraVegetable-windows.zip`, and leave out `AssetPacker.exe` and `AssetPack.cpp`.
+1. **Build the release versions.** `make release-win` makes `build\release\IncraVegetable.exe` and `SDL3.dll`. Zip the two files as `IncraVegetable-windows.zip`, and leave out `AssetPacker.exe` and `AssetPack.cpp`.
 2. **The Mac build won't run on other people's Macs yet.** `make release` links SDL3 from `/Library/Frameworks`, which players won't have. It needs packaging as an `IncraVegetable.app` with `SDL3.framework` inside it (and the `.icns` from `icon/`). I can add a `make mac-app` target for that.
 3. **Try the zips on a computer that's never had SDL or the source on it**, if you can.
 4. **Version number.** The game says `v0.2` on the main menu. Bump it if this is a bigger release, and use the same number in the upload's display name.
-5. **Demo (optional).** `make demo-release-win` / `make demo-release` build it into `build/demo-release/`. Zip it the same way, as `IncraVegetable-demo-windows.zip`.
+5. **Demo (optional).** `make demo-release-win` / `make demo-release` build `IncraVegetable Demo.exe` (or `IncraVegetable Demo` on Mac) into `build/demo-release/`. Zip it with `SDL3.dll` the same way, as `IncraVegetable-demo-windows.zip`.
 6. **Optional: butler.** itch's command-line uploader (`butler push`) makes updates painless and lets players' itch app patch instead of re-downloading.
