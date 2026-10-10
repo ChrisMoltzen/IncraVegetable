@@ -1,0 +1,4 @@
+// The Android build of IncraVegetable. See the README ("Building for Android").
+plugins {
+    id 'com.android.application' version '8.13.0' apply false
+}

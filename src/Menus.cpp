@@ -52,6 +52,10 @@ void MainMenu::refresh(bool hasSave, const std::string& continueInfo) {
 
 MainMenu::Action MainMenu::handleEvent(const SDL_Event& e) {
     if (kIsDesktop && isBack(e)) return Action::Quit;
+#ifdef SDL_PLATFORM_ANDROID
+    // Android's Back button on the main menu leaves the game, as other apps do.
+    if (isBack(e)) SDL_SendAndroidBackButton();
+#endif
     int i = buttons_.handleEvent(e);
     return i >= 0 ? actions_[i] : Action::None;
 }

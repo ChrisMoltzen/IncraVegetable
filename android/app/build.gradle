@@ -1,0 +1,96 @@
+// IncraVegetable for Android.
+//
+// The game itself is built by the project's CMakeLists.txt (the same file the
+// iOS build uses) into libmain.so, next to SDL's libSDL3.so. SDL's Java activity
+// (src/main/java/org/libsdl/app, copied from SDL 3.2.24 - keep it matching the
+// SDL version in CMakeLists.txt) starts it. Assets are packed into libmain.so.
+//
+// Four versions ("variants"), picked in Android Studio's Build Variants panel or
+// with the Gradle task names:
+//   fullDebug     the game, with the debug screen        ./gradlew assembleFullDebug
+//   fullRelease   the game for Google Play               ./gradlew bundleFullRelease
+//   demoDebug     the demo, with the debug screen        ./gradlew assembleDemoDebug
+//   demoRelease   the demo for Google Play               ./gradlew bundleDemoRelease
+plugins {
+    id 'com.android.application'
+}
+
+// Release signing: put your upload key's details in android/keystore.properties
+// (never commit it; see the README). Without it, release builds come out unsigned.
+def keystoreProps = new Properties()
+def keystoreFile = rootProject.file('keystore.properties')
+if (keystoreFile.exists()) keystoreFile.withInputStream { keystoreProps.load(it) }
+
+android {
+    namespace = 'com.incravegetable.game'
+    compileSdk = 36
+
+    defaultConfig {
+        // Your app's ID on Google Play. It can never change once the app is published.
+        applicationId = project.findProperty('incraAppId') ?: 'com.incravegetable.game'
+        minSdk = 21        // Android 5.0, the oldest SDL 3 supports
+        targetSdk = 36     // Google Play requires a recent target for new apps and updates
+        // Raise versionCode for every upload to Google Play (or pass -PincraVersionCode=N).
+        versionCode = (project.findProperty('incraVersionCode') ?: '1') as int
+        versionName = '0.2' // keep in step with project(... VERSION) in CMakeLists.txt
+
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_STL=c++_static'
+                // 64-bit ARM (nearly every phone), 32-bit ARM (older phones), and x86_64 (emulators on Intel PCs)
+                abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+            }
+        }
+    }
+
+    flavorDimensions 'edition'
+    productFlavors {
+        full {
+            dimension 'edition'
+            resValue 'string', 'app_name', 'IncraVegetable'
+        }
+        demo {
+            dimension 'edition'
+            applicationIdSuffix '.demo' // a separate app on the store, installable alongside the full game
+            resValue 'string', 'app_name', 'IncraVegetable Demo'
+            externalNativeBuild { cmake { arguments '-DINCRA_DEMO=ON' } }
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreProps['storeFile']) {
+                storeFile rootProject.file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            externalNativeBuild { cmake { arguments '-DINCRA_RELEASE=OFF' } }
+        }
+        release {
+            // Like `make release`: no debug screen, scrambled saves only.
+            externalNativeBuild { cmake { arguments '-DINCRA_RELEASE=ON' } }
+            minifyEnabled false
+            if (keystoreProps['storeFile']) signingConfig signingConfigs.release
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path file('../../CMakeLists.txt')
+        }
+    }
+
+    buildFeatures {
+        resValues = true
+    }
+
+    lint {
+        abortOnError = false
+    }
+}

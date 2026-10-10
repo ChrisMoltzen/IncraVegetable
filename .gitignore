@@ -20,3 +20,16 @@ Thumbs.db
 # Game saves accidentally made in the project folder
 *.sav
 *.sav.bak
+
+# Android build output and machine-specific files
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+android/.idea/
+*.iml
+# Your Play Store upload key and its passwords: never commit these
+android/keystore.properties
+*.jks
+*.keystore

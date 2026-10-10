@@ -35,6 +35,9 @@ Game::~Game() {
 bool Game::init() {
     SDL_SetAppMetadata(kGameTitle, kGameVersion, "com.incravegetable.game");
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+    // Android: the Back button comes to the game (it pauses, or closes a menu)
+    // instead of closing the app straight away.
+    SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());
         return false;
@@ -545,6 +548,11 @@ bool Game::handleEndDayButton(const SDL_Event& e) {
 
 void Game::handleEvent(SDL_Event& e) {
     SDL_ConvertEventToRenderCoordinates(renderer_, &e);
+    // Android's Back button does whatever Escape does (pause, close a menu...).
+    if ((e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP) && e.key.key == SDLK_AC_BACK) {
+        e.key.key = SDLK_ESCAPE;
+        e.key.scancode = SDL_SCANCODE_ESCAPE;
+    }
 
     // ---- App lifecycle (mostly matters on phones) ----
     switch (e.type) {
