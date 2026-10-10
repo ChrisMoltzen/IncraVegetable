@@ -4,6 +4,7 @@
 #include "CropLooks.h"
 #include "Draw.h"
 #include "Palette.h"
+#include "Platform.h"
 
 #include <algorithm>
 #include <cctype>
@@ -860,6 +861,43 @@ void Farm::drawPickBarBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool fill) {
     else draw::fillRoundRect(r, rc.x, rc.y, rc.w, rc.h, rc.h * 0.5f, SDL_Color{30, 20, 10, 220});
 }
 
+// A ring round the vegetable, so it shows past the finger picking it. The band
+// takes up the outer fifth of rc; fill > 0 draws the yellow part, from the top
+// clockwise (fill < 0 draws the dark track behind it).
+void Farm::drawPickRingBuiltin(SDL_Renderer* r, const SDL_FRect& rc, float fill) {
+    const float cx = rc.x + rc.w * 0.5f, cy = rc.y + rc.h * 0.5f, R = rc.w * 0.5f;
+    const float band = R * 0.2f, mid = R - band * 0.5f;
+    if (fill < 0.f) {
+        draw::arc(r, cx, cy, mid, band + R * 0.06f, 0.f, 1.f, SDL_Color{30, 20, 10, 200}, 64);
+        return;
+    }
+    draw::arc(r, cx, cy, mid, band, 0.f, std::min(1.f, fill), SDL_Color{255, 220, 70, 255}, 64);
+}
+
+void Farm::drawPickRing(SDL_Renderer* r, float cx, float cy, float radius, float fill) {
+    const SDL_FRect rc{cx - radius, cy - radius, radius * 2.f, radius * 2.f};
+    art::draw(r, "ui/pick_ring_back", rc);
+    fill = std::clamp(fill, 0.f, 1.f);
+    SDL_Texture* tex = art::texture("ui/pick_ring_fill");
+    if (!tex) return drawPickRingBuiltin(r, rc, fill);
+    // Your ring image, shown as a pie slice from the top, clockwise.
+    const int n = std::max(1, static_cast<int>(std::ceil(64 * fill)));
+    const float reach = radius / std::cos(3.14159265f / 64.f); // the fan's edge stays outside the circle
+    const SDL_FColor white{1.f, 1.f, 1.f, 1.f};
+    std::vector<SDL_Vertex> v{SDL_Vertex{{cx, cy}, white, {0.5f, 0.5f}}};
+    std::vector<int> idx;
+    for (int k = 0; k <= n; ++k) {
+        const float a = fill * k / n * 6.2831853f;
+        const float dx = std::sin(a), dy = -std::cos(a);
+        const float x = cx + dx * reach, y = cy + dy * reach;
+        v.push_back(SDL_Vertex{{x, y}, white,
+                               {std::clamp(0.5f + dx * reach / (2.f * radius), 0.f, 1.f),
+                                std::clamp(0.5f + dy * reach / (2.f * radius), 0.f, 1.f)}});
+        if (k > 0) idx.insert(idx.end(), {0, k, k + 1});
+    }
+    SDL_RenderGeometry(r, tex, v.data(), static_cast<int>(v.size()), idx.data(), static_cast<int>(idx.size()));
+}
+
 void Farm::drawReachBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     float cx = rc.x + rc.w * 0.5f, cy = rc.y + rc.h * 0.5f;
     draw::fillCircle(r, cx, cy, rc.w * 0.5f, SDL_Color{255, 240, 160, 35}, 48);
@@ -979,7 +1017,10 @@ void Farm::renderScene(SDL_Renderer* r) const {
     while (nextFarmer < farmerOrder.size()) drawFarmer(r, farmers_[farmerOrder[nextFarmer++]]);
     drawFence(r, true);
 
-    // Picking bars on top of everything else in the bed.
+    // Picking bars on top of everything else in the bed. Phones and tablets show your
+    // own picking as a ring round the vegetable instead, so your finger doesn't hide it
+    // (art.txt: "pick_rings on" / "pick_rings off" to choose).
+    const bool rings = art::option("pick_rings", kIsMobile);
     std::vector<float> farmerWork(tiles_.size(), 0.f);
     for (const auto& f : farmers_)
         if (f.picking && f.target >= 0 && f.target < static_cast<int>(tiles_.size())) farmerWork[f.target] = f.work;
@@ -987,6 +1028,11 @@ void Farm::renderScene(SDL_Renderer* r) const {
         const Tile& t = tiles_[i];
         const float progress = std::max(t.pick, farmerWork[i]);
         if (t.growth < 1.f || progress <= 0.01f) continue;
+        if (rings && t.pick >= farmerWork[i]) {
+            // Wide enough to show round a fingertip even when the plants are small.
+            drawPickRing(r, t.x, t.y, std::max(plantSize_ * 0.62f, 34.f), t.pick);
+            continue;
+        }
         float bw = plantSize_ * 0.7f, bh = std::max(4.f, plantSize_ * 0.08f);
         float bx = t.x - bw * 0.5f, by = t.y + plantSize_ * 0.36f;
         art::draw(r, "ui/pick_bar_back", SDL_FRect{bx - 1, by - 1, bw + 2, bh + 2});

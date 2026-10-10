@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Screen.h"
 #include "Palette.h"
 #include "Farm.h"
 #include "Grass.h"
@@ -82,8 +83,9 @@ void MainMenu::drawLogoBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
 }
 
 void MainMenu::renderBackground(SDL_Renderer* r) const {
-    art::draw(r, "menu/background", SDL_FRect{0, 0, 1280, 720});
+    screen::background(r, "menu/background");
     if (!art::option("menu_crop_rows", true)) return;
+    screen::Whole all(r); // the rows run right across the screen
 
     // Rows of vegetables slowly drifting past, bigger ones nearer the front.
     struct Row {
@@ -117,13 +119,16 @@ void MainMenu::renderBackground(SDL_Renderer* r) const {
     for (int ri = 0; ri < 3; ++ri) {
         const Row& row = rows[ri];
         float spacing = row.size * 1.5f;
-        draw::fillRect(r, 0, row.y + row.size * 0.25f, 1280, row.size * 0.3f, row.soil);
+        const float y = row.y + all.oy;
+        draw::fillRect(r, 0, y + row.size * 0.25f, all.w, row.size * 0.3f, row.soil);
         float offset = std::fmod(clock_ * row.speed, spacing);
         int first = static_cast<int>(std::floor(clock_ * row.speed / spacing));
-        for (int k = -1; k * spacing < 1280 + spacing; ++k) {
-            float x = k * spacing - offset + spacing * 0.5f;
+        // Crops line up with the stage, so the screen's edges just show more of the row.
+        const int k0 = -1 - static_cast<int>(std::ceil(all.ox / spacing));
+        for (int k = k0; (k - k0 - 1) * spacing < all.w + spacing; ++k) {
+            float x = k * spacing - offset + spacing * 0.5f + all.ox;
             float bob = std::sin(clock_ * 2.f + k * 1.3f + ri) * row.size * 0.03f;
-            Farm::drawCrop(r, cropAt(k + first, ri), x, row.y + bob, row.size);
+            Farm::drawCrop(r, cropAt(k + first, ri), x, y + bob, row.size);
         }
     }
 }
@@ -136,8 +141,11 @@ void MainMenu::render(SDL_Renderer* r) const {
     art::draw(r, "menu/logo", SDL_FRect{190.f, 64.f + bounce, 900.f, 112.f});
 
     buttons_.render(r);
-    draw::text(r, 1270, 704, std::string("v") + kGameVersion + (kIsDemo ? " demo" : ""), 1.5f,
-               pal::alpha(pal::Cream, 180), draw::Align::Right);
+    {
+        screen::Pinned bottom(r, screen::Edge::Bottom); // in the screen's corner
+        draw::text(r, 1270, 704, std::string("v") + kGameVersion + (kIsDemo ? " demo" : ""), 1.5f,
+                   pal::alpha(pal::Cream, 180), draw::Align::Right);
+    }
     if (kIsDemo) { // a little "DEMO" tag between the logo and the buttons
         const float x = 640.f, y = 184.f + bounce;
         draw::fillRoundRect(r, x - 70, y, 140, 40, 10, pal::Carrot);

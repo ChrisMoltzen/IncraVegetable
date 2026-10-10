@@ -170,6 +170,13 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawPickBarBuiltin(r, rc, false); }});
     add({"ui/pick_bar_fill", 128, 16, "Picking progress bar when full (cropped while picking)", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawPickBarBuiltin(r, rc, true); }});
+    add({"ui/pick_ring_back", 128, 128,
+         "Phones and tablets: ring behind the picking progress, round the vegetable under your finger (keep the "
+         "middle see-through)",
+         false, [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawPickRingBuiltin(r, rc, -1.f); }});
+    add({"ui/pick_ring_fill", 128, 128,
+         "Phones and tablets: the picking ring when full (shown as a growing slice, clockwise from the top)", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { Farm::drawPickRingBuiltin(r, rc, 1.f); }});
     add({"ui/pause_button", 96, 96, "Pause button, top-right while playing", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { ui::drawPauseIconBuiltin(r, rc, false); }});
     add({"ui/pause_button_hover", 96, 96, "Pause button with the mouse over it (optional)", false,

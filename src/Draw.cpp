@@ -116,6 +116,27 @@ void fillTriangle(SDL_Renderer* r, SDL_FPoint a, SDL_FPoint b, SDL_FPoint c, SDL
     SDL_RenderGeometry(r, nullptr, v, 3, nullptr, 0);
 }
 
+void arc(SDL_Renderer* r, float cx, float cy, float radius, float thickness, float from, float to, SDL_Color c,
+         int segments) {
+    if (to <= from || radius <= 0.f) return;
+    const int n = std::max(1, static_cast<int>(std::ceil(segments * (to - from))));
+    const float r0 = radius - thickness * 0.5f, r1 = radius + thickness * 0.5f;
+    const SDL_FColor fc = toF(c);
+    std::vector<SDL_Vertex> v;
+    std::vector<int> idx;
+    for (int k = 0; k <= n; ++k) {
+        const float a = (from + (to - from) * k / n) * 6.2831853f;
+        const float sx = std::sin(a), sy = -std::cos(a);
+        v.push_back(SDL_Vertex{{cx + sx * r0, cy + sy * r0}, fc, {0, 0}});
+        v.push_back(SDL_Vertex{{cx + sx * r1, cy + sy * r1}, fc, {0, 0}});
+        if (k > 0) {
+            const int b = (k - 1) * 2;
+            idx.insert(idx.end(), {b, b + 1, b + 2, b + 1, b + 3, b + 2});
+        }
+    }
+    SDL_RenderGeometry(r, nullptr, v.data(), static_cast<int>(v.size()), idx.data(), static_cast<int>(idx.size()));
+}
+
 void thickLine(SDL_Renderer* r, float x1, float y1, float x2, float y2, float thickness, SDL_Color c) {
     float dx = x2 - x1, dy = y2 - y1;
     float len = std::sqrt(dx * dx + dy * dy);
@@ -177,9 +198,16 @@ void text(SDL_Renderer* r, float x, float y, const std::string& s, float scale, 
         return;
     }
     setColor(r, c);
+    // The render scale scales the viewport's position too, so on a filled phone screen
+    // (where the stage is a viewport, see Screen.h) step out to the whole screen first.
+    SDL_Rect vp{0, 0, 0, 0};
+    SDL_GetRenderViewport(r, &vp);
+    const bool moved = vp.x != 0 || vp.y != 0;
+    if (moved) SDL_SetRenderViewport(r, nullptr);
     SDL_SetRenderScale(r, scale, scale);
-    SDL_RenderDebugText(r, x / scale, y / scale, s.c_str());
+    SDL_RenderDebugText(r, (x + vp.x) / scale, (y + vp.y) / scale, s.c_str());
     SDL_SetRenderScale(r, 1.f, 1.f);
+    if (moved) SDL_SetRenderViewport(r, &vp);
 }
 
 void textShadow(SDL_Renderer* r, float x, float y, const std::string& s, float scale, SDL_Color c, Align align) {

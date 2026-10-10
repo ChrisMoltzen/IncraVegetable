@@ -21,6 +21,10 @@ void fillPolygon(SDL_Renderer* r, float cx, float cy, const std::vector<SDL_FPoi
 void circleOutline(SDL_Renderer* r, float cx, float cy, float radius, SDL_Color c);
 void fillTriangle(SDL_Renderer* r, SDL_FPoint a, SDL_FPoint b, SDL_FPoint c, SDL_Color col);
 void thickLine(SDL_Renderer* r, float x1, float y1, float x2, float y2, float thickness, SDL_Color c);
+// Part of a ring, from `from` to `to` (fractions of a turn: 0 = top, going clockwise).
+// `radius` is to the middle of the band.
+void arc(SDL_Renderer* r, float cx, float cy, float radius, float thickness, float from, float to, SDL_Color c,
+         int segments = 48);
 
 // Text uses SDL's 8x8 debug font, scaled up. Scale 2 = 16px tall glyphs.
 void text(SDL_Renderer* r, float x, float y, const std::string& s, float scale, SDL_Color c,
