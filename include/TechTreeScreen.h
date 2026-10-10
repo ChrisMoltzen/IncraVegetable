@@ -41,6 +41,8 @@ private:
 
     float originX_ = 640.f, originY_ = 300.f; // screen position of grid (0,0): set so the tree is centred
     float camX_ = 0.f, camY_ = 0.f;
+    // While drawing the tree: where the stage is on a filled screen (see Screen.h); 0 otherwise.
+    mutable float drawOffX_ = 0.f, drawOffY_ = 0.f;
     float zoom_ = 1.f;
     // Two-finger pinch (touch): the fingers down, and the spread when it started.
     SDL_FingerID fingerA_ = 0, fingerB_ = 0;

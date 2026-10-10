@@ -26,3 +26,8 @@ slice tree/node_maxed 12
 # The main menu draws rows of vegetables drifting across its background.
 # Turn them off if your menu/background already has a field in it:
 menu_crop_rows on
+
+# Picking progress on phones and tablets is a ring round the vegetable (so the
+# finger picking it doesn't hide it); elsewhere it's a bar underneath. Uncomment
+# to choose for every platform:
+# pick_rings on

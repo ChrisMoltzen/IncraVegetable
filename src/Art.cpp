@@ -209,7 +209,7 @@ const Info* infoFor(const std::string& name) {
     return nullptr;
 }
 
-// Where the game's 1280 x 720 lands in the window: screen pixel = offset + game unit x scale.
+// Where the game's drawing area lands in the window: screen pixel = offset + game unit x scale.
 // (Identity when drawing into an image, or with no logical presentation.)
 struct ScreenMap {
     float ox = 0.f, oy = 0.f, sx = 1.f, sy = 1.f;
@@ -223,10 +223,13 @@ ScreenMap screenMap(SDL_Renderer* r) {
     if (!SDL_GetRenderLogicalPresentation(r, &lw, &lh, &mode) || lw <= 0 || lh <= 0 ||
         mode == SDL_LOGICAL_PRESENTATION_DISABLED || !SDL_GetRenderLogicalPresentationRect(r, &out) || out.w <= 0.f)
         return m;
-    m.ox = std::floor(out.x); // SDL draws from a whole-pixel origin
-    m.oy = std::floor(out.y);
     m.sx = out.w / static_cast<float>(lw);
     m.sy = out.h / static_cast<float>(lh);
+    // A viewport (the stage on a filled phone screen, see Screen.h) moves the origin too.
+    SDL_Rect vp{0, 0, 0, 0};
+    SDL_GetRenderViewport(r, &vp);
+    m.ox = std::floor(out.x + vp.x * m.sx); // SDL draws from a whole-pixel origin
+    m.oy = std::floor(out.y + vp.y * m.sy);
     return m;
 }
 

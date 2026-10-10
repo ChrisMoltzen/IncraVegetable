@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Screen.h"
 #include "Palette.h"
 
 #include <algorithm>
@@ -101,7 +102,7 @@ void drawCoin(SDL_Renderer* r, float cx, float cy, float radius) {
     art::draw(r, "ui/coin", SDL_FRect{cx - radius, cy - radius, radius * 2, radius * 2});
 }
 
-void dim(SDL_Renderer* r, Uint8 alpha) { draw::fillRect(r, 0, 0, 1280, 720, SDL_Color{0, 0, 0, alpha}); }
+void dim(SDL_Renderer* r, Uint8 alpha) { screen::fillAll(r, SDL_Color{0, 0, 0, alpha}); }
 
 int ButtonList::indexAt(float x, float y) const {
     for (int i = 0; i < static_cast<int>(buttons.size()); ++i) {

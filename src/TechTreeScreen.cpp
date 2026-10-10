@@ -4,6 +4,7 @@
 #include "CropLooks.h"
 #include "TileShapes.h"
 #include "Draw.h"
+#include "Screen.h"
 #include "Grass.h"
 #include "Palette.h"
 #include "Platform.h"
@@ -107,7 +108,7 @@ void TechTreeScreen::fitView(const TechTree& tree) {
 }
 
 SDL_FPoint TechTreeScreen::toScreen(float x, float y) const {
-    return SDL_FPoint{kPivotX + (x - kPivotX) * zoom_ + camX_, kPivotY + (y - kPivotY) * zoom_ + camY_};
+    return SDL_FPoint{kPivotX + (x - kPivotX) * zoom_ + camX_ + drawOffX_, kPivotY + (y - kPivotY) * zoom_ + camY_ + drawOffY_};
 }
 
 SDL_FRect TechTreeScreen::nodeRect(const TechNode& n) const {
@@ -296,6 +297,15 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
     grass::drawField(r); // the farm's field, a little darker, tufts swaying as on the farm
 
     const auto& nodes = tree.nodes();
+    int hovered = touchMode_ ? selected_ : nodeAt(tree, mouseX_, mouseY_);
+    if (pressing_ && dragged_) hovered = -1;
+
+    // The tree itself reaches the screen's edges on phones and tablets (Screen.h):
+    // it's drawn in whole-screen coordinates, so nodeRect() is moved to match.
+    {
+    screen::Whole all(r);
+    drawOffX_ = all.ox;
+    drawOffY_ = all.oy;
 
     // Connection lines first so nodes sit on top of them.
     for (const auto& n : nodes) {
@@ -340,9 +350,6 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
             }
         }
     }
-
-    int hovered = touchMode_ ? selected_ : nodeAt(tree, mouseX_, mouseY_);
-    if (pressing_ && dragged_) hovered = -1;
 
     for (int i = 0; i < static_cast<int>(nodes.size()); ++i) {
         const TechNode& n = nodes[i];
@@ -415,8 +422,11 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         }
     }
 
+    drawOffX_ = drawOffY_ = 0.f;
+    } // back to the stage
+
     // Header.
-    art::draw(r, "tree/header_bar", SDL_FRect{0, 0, 1280, 64});
+    screen::topBar(r, "tree/header_bar", 64);
     draw::textShadow(r, 24, 18, "THE BARN", 3.f, kWhite);
     std::string coinText = draw::number(coins) + " coins";
     float coinX = 1136.f - draw::textWidth(coinText, 3.f); // clear of the stats and pause buttons
