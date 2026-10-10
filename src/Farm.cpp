@@ -319,7 +319,7 @@ bool Farm::restore(const std::vector<std::string>& lines, const Stats& stats) {
         // unlocked any more, means the tree changed: start a fresh day instead.
         int crop = !cropTok.empty() && std::isdigit(static_cast<unsigned char>(cropTok[0])) ? std::atoi(cropTok.c_str())
                                                                                               : techdata::cropIndex(cropTok);
-        if (!ss || key != "tile" || crop < 0 || crop >= cropCount() || cropDef(crop).tier > stats.cropTier) return false;
+        if (!ss || key != "tile" || crop < 0 || crop >= cropCount() || !stats.cropUnlocked(cropDef(crop).tier)) return false;
         if (!(ss >> savedSpots[i])) savedSpots[i] = -1; // older saves don't record spots
         tiles[i].crop = crop;
         tiles[i].growth = std::clamp(tiles[i].growth, 0.f, 1.f);
@@ -393,7 +393,7 @@ void Farm::applyStats(const Stats& stats, std::mt19937& rng) {
         syncFarmers(rng);
         // Crops that are no longer unlocked get replanted.
         for (auto& t : tiles_) {
-            if (cropDef(t.crop).tier > stats.cropTier) {
+            if (!stats.cropUnlocked(cropDef(t.crop).tier)) {
                 t.crop = randomCrop(rng);
                 t.growth = 0.f;
                 t.pick = 0.f;
@@ -420,13 +420,13 @@ Crop Farm::randomCrop(std::mt19937& rng) const {
     const auto& list = techdata::crops();
     float total = 0.f;
     for (const auto& c : list)
-        if (c.tier <= stats_.cropTier) total += std::max(0.f, c.weight);
+        if (stats_.cropUnlocked(c.tier)) total += std::max(0.f, c.weight);
     if (total <= 0.f) return 0;
     std::uniform_real_distribution<float> roll(0.f, total);
     float r = roll(rng);
     int last = 0;
     for (int i = 0; i < static_cast<int>(list.size()); ++i) {
-        if (list[i].tier > stats_.cropTier || list[i].weight <= 0.f) continue;
+        if (!stats_.cropUnlocked(list[i].tier) || list[i].weight <= 0.f) continue;
         last = i;
         r -= list[i].weight;
         if (r < 0.f) return i;

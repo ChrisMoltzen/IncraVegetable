@@ -32,7 +32,8 @@
 //     grow 1.6                      <- grow time = this x the Grow time stat
 //     pick 1.25                     <- pick time = this x the Pick time stat
 //     weight 35                     <- how often it's planted, compared with the other unlocked crops
-//     tier 1                        <- planted once the Crops stat reaches this (0 = from the start)
+//     tier 1                        <- its unlock number: a tech with "effect cropTier atleast 1" plants it
+//                                      (0 = from the start). Each crop is its own unlock.
 //     look carrot                   <- built-in drawing: lettuce, carrot, pumpkin or round
 //     color e07020                  <- optional colour for the built-in drawing (hex)
 //   end
@@ -43,7 +44,8 @@
 //   add       stat += amount x L                    e.g. day length + 5 seconds per level
 //   percent   stat x (1 + amount/100 x L)           e.g. +25% coins per level
 //   multiply  stat x amount^L                       e.g. pick time x 0.82 per level
-//   atleast   stat = max(stat, amount)              e.g. unlock carrots (crop tier 1)
+//   atleast   stat = max(stat, amount)              e.g. pick time at least 0.1
+//             (for cropTier it unlocks crop number `amount` on its own, not the ones below)
 #pragma once
 
 #include "TechTree.h" // Stats
@@ -123,7 +125,7 @@ struct CropDef {
     float grow = 1.f;   // x the Grow time stat
     float pick = 1.f;   // x the Pick time stat
     float weight = 10.f;
-    int tier = 0;       // needs the Crops stat at least this
+    int tier = 0;       // unlock number: planted once a tech unlocks this number (0 = from the start)
     std::string look = "round";
     std::string color;  // hex, "" = the look's usual colour
 };

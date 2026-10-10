@@ -1343,13 +1343,14 @@ std::vector<std::string> Editor::techsUnlocking(int tier) const {
     for (const auto& t : techs_) {
         Stats s;
         techdata::applyEffects(t, s, std::max(1, t.maxLevel));
-        if (s.cropTier >= tier && tier > 0) names.push_back(t.name.empty() ? t.id : t.name);
+        if (tier > 0 && s.cropUnlocked(tier)) names.push_back(t.name.empty() ? t.id : t.name);
     }
     return names;
 }
 
-// A tech that unlocks this crop: Crops "set at least" its tier, needing the
-// tech that unlocks the tier before it, with the crop as its icon.
+// A tech that unlocks just this crop (Unlock crop = its unlock number), with the crop as
+// its icon. Crops don't depend on each other: it needs only the tree's first tech
+// (The Barn) and sits near it - drag it wherever you like.
 void Editor::makeUnlockTech(int ci) {
     if (ci < 0 || ci >= static_cast<int>(crops_.size())) return;
     const techdata::CropDef c = crops_[ci];
@@ -1363,14 +1364,10 @@ void Editor::makeUnlockTech(int ci) {
     t.costGrowth = 1.0;
     t.icon = "crop_" + c.id;
     t.effects.push_back(Effect{"cropTier", Op::AtLeast, static_cast<float>(c.tier)});
-    // Requires whichever tech unlocks the tier below (if any), and sits under it.
     float gx = 0.f, gy = 0.f;
     int prev = -1;
-    for (int i = 0; i < static_cast<int>(techs_.size()); ++i) {
-        Stats s;
-        techdata::applyEffects(techs_[i], s, std::max(1, techs_[i].maxLevel));
-        if (s.cropTier >= c.tier - 1 && s.cropTier < c.tier && c.tier > 1) prev = i;
-    }
+    for (int i = 0; i < static_cast<int>(techs_.size()) && prev < 0; ++i)
+        if (techs_[i].needs.empty()) prev = i;
     if (prev >= 0) {
         t.needs.push_back({techs_[prev].id, 1});
         gx = techs_[prev].gridX;
@@ -1420,7 +1417,7 @@ void Editor::drawCropsSection(float x, float& y, float w) {
         }
         drawCrop(i, x + 24, y + 22, 38);
         text(r_, x + 52, y + 8, fit(c.name, 1.75f, w - 60 - 200), 1.75f, col::text);
-        text(r_, x + 52, y + 27, c.tier <= 0 ? std::string("from the start") : strf("Crops level %d", c.tier), 1.25f, col::dim);
+        text(r_, x + 52, y + 27, c.tier <= 0 ? std::string("from the start") : strf("Unlock %d", c.tier), 1.25f, col::dim);
         text(r_, x + w - 12, y + 14, number(c.value) + " coins", 1.5f, col::gold, Align::Right);
         y += 48;
     }
@@ -1512,8 +1509,8 @@ void Editor::drawCropPanel(float x, float& y, float w) {
     {
         float total = 0.f;
         for (const auto& o : crops_)
-            if (o.tier <= c.tier) total += std::max(0.f, o.weight);
-        text(r_, fx + 132, y + 13, fit(strf("%.0f%% of plants once it unlocks", total > 0 ? 100.f * c.weight / total : 0.f), 1.25f, fw - 132),
+            if (o.tier <= 0 || o.tier == c.tier) total += std::max(0.f, o.weight);
+        text(r_, fx + 132, y + 13, fit(strf("%.0f%% of plants with the starting crops", total > 0 ? 100.f * c.weight / total : 0.f), 1.25f, fw - 132),
              1.25f, col::faint);
     }
     y += fh + 10;
@@ -1521,9 +1518,9 @@ void Editor::drawCropPanel(float x, float& y, float w) {
     label("Unlocks at");
     ui_.numberField("c_tier", {fx, y, 120, fh}, c.tier, [this, C](double v) {
         pushUndo();
-        C().tier = std::max(0, static_cast<int>(v));
+        C().tier = std::clamp(static_cast<int>(v), 0, 63);
     }, true);
-    text(r_, fx + 132, y + 13, "Crops level", 1.5f, col::faint);
+    text(r_, fx + 132, y + 13, "unlock number", 1.5f, col::faint);
     y += fh + 6;
     if (c.tier <= 0) {
         text(r_, fx, y, "Planted from the start.", 1.25f, col::good);

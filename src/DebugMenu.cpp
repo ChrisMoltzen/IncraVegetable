@@ -323,7 +323,7 @@ void DebugMenu::buildFarm() {
                     st.pickTime, st.valueMult),
          1.5f);
     text(kLeft, kTop + 374,
-         draw::strf("Reach %d   Crops tier %d   Head start %d%%   Day %.1fs", st.reach, st.cropTier,
+         draw::strf("Reach %d   Crop unlocks %d   Head start %d%%   Day %.1fs", st.reach, __builtin_popcountll(st.cropsUnlocked) - 1,
                     static_cast<int>(st.headStart * 100), st.dayLength),
          1.5f);
     text(kLeft, kTop + 396,
