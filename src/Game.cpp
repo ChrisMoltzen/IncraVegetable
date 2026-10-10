@@ -118,10 +118,10 @@ std::vector<Crop> Game::unlockedCrops(int slot) const {
             if (TechNode* n = tree.find(id)) n->level = std::clamp(level, 0, n->maxLevel);
         }
     }
-    const int tier = tree.computeStats().cropTier;
+    const Stats st = tree.computeStats();
     std::vector<Crop> crops;
     for (Crop c = 0; c < cropCount(); ++c)
-        if (cropDef(c).tier <= tier) crops.push_back(c);
+        if (st.cropUnlocked(cropDef(c).tier)) crops.push_back(c);
     if (crops.empty()) crops.push_back(0);
     return crops;
 }
@@ -1149,8 +1149,8 @@ std::vector<std::string> Game::debugInfo() const {
         Stats st = currentStats();
         lines.push_back(draw::strf("Crops %d of %d (patch room %d)   Day %.1fs   Grow %.3fs   Pick %.3fs", Farm::plantCount(st), st.maxCrops, st.patchSize * st.patchSize,
                                    st.dayLength, st.growTime, st.pickTime));
-        lines.push_back(draw::strf("Value x%.2f   Reach %d   Crop tier %d   Head start %.0f%%", st.valueMult, st.reach,
-                                   st.cropTier, st.headStart * 100.f));
+        lines.push_back(draw::strf("Value x%.2f   Reach %d   Crop types %d   Head start %.0f%%", st.valueMult, st.reach,
+                                   [&st] { int n = 0; for (Crop c = 0; c < cropCount(); ++c) n += st.cropUnlocked(cropDef(c).tier); return n; }(), st.headStart * 100.f));
         lines.push_back(draw::strf("Auto-pick %.0f%% chance, up to %d crops within %.1f plants", st.autoPickChance,
                                    st.autoPickCount, st.autoPickRadius));
         lines.push_back(draw::strf("Farmers %d   walk %.2f plants/s   pick %.2fs", st.farmers, st.farmerSpeed,

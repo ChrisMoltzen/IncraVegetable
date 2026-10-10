@@ -264,7 +264,7 @@ static void fadeFrames(Reel& v, int frames, bool out, std::function<void()> step
 static std::string farmLine(Game& g) {
     Stats s = g.tree_.computeStats();
     int crops = 0;
-    for (Crop c = 0; c < cropCount(); ++c) if (cropDef(c).tier <= s.cropTier) ++crops;
+    for (Crop c = 0; c < cropCount(); ++c) if (s.cropUnlocked(cropDef(c).tier)) ++crops;
     std::string line = draw::strf("%dx%d patch", s.patchSize, s.patchSize);
     line += crops == 1 ? "  -  lettuce only" : draw::strf("  -  %d crops", crops);
     if (s.farmers > 0) line += draw::strf("  -  %d farmer%s", s.farmers, s.farmers == 1 ? "" : "s");

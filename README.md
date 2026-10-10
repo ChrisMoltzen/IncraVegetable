@@ -291,10 +291,10 @@ Run it from the project folder (or pass the path to `TechTreeData.h`). It opens 
   - With nothing selected, the panel shows **With everything bought**: every stat at the start and with the whole tree bought. It also warns when *Crops at once* and the patch's room don't match up (crops can never be more than the patch has room for).
   - **Preview:** the cost of every level and what the tech gives at each level.
   - **Problems:** missing requirements, loops that make techs impossible to buy, duplicate ids, techs on the same spot, techs with no effects, and crops that nothing unlocks.
-- **Crops:** with no tech selected, the panel lists every crop. **+ Add crop** makes a new one (a step up from your best crop: worth more, slower, unlocked one Crops level later); click a crop to edit it:
+- **Crops:** with no tech selected, the panel lists every crop. **+ Add crop** makes a new one (a step up from your best crop: worth more, slower, with the next unlock number); click a crop to edit it:
   - **ID** (letters, numbers and `_`; it's also the art name, `assets/crops/<id>.png`) and **Name**.
   - **Value** in coins, **Grow time** and **Pick time** (times lettuce's), and **How often** it's planted compared with the other unlocked crops (the panel shows what share that works out to).
-  - **Unlocks at** a level of the **Crops** stat (0 = from the start). The panel names the techs that unlock it; if none do, **+ Make an unlock tech** adds one (Crops "set at least" that level, needing the tech for the level before, with the crop as its icon).
+  - **Unlocks at** its unlock number (0 = from the start). Each crop is its own unlock: a tech with **Unlock crop** N plants only the crops numbered N, not the ones below. The panel names the techs that unlock it; if none do, **+ Make an unlock tech** adds one (Unlock crop = that number, needing only The Barn, with the crop as its icon).
   - **Look** (lettuce, carrot, pumpkin or round fruit) and **Colour** (a swatch, a hex code, or **Usual**), used until you draw the crop. The preview shows exactly what the game will draw.
   - Any crop can be a tech's icon: it's in the icon picker as `crop_<id>`.
 - **Keys:** Ctrl+S save, Ctrl+Z / Ctrl+Y undo / redo, Ctrl+D duplicate, Delete removes the selected tech, arrow keys nudge it. On a Mac, Cmd works too.

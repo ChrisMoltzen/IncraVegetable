@@ -11,6 +11,7 @@
 #pragma once
 
 #include <functional>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -25,7 +26,11 @@ struct Stats {
     float growTime = 3.0f;    // seconds for a lettuce to grow (other crops are multiples)
     float valueMult = 1.0f;   // multiplier on coins from every vegetable
     int reach = 0;            // 0 = pick only the tile under the mouse; higher = bigger picking circle
-    int cropTier = 0;         // 0 = lettuce, 1 = + carrots, 2 = + pumpkins
+    // Which crops get planted. Each crop has its own unlock number (its "tier" in the tree file);
+    // a tech with "effect cropTier atleast N" unlocks just the crops numbered N, not the ones
+    // below it. Bit N set = unlocked; bit 0 (crops from the start) is always set.
+    std::uint64_t cropsUnlocked = 1;
+    bool cropUnlocked(int tier) const { return tier <= 0 || (tier < 64 && ((cropsUnlocked >> tier) & 1u)); }
     float headStart = 0.f;    // fraction of the patch that is already ripe when a day starts
     // Auto-pick: picking a crop has a chance to also pick ripe crops near it.
     float autoPickChance = 0.f; // percent chance (0-100) each time you pick a crop

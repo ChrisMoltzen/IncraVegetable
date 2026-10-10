@@ -75,7 +75,7 @@ const std::vector<StatInfo>& stats() {
         {"growTime", "Grow time", "Seconds for a lettuce to grow (other crops take longer). Starts at 3.", false},
         {"valueMult", "Coin value", "Multiplier on the coins from every vegetable. Starts at 1.", false},
         {"reach", "Reach", "Picks everything within this radius of the pointer. Starts at 0 (one plant).", true},
-        {"cropTier", "Crops", "Which crops get planted: each crop unlocks at its own level of this (see Crops). Starts at 0.", true},
+        {"cropTier", "Unlock crop", "Plants the crop with this unlock number (see Crops). Each crop is its own unlock.", true},
         {"headStart", "Head start", "Fraction of the bed already ripe when a day starts (0 to 1). Starts at 0.", false},
         {"autoPickChance", "Auto-pick chance", "% chance that picking a crop also picks ripe crops near it. Starts at 0.", false},
         {"autoPickCount", "Auto-pick crops", "How many nearby ripe crops an auto-pick picks. Starts at 0 (off).", true},
@@ -103,7 +103,12 @@ float getStat(const Stats& s, int index) {
     case 4: return s.growTime;
     case 5: return s.valueMult;
     case 6: return static_cast<float>(s.reach);
-    case 7: return static_cast<float>(s.cropTier);
+    case 7: { // the highest crop unlocked (only for display; the crops are a set)
+        int top = 0;
+        for (int b = 0; b < 64; ++b)
+            if ((s.cropsUnlocked >> b) & 1u) top = b;
+        return static_cast<float>(top);
+    }
     case 8: return s.headStart;
     case 9: return s.autoPickChance;
     case 10: return static_cast<float>(s.autoPickCount);
@@ -124,7 +129,11 @@ void setStat(Stats& s, int index, float v) {
     case 4: s.growTime = v; break;
     case 5: s.valueMult = v; break;
     case 6: s.reach = static_cast<int>(std::lround(v)); break;
-    case 7: s.cropTier = static_cast<int>(std::lround(v)); break;
+    case 7: { // unlock that one crop number
+        const int b = std::clamp(static_cast<int>(std::lround(v)), 0, 63);
+        s.cropsUnlocked |= std::uint64_t{1} << b;
+        break;
+    }
     case 8: s.headStart = v; break;
     case 9: s.autoPickChance = std::clamp(v, 0.f, 100.f); break;
     case 10: s.autoPickCount = std::max(0, static_cast<int>(std::lround(v))); break;
@@ -149,7 +158,7 @@ std::string formatStat(int index, const Stats& s) {
         // Names of the crops this level plants, e.g. "lettuce, carrot & pumpkin".
         std::vector<std::string> names;
         for (const auto& c : crops())
-            if (c.tier <= s.cropTier) {
+            if (s.cropUnlocked(c.tier)) {
                 std::string n = c.name;
                 for (char& ch : n) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
                 names.push_back(n);
@@ -249,6 +258,10 @@ void applyEffects(const TechDef& t, Stats& s, int level) {
     for (const auto& e : t.effects) {
         int idx = statIndex(e.stat);
         if (idx < 0) continue;
+        if (idx == 7) { // crops: each effect unlocks its own crop number, whatever the op
+            setStat(s, idx, e.amount);
+            continue;
+        }
         float v = getStat(s, idx);
         switch (e.op) {
         case Op::Add: v += e.amount * level; break;
@@ -584,8 +597,8 @@ std::vector<std::string> validateCrops(const std::vector<CropDef>& list, const s
         if (!croplook::isLook(c.look)) add("unknown look '" + c.look + "'");
         if (!croplook::isValidColor(c.color)) add("color must be 6 hex digits, e.g. e05040");
         if (c.tier <= 0) startCrop = true;
-        else if (c.tier > full.cropTier)
-            add("nothing unlocks it - it needs a tech with effect Crops 'set at least' " + std::to_string(c.tier));
+        else if (!full.cropUnlocked(c.tier))
+            add("nothing unlocks it - it needs a tech with effect Unlock crop " + std::to_string(c.tier));
     }
     if (!list.empty() && !startCrop) out.push_back("crops: no crop has tier 0, so nothing grows at the start");
     return out;
