@@ -110,7 +110,7 @@ iOS details already handled:
 
 ## Building for Android
 
-You need **Android Studio** (free, from developer.android.com/studio). The first time, open it and let it install the Android SDK; then in *Settings > Languages & Frameworks > Android SDK > SDK Tools* tick **NDK (Side by side)** and **CMake** and click Apply.
+You need **Android Studio** (free, from developer.android.com/studio), and a C++ compiler for your computer itself (the build uses it to pack `assets/` into the game): on a Mac that's Xcode's; on Windows, MSYS2's g++ (the one `make win` uses) with its `bin` folder (e.g. `C:\msys64\ucrt64\bin`) on your PATH. If it picks the wrong compiler, add `-DINCRA_HOST_CXX=C:/path/to/g++.exe` to the `arguments` in `android/app/build.gradle`. The first time, open it and let it install the Android SDK; then in *Settings > Languages & Frameworks > Android SDK > SDK Tools* tick **NDK (Side by side)** and **CMake** and click Apply.
 
 **From Android Studio:** *File > Open* the `android` folder (not the project folder). When it has synced, pick a variant in *Build > Select Build Variant* (`fullDebug` to try it), plug in your phone (with *USB debugging* turned on in its Developer options) or start an emulator, and press Run.
 
