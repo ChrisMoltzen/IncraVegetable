@@ -61,6 +61,26 @@ Whole::~Whole() {
     if (active_) useStage(r_);
 }
 
+namespace {
+float shift(Edge edge) {
+    if (!kFillScreen) return 0.f;
+    return edge == Edge::Top ? static_cast<float>(-gY) : static_cast<float>(gH - kStageH - gY);
+}
+} // namespace
+
+SDL_FRect at(Edge edge, const SDL_FRect& rc) { return SDL_FRect{rc.x, rc.y + shift(edge), rc.w, rc.h}; }
+
+Pinned::Pinned(SDL_Renderer* r, Edge edge) : r_(r) {
+    if (!drawingToScreen(r) || gH == kStageH) return;
+    active_ = true;
+    SDL_Rect vp{gX, gY + static_cast<int>(shift(edge)), kStageW, kStageH};
+    SDL_SetRenderViewport(r, &vp);
+}
+
+Pinned::~Pinned() {
+    if (active_) useStage(r_);
+}
+
 void fillAll(SDL_Renderer* r, SDL_Color c) {
     Whole all(r);
     draw::fillRect(r, 0, 0, all.w, all.h, c);
@@ -95,20 +115,7 @@ void background(SDL_Renderer* r, const std::string& name) {
 
 void topBar(SDL_Renderer* r, const std::string& name, float height) {
     Whole all(r);
-    const SDL_FRect bar{0, all.oy, all.w, height};
-    art::draw(r, name, bar);
-    if (all.oy <= 0.f) return;
-    // Above the stage (taller screens): a row from the middle of the bar, stretched up to the top edge.
-    if (SDL_Texture* tex = art::texture(name)) {
-        float tw = 0, th = 0;
-        SDL_GetTextureSize(tex, &tw, &th);
-        const SDL_FRect src{0, std::floor(th * 0.5f), tw, 1};
-        const SDL_FRect dst{0, 0, all.w, all.oy};
-        SDL_RenderTexture(r, tex, &src, &dst);
-    } else {
-        art::draw(r, name, SDL_FRect{0, 0, all.w, all.oy + height * 0.5f});
-        art::draw(r, name, bar);
-    }
+    art::draw(r, name, SDL_FRect{0, 0, all.w, height});
 }
 
 } // namespace screen

@@ -54,6 +54,26 @@ private:
     bool active_ = false;
 };
 
+// Things along the top or bottom of the stage (the HUD, Start Day, End Day...) can
+// be pinned to that edge of the screen, so on a taller screen (iPad) they sit at
+// its real edge instead of floating in from it.
+enum class Edge { Top, Bottom };
+// Where rc, laid out on the stage, really is once pinned to `edge`, in stage
+// coordinates (what pointer positions arrive in): use it to test for clicks and hovers.
+SDL_FRect at(Edge edge, const SDL_FRect& rc);
+// While alive, draws laid out on the stage come out pinned to `edge`.
+class Pinned {
+public:
+    Pinned(SDL_Renderer* r, Edge edge);
+    ~Pinned();
+    Pinned(const Pinned&) = delete;
+    Pinned& operator=(const Pinned&) = delete;
+
+private:
+    SDL_Renderer* r_;
+    bool active_ = false;
+};
+
 // A colour over the whole screen (dimming behind menus).
 void fillAll(SDL_Renderer* r, SDL_Color c);
 
@@ -61,8 +81,8 @@ void fillAll(SDL_Renderer* r, SDL_Color c);
 // edges of the screen.
 void background(SDL_Renderer* r, const std::string& art);
 
-// A strip along the top of the stage (the HUD and The Barn's header), stretched
-// to the full width of the screen and reaching up to its top edge.
+// A strip along the top of the screen (the HUD and The Barn's header), the full
+// width of the screen. Draw what goes on it inside a Pinned(Edge::Top).
 void topBar(SDL_Renderer* r, const std::string& art, float height);
 
 } // namespace screen

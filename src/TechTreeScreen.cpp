@@ -232,8 +232,8 @@ TechTreeScreen::Action TechTreeScreen::handleEvent(const SDL_Event& e, TechTree&
             pressY_ = e.button.y;
             pressedZoom_ = 0;
             if (e.button.button == SDL_BUTTON_LEFT) {
-                if (draw::pointInRect(e.button.x, e.button.y, zoomInButton())) pressedZoom_ = 1;
-                else if (draw::pointInRect(e.button.x, e.button.y, zoomOutButton())) pressedZoom_ = -1;
+                if (draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Bottom, zoomInButton()))) pressedZoom_ = 1;
+                else if (draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Bottom, zoomOutButton()))) pressedZoom_ = -1;
             }
             if (pinching_) dragged_ = true;
         }
@@ -245,13 +245,13 @@ TechTreeScreen::Action TechTreeScreen::handleEvent(const SDL_Event& e, TechTree&
         pressing_ = dragged_ = false;
         pressedZoom_ = 0;
         if (wasDrag || e.button.button != SDL_BUTTON_LEFT) break;
-        if (draw::pointInRect(e.button.x, e.button.y, startButton_)) return Action::StartDay;
+        if (draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Bottom, startButton_))) return Action::StartDay;
         // Zoom buttons zoom about the middle of the screen.
-        if (zoomButton > 0 && draw::pointInRect(e.button.x, e.button.y, zoomInButton())) {
+        if (zoomButton > 0 && draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Bottom, zoomInButton()))) {
             zoomAt(640.f, 360.f, zoom_ * 1.25f);
             break;
         }
-        if (zoomButton < 0 && draw::pointInRect(e.button.x, e.button.y, zoomOutButton())) {
+        if (zoomButton < 0 && draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Bottom, zoomOutButton()))) {
             zoomAt(640.f, 360.f, zoom_ / 1.25f);
             break;
         }
@@ -427,6 +427,8 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
 
     // Header.
     screen::topBar(r, "tree/header_bar", 64);
+    {
+    screen::Pinned top(r, screen::Edge::Top);
     draw::textShadow(r, 24, 18, "THE BARN", 3.f, kWhite);
     std::string coinText = draw::number(coins) + " coins";
     float coinX = 1136.f - draw::textWidth(coinText, 3.f); // clear of the stats and pause buttons
@@ -440,6 +442,9 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
                                                 static_cast<int>(nodes.size())),
                    1.25f, pal::Tilled, draw::Align::Center);
     }
+    }
+    {
+    screen::Pinned bottom(r, screen::Edge::Bottom); // the rest sits along the bottom of the screen
     draw::textShadow(r, 64, 690,
                touchMode_ ? "Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom."
                           : "Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit.",
@@ -449,7 +454,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
     ui::Button start;
     start.rect = startButton_;
     start.label = draw::strf("Start Day %d", nextDay);
-    ui::drawButton(r, start, !touchMode_ && draw::pointInRect(mouseX_, mouseY_, startButton_), false);
+    ui::drawButton(r, start, !touchMode_ && draw::pointInRect(mouseX_, mouseY_, screen::at(screen::Edge::Bottom, startButton_)), false);
 
     // Zoom buttons.
     for (int k = 0; k < 2; ++k) {
@@ -459,7 +464,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         zb.style = ui::Style::Secondary;
         zb.textScale = 3.f;
         zb.enabled = k == 0 ? zoom_ > kMinZoom + 0.001f : zoom_ < kMaxZoom - 0.001f;
-        bool over = !touchMode_ && draw::pointInRect(mouseX_, mouseY_, zb.rect);
+        bool over = !touchMode_ && draw::pointInRect(mouseX_, mouseY_, screen::at(screen::Edge::Bottom, zb.rect));
         ui::drawButton(r, zb, over, over && pressing_ && pressedZoom_ == (k == 0 ? -1 : 1));
     }
     {
@@ -467,6 +472,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
         float mx = (zoomOutButton().x + zoomInButton().x + zoomInButton().w) * 0.5f, y = zoomInButton().y - 24;
         draw::fillRoundRect(r, mx - 30, y, 60, 20, 8, SDL_Color{20, 24, 23, 220});
         draw::text(r, mx, y + 6, pct, 1.25f, kGrey, draw::Align::Center);
+    }
     }
 
     if (hovered >= 0) renderTooltip(r, tree, nodes[hovered], coins);
