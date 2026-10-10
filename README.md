@@ -108,6 +108,43 @@ iOS details already handled:
 - The game pauses and saves when you switch apps or get a phone call, and saves if iOS closes it.
 - Resolution/fullscreen settings and the Quit buttons are hidden on mobile (the OS controls those).
 
+## Building for Android
+
+You need **Android Studio** (free, from developer.android.com/studio). The first time, open it and let it install the Android SDK; then in *Settings > Languages & Frameworks > Android SDK > SDK Tools* tick **NDK (Side by side)** and **CMake** and click Apply.
+
+**From Android Studio:** *File > Open* the `android` folder (not the project folder). When it has synced, pick a variant in *Build > Select Build Variant* (`fullDebug` to try it), plug in your phone (with *USB debugging* turned on in its Developer options) or start an emulator, and press Run.
+
+**From the terminal:** with `ANDROID_HOME` set to your SDK (usually `~/Library/Android/sdk`), or after opening the folder in Android Studio once:
+
+| Command | Makes |
+| --- | --- |
+| `make android` | `build/android/IncraVegetable.apk`: try it on your phone (`make android-install` installs it over USB) |
+| `make android-release` | `build/android/IncraVegetable.aab`: the file you upload to Google Play |
+| `make demo-android` / `make demo-android-release` | the same for the demo (its own app, `com.incravegetable.game.demo`) |
+
+The first build takes a while: it downloads and builds SDL, and packs `assets/` into the game for three kinds of phone CPU.
+
+How it fits together:
+- `android/` is a normal Gradle project. Its `app/build.gradle` runs the project's `CMakeLists.txt` (the same one the iOS build uses), which builds the game into `libmain.so` with every file in `assets/` packed in. SDL's Java activity (`android/app/src/main/java/org/libsdl/app`, copied from SDL 3.2.24) starts it. If you change the SDL version in `CMakeLists.txt`, copy that version's `android-project/app/src/main/java/org/libsdl/app` files over these.
+- Debug variants have the debug screen; release variants are like `make release` (no debug screen, scrambled saves only).
+- The game fills the screen as on iPhone and iPad, picking shows the ring, and the Back button does what Esc does (pause, close a menu; on the main menu it leaves the game).
+- Saves go in the app's own storage (removed if the app is uninstalled).
+- The app icon comes from `icon/IncraVegetable_1024.png` (in `android/app/src/main/res/mipmap-*`).
+
+**Releasing on Google Play:**
+1. Pick the app ID before your first upload; it can never change. It's `com.incravegetable.game` (`applicationId` in `android/app/build.gradle`).
+2. Make an upload key once, and keep it (and its passwords) somewhere safe:
+   `keytool -genkey -v -keystore android/upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`
+3. Create `android/keystore.properties` (it's in `.gitignore`, never commit it):
+   ```
+   storeFile=upload.jks
+   storePassword=...
+   keyAlias=upload
+   keyPassword=...
+   ```
+4. `make android-release`, then upload `build/android/IncraVegetable.aab` in the Google Play Console.
+5. Every upload needs a higher version code: change `versionCode` in `android/app/build.gradle`, or run e.g. `cd android && ./gradlew bundleFullRelease -PincraVersionCode=2`.
+
 ## Menus
 
 - **Continue** - jumps back into the last farm you played, exactly where you left it (even mid-day).
@@ -218,6 +255,7 @@ Save and settings files live in your user data folder:
 - macOS: `~/Library/Application Support/IncraVegetable/IncraVegetable/`
 - Linux: `~/.local/share/IncraVegetable/IncraVegetable/`
 - iOS: inside the app's own storage (removed if the app is deleted)
+- Android: inside the app's own storage (removed if the app is uninstalled)
 
 **Save files are scrambled.** Each save is stored scrambled, with a check value, so it can't be opened and edited as text. If a save has been edited (or damaged), it fails the check and the backup (`slotN.sav.bak`) loads instead. Development builds still read old plain-text saves and re-save them scrambled; release builds don't. As with the assets, this keeps honest players honest rather than being real encryption.
 
@@ -352,6 +390,7 @@ IncraVegetable/
 ├── assets/         your artwork
 ├── art_templates/  every image at the right size, ready to paint over
 ├── platform/ios/   iOS Info.plist and app icon
+├── android/        Android Gradle project (SDL's Java activity, manifest, icons)
 └── CMakeLists.txt
 ```
 

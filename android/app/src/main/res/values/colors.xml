@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The icon's dark outline colour: behind the adaptive icon, and the window while the game loads -->
+    <color name="background">#1F2421</color>
+</resources>

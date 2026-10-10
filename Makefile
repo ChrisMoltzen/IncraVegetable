@@ -206,3 +206,41 @@ reels:
 	cd $(REELS_DIR) && SDL_AUDIODRIVER=dummy ./Reels "$(LINE)"
 
 .PHONY: reels
+
+# ---------------------------------------------------------------------------
+# Android (see the README, "Building for Android"). Needs Android Studio (for
+# the Android SDK, NDK and CMake), and ANDROID_HOME set or android/local.properties
+# (Android Studio writes it the first time you open the android folder).
+#   make android               build/android/IncraVegetable.apk         to try on your phone
+#   make android-release       build/android/IncraVegetable.aab         for Google Play
+#   make demo-android          build/android/IncraVegetable Demo.apk
+#   make demo-android-release  build/android/IncraVegetable Demo.aab
+#   make android-install       installs the debug APK on a connected phone (adb)
+# ---------------------------------------------------------------------------
+ANDROID_DIR = $(OUTPUT_DIR)/android
+ANDROID_OUT = android/app/build/outputs
+
+android:
+	cd android && ./gradlew assembleFullDebug
+	mkdir -p $(ANDROID_DIR)
+	cp $(ANDROID_OUT)/apk/full/debug/app-full-debug.apk "$(ANDROID_DIR)/$(PROJECTNAME).apk"
+
+android-release:
+	cd android && ./gradlew bundleFullRelease
+	mkdir -p $(ANDROID_DIR)
+	cp $(ANDROID_OUT)/bundle/fullRelease/app-full-release.aab "$(ANDROID_DIR)/$(PROJECTNAME).aab"
+
+demo-android:
+	cd android && ./gradlew assembleDemoDebug
+	mkdir -p $(ANDROID_DIR)
+	cp $(ANDROID_OUT)/apk/demo/debug/app-demo-debug.apk "$(ANDROID_DIR)/$(DEMO_NAME).apk"
+
+demo-android-release:
+	cd android && ./gradlew bundleDemoRelease
+	mkdir -p $(ANDROID_DIR)
+	cp $(ANDROID_OUT)/bundle/demoRelease/app-demo-release.aab "$(ANDROID_DIR)/$(DEMO_NAME).aab"
+
+android-install: android
+	adb install -r "$(ANDROID_DIR)/$(PROJECTNAME).apk"
+
+.PHONY: android android-release demo-android demo-android-release android-install

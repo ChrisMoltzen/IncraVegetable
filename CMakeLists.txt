@@ -2,12 +2,14 @@
 # it). It also builds the desktop game if you prefer CMake to the Makefile.
 #
 #   iOS:      ./build-ios.sh YOUR_TEAM_ID com.yourname.incravegetable
+#   Android:  make android (Gradle runs this file through android/app/build.gradle)
 #   options:  -DINCRA_RELEASE=ON   release build (no debug screen, scrambled saves only)
 #             -DINCRA_DEMO=ON      demo build (techs past INCRA_DEMO_RADIUS stay locked)
 #             -DINCRA_DEMO_RADIUS=6
 #
-# On iOS every file in assets/ is packed into the app with tools/AssetPacker (as
-# in `make release`), so there's no loose assets folder to copy into the bundle.
+# On iOS and Android every file in assets/ is packed into the app with
+# tools/AssetPacker (as in `make release`), so there are no loose asset files to
+# copy into the app.
 cmake_minimum_required(VERSION 3.21)
 project(IncraVegetable VERSION 0.2 LANGUAGES C CXX)
 
@@ -41,9 +43,10 @@ set(INCRA_DEVELOPMENT_TEAM "" CACHE STRING "Apple Developer Team ID used to sign
 
 # ---------------------------------------------------------------------------
 # SDL3: use an installed copy if there is one, otherwise download and build it.
-# iOS always builds it from source as a static library.
+# iOS always builds it from source as a static library; Android builds it from
+# source as libSDL3.so, which goes into the app next to the game.
 # ---------------------------------------------------------------------------
-if(NOT IOS)
+if(NOT IOS AND NOT ANDROID)
     find_package(SDL3 CONFIG QUIET)
 endif()
 if(NOT SDL3_FOUND)
@@ -73,8 +76,8 @@ file(GLOB GAME_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.
 set(ART_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 file(GLOB_RECURSE ART_FILES CONFIGURE_DEPENDS "${ART_DIR}/*")
 
-# Pack the assets into the game on iOS and in release builds.
-if(IOS OR INCRA_RELEASE)
+# Pack the assets into the game on phones and in release builds.
+if(IOS OR ANDROID OR INCRA_RELEASE)
     set(INCRA_PACK_ASSETS ON)
 else()
     set(INCRA_PACK_ASSETS OFF)
@@ -144,6 +147,11 @@ if(IOS)
         XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS "iphoneos iphonesimulator"
         XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "YES"
     )
+elseif(ANDROID)
+    # On Android the game is a library: SDL's Java activity (android/app/src/main/java/
+    # org/libsdl/app) loads libSDL3.so and then libmain.so, and calls its SDL_main.
+    add_library(IncraVegetable SHARED ${GAME_SOURCES} ${GAME_HEADERS})
+    set_target_properties(IncraVegetable PROPERTIES OUTPUT_NAME "main")
 else()
     add_executable(IncraVegetable WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
     if(INCRA_DEMO)
