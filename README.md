@@ -92,12 +92,15 @@ You need a Mac with Xcode 15 or newer and CMake 3.21+ (`brew install cmake`).
    ```
 
    This generates `build-ios/IncraVegetable.xcodeproj` (downloading and building SDL3 for iOS) and opens it.
+
+   Add `-DINCRA_RELEASE=ON` for a release build (no debug screen) or `-DINCRA_DEMO=ON` for the demo, e.g. `./build-ios.sh YOUR_TEAM_ID com.yourname.incravegetable -DINCRA_DEMO=ON`. Delete the `build-ios` folder when switching between them.
 4. In Xcode choose the **IncraVegetable** scheme, pick your iPhone/iPad or a simulator, and press Run.
 
 The first time you run on a real device, iOS may ask you to trust the developer certificate under *Settings > General > VPN & Device Management*.
 
 iOS details already handled:
 - Landscape only, full screen, status bar hidden, works on iPhone and iPad.
+- Everything in `assets/` is packed into the app when Xcode builds it (as in `make release`), and re-packed when you change a file.
 - The app icon is in `platform/ios/Assets.xcassets` (replace `AppIcon-1024.png` with your own 1024x1024 PNG).
 - Touch controls: hold a finger on vegetables and drag across the patch to pick. In the tech tree, tap an upgrade to see what it does, then tap it again to buy it. Drag to scroll.
 - The game pauses and saves when you switch apps or get a phone call, and saves if iOS closes it.
