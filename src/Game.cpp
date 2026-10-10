@@ -483,13 +483,13 @@ bool Game::pointerActive() const { return usingTouch_ ? touchDown_ : mouseInside
 bool Game::handlePauseButton(const SDL_Event& e) {
     if (state_ != State::Farming && state_ != State::TechTree) return false;
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT &&
-        draw::pointInRect(e.button.x, e.button.y, pauseButton_)) {
+        draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Top, pauseButton_))) {
         pauseButtonDown_ = true;
         return true;
     }
     if (isMouseUp(e) && pauseButtonDown_) {
         pauseButtonDown_ = false;
-        if (draw::pointInRect(e.button.x, e.button.y, pauseButton_)) {
+        if (draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Top, pauseButton_))) {
             audio_.play(Sfx::Click);
             pause();
         }
@@ -503,13 +503,13 @@ bool Game::handlePauseButton(const SDL_Event& e) {
 bool Game::handleStatsButton(const SDL_Event& e) {
     if (state_ != State::Farming && state_ != State::TechTree) return false;
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT &&
-        draw::pointInRect(e.button.x, e.button.y, statsButton_)) {
+        draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Top, statsButton_))) {
         statsButtonDown_ = true;
         return true;
     }
     if (isMouseUp(e) && statsButtonDown_) {
         statsButtonDown_ = false;
-        if (draw::pointInRect(e.button.x, e.button.y, statsButton_)) {
+        if (draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Top, statsButton_))) {
             audio_.play(Sfx::Click);
             openStats();
         }
@@ -528,13 +528,13 @@ bool Game::handleStatsButton(const SDL_Event& e) {
 bool Game::handleEndDayButton(const SDL_Event& e) {
     if (state_ != State::Farming) return false;
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT &&
-        draw::pointInRect(e.button.x, e.button.y, endDayButton_)) {
+        draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Bottom, endDayButton_))) {
         endDayButtonDown_ = true;
         return true;
     }
     if (isMouseUp(e) && endDayButtonDown_) {
         endDayButtonDown_ = false;
-        if (draw::pointInRect(e.button.x, e.button.y, endDayButton_)) {
+        if (draw::pointInRect(e.button.x, e.button.y, screen::at(screen::Edge::Bottom, endDayButton_))) {
             audio_.play(Sfx::Click);
             endDay();
         }
@@ -958,6 +958,7 @@ void Game::render(bool present) {
     }
 
     if (toastTime_ > 0.f) {
+        screen::Pinned top(renderer_, screen::Edge::Top); // just under the top bar
         Uint8 a = static_cast<Uint8>(255 * std::min(1.f, toastTime_ * 2.f));
         float w = draw::textWidth(toast_, 2.f) + 40;
         draw::fillRoundRect(renderer_, (kWidth - w) * 0.5f, 84, w, 40, 12, SDL_Color{0, 0, 0, static_cast<Uint8>(a * 0.7f)});
@@ -965,13 +966,15 @@ void Game::render(bool present) {
     }
 
     if (kDebugTools) {
+        screen::Pinned bottom(renderer_, screen::Edge::Bottom);
         if (debug_.showFps) {
             draw::textShadow(renderer_, 56, 686, draw::strf("%.0f fps", fps_), 1.5f, pal::PaleShoot);
         }
         if (debugMenu_.isOpen()) {
             debugMenu_.render(renderer_);
         } else {
-            bool hover = !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, DebugMenu::buttonRect());
+            bool hover = !usingTouch_ &&
+                         draw::pointInRect(mouseX_, mouseY_, screen::at(screen::Edge::Bottom, DebugMenu::buttonRect()));
             DebugMenu::drawOpenButton(renderer_, hover);
         }
     }
@@ -989,14 +992,16 @@ void Game::renderPlayScene(State s) {
         if (s == State::DaySummary) renderSummary();
     }
     if (s == State::Farming || s == State::TechTree) {
-        bool hover = !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, pauseButton_);
+        screen::Pinned top(renderer_, screen::Edge::Top);
+        bool hover = !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, screen::at(screen::Edge::Top, pauseButton_));
         ui::drawPauseIcon(renderer_, pauseButton_, hover && state_ == s);
-        bool statsHover = !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, statsButton_);
+        bool statsHover = !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, screen::at(screen::Edge::Top, statsButton_));
         StatsScreen::drawButton(renderer_, statsButton_, statsHover && state_ == s);
     }
     if (s == State::Farming) {
+        screen::Pinned bottom(renderer_, screen::Edge::Bottom);
         bool live = state_ == s; // not while paused
-        bool hover = live && !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, endDayButton_);
+        bool hover = live && !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, screen::at(screen::Edge::Bottom, endDayButton_));
         ui::Button b;
         b.rect = endDayButton_;
         b.label = "End Day";
@@ -1028,6 +1033,8 @@ void Game::renderBackground() {
 
 void Game::renderHud() {
     screen::topBar(renderer_, "farm/hud_bar", 72);
+    {
+    screen::Pinned top(renderer_, screen::Edge::Top); // the HUD sits at the very top of the screen
     draw::textShadow(renderer_, 26, 14, draw::strf("Day %d", day_), 3.f, kWhite);
     draw::text(renderer_, 28, 50, slotTitle(currentSlot_, farmName_), 1.5f, kGrey);
 
@@ -1041,10 +1048,12 @@ void Game::renderHud() {
     ui::drawCoin(renderer_, 930, 30, 13);
     draw::textShadow(renderer_, 952, 19, draw::number(coins_), 3.f, kGold);
     draw::text(renderer_, 952, 50, "+" + draw::number(farm_.earnedToday()) + " today", 1.5f, kGrey);
+    }
 
     if (state_ == State::Farming && day_ <= 2) {
         const char* hint = usingTouch_ ? "Hold your finger on ripe vegetables to pick them!"
                                        : "Hover over ripe vegetables to pick them!";
+        screen::Pinned bottom(renderer_, screen::Edge::Bottom);
         draw::textShadow(renderer_, kWidth * 0.5f, kHeight - 34, hint, 2.f, kWhite, draw::Align::Center);
     }
 }
@@ -1239,7 +1248,7 @@ bool Game::handleDebugInput(const SDL_Event& e) {
         if (!debugMenu_.isOpen()) lastTicks_ = SDL_GetTicksNS();
         return true;
     }
-    SDL_FRect b = DebugMenu::buttonRect();
+    SDL_FRect b = screen::at(screen::Edge::Bottom, DebugMenu::buttonRect());
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT &&
         draw::pointInRect(e.button.x, e.button.y, b)) {
         debugButtonDown_ = true;
