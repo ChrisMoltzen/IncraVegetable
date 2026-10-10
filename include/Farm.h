@@ -70,6 +70,9 @@ public:
     enum class FencePiece { Horizontal, Vertical, Corner, Gate };
     static void drawFenceBuiltin(SDL_Renderer* r, const SDL_FRect& rc, FencePiece piece); // one fence tile
     static void drawPickBarBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool fill);
+    // The picking ring (phones and tablets): rc is the square around it; fill = how much is filled (0..1).
+    static void drawPickRingBuiltin(SDL_Renderer* r, const SDL_FRect& rc, float fill);
+    static void drawPickRing(SDL_Renderer* r, float cx, float cy, float radius, float fill);
     static void drawReachBuiltin(SDL_Renderer* r, const SDL_FRect& rc);
     // pose: 0 standing, 1 and 2 walking steps, 3 picking. Feet at the bottom middle of rc.
     static void drawFarmerBuiltin(SDL_Renderer* r, const SDL_FRect& rc, int pose);

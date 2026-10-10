@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Screen.h"
 #include "Palette.h"
 
 #include <algorithm>
@@ -511,7 +512,7 @@ void DebugMenu::render(SDL_Renderer* r) {
     if (!open_) return;
     build();
 
-    draw::fillRect(r, 0, 0, 1280, 720, SDL_Color{0, 0, 0, 140});
+    screen::fillAll(r, SDL_Color{0, 0, 0, 140});
     draw::fillRoundRect(r, kPanelX + 4, kPanelY + 8, kPanelW, kPanelH, 18, SDL_Color{0, 0, 0, 120});
     draw::fillRoundRect(r, kPanelX - 2, kPanelY - 2, kPanelW + 4, kPanelH + 4, 20, SDL_Color{150, 90, 190, 255});
     draw::fillRoundRect(r, kPanelX, kPanelY, kPanelW, kPanelH, 18, SDL_Color{28, 24, 34, 248});

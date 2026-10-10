@@ -3,6 +3,7 @@
 #include "Art.h"
 #include "AssetPack.h"
 #include "Draw.h"
+#include "Screen.h"
 #include "Grass.h"
 #include "Palette.h"
 #include "Platform.h"
@@ -925,6 +926,7 @@ void Game::takeHarvests() {
 void Game::render(bool present) {
     SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
     SDL_RenderClear(renderer_);
+    screen::fit(renderer_); // phones and tablets: fill the whole screen, not just a 16:9 box
 
     switch (state_) {
     case State::MainMenu:
@@ -1020,12 +1022,12 @@ void Game::setWindowIcon() {
 }
 
 void Game::renderBackground() {
-    art::draw(renderer_, "farm/background", SDL_FRect{0, 0, kWidth, kHeight});
+    screen::background(renderer_, "farm/background");
     grass::draw(renderer_, static_cast<float>(SDL_GetTicks()) / 1000.f, mouseX_, mouseY_);
 }
 
 void Game::renderHud() {
-    art::draw(renderer_, "farm/hud_bar", SDL_FRect{0, 0, kWidth, 72});
+    screen::topBar(renderer_, "farm/hud_bar", 72);
     draw::textShadow(renderer_, 26, 14, draw::strf("Day %d", day_), 3.f, kWhite);
     draw::text(renderer_, 28, 50, slotTitle(currentSlot_, farmName_), 1.5f, kGrey);
 
@@ -1065,7 +1067,7 @@ Game::SummaryLayout Game::summaryLayout() const {
 
 void Game::renderSummary() {
     Uint8 fade = static_cast<Uint8>(150 * std::min(1.f, summaryTimer_ * 3.f));
-    draw::fillRect(renderer_, 0, 0, kWidth, kHeight, SDL_Color{0, 0, 0, fade});
+    screen::fillAll(renderer_, SDL_Color{0, 0, 0, fade});
 
     const SummaryLayout L = summaryLayout();
     const float w = L.panel.w, x = L.panel.x, y = L.panel.y;

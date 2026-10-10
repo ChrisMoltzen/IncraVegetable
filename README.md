@@ -100,6 +100,8 @@ The first time you run on a real device, iOS may ask you to trust the developer 
 
 iOS details already handled:
 - Landscape only, full screen, status bar hidden, works on iPhone and iPad.
+- Fills the whole screen with no black bars: the game is laid out for 16:9, and on wider iPhones or taller iPads the field, menu background and top bars carry on to the edges (`include/Screen.h`). Build the desktop game with `-DINCRA_FILL_SCREEN=1` to try it in a resized window.
+- Picking progress is a ring round the vegetable instead of a bar under it, so your finger doesn't hide it. Art: `ui/pick_ring_back` and `ui/pick_ring_fill` (128x128); `pick_rings on/off` in `assets/art.txt` chooses for every platform.
 - Everything in `assets/` is packed into the app when Xcode builds it (as in `make release`), and re-packed when you change a file.
 - The app icon is in `platform/ios/Assets.xcassets` (replace `AppIcon-1024.png` with your own 1024x1024 PNG).
 - Touch controls: hold a finger on vegetables and drag across the patch to pick. In the tech tree, tap an upgrade to see what it does, then tap it again to buy it. Drag to scroll.
