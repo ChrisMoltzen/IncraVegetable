@@ -1,6 +1,7 @@
 // Game.h - owns the window, the state machine, audio and saving/loading.
 #pragma once
 
+#include "Achievements.h"
 #include "Audio.h"
 #include "DebugMenu.h"
 #include "Farm.h"
@@ -37,7 +38,7 @@ public:
     int exportArtTemplates(const std::string& folder);
 
 private:
-    enum class State { MainMenu, SlotSelect, Settings, Farming, DaySummary, TechTree, Paused, Stats, Complete };
+    enum class State { MainMenu, SlotSelect, Settings, Farming, DaySummary, TechTree, Paused, Stats, Complete, Achievements };
 
     // Flow
     void goToMainMenu();
@@ -55,6 +56,12 @@ private:
     void openStats();
     void openCompletion(); // the "Barn fully unlocked" pop-up
     void closeStats();
+    void openAchievements();  // the achievements page, over the main menu or the stats page
+    // Achievements: unlocks any whose rule the current farm now meets (and tells the platform).
+    void checkAchievements();
+    AchievementProgress achievementProgress() const;
+    void loadAchievements();  // at startup; also re-sends every unlock to Steam / Game Center / Play Games
+    void saveAchievements() const;
     std::vector<StatsScreen::Row> statsRows() const;
     void resume();
     void openSettings();
@@ -103,6 +110,7 @@ private:
     State pausedFrom_ = State::Farming;   // what's under the pause menu
     State settingsFrom_ = State::MainMenu; // where Settings returns to
     State statsFrom_ = State::Farming;     // what's under the stats page
+    State achievementsFrom_ = State::MainMenu; // what's under the achievements page (MainMenu or Stats)
 
     TechTree tree_;
     TechTreeScreen treeScreen_;
@@ -113,6 +121,12 @@ private:
     PauseMenu pauseMenu_;
     StatsScreen statsScreen_;
     CompleteScreen completeScreen_;
+    Achievements achievements_;
+    AchievementBanner achievementBanner_;
+    AchievementsScreen achievementsScreen_;
+    float achievementTimer_ = 0.f; // checks a couple of times a second while playing
+    bool trophyButtonDown_ = false;
+    SDL_FRect trophyButton_{1280.f - 62.f, 12.f, 48.f, 48.f}; // top-right of the main menu
     bool completionSeen_ = false; // the pop-up shows once per farm (saved)
     PlayStats playStats_;
     DebugMenu debugMenu_;

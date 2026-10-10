@@ -220,6 +220,52 @@ The old music names (`music`, `music_menu`, `music_barn`) still work if the new 
 - **Volume:** the Music and Sound sliders in Settings work on your files too.
 - **File size:** use OGG or MP3 for music. A few minutes of WAV is tens of megabytes.
 
+## Achievements
+
+There are 18 achievements (First Harvest, Green Thumb, Market Day, Full Crew, The Barn Is Full...), listed with their rules in `src/Achievements.cpp`. They belong to the player rather than a farm: unlock one on any save and it stays unlocked (`achievements.sav`, next to the save slots). When one unlocks, a banner slides in under the top bar; the trophy button in the top-right of the main menu, and **Achievements** on the stats page, show them all.
+
+Each build also passes unlocks on to the store's own achievements, using the id from `src/Achievements.cpp` (e.g. `green_thumb`). When it does, the store shows its own pop-up instead of the game's banner, and every unlock is sent again at startup, so ones earned offline catch up. The demo never sends any.
+
+| Achievement | Id |
+| --- | --- |
+| **First Harvest**: Pick your first vegetable. | `first_harvest` |
+| **Green Thumb**: Pick 1,000 vegetables. | `green_thumb` |
+| **Bumper Crop**: Pick 50,000 vegetables. | `bumper_crop` |
+| **Pocket Money**: Earn 1,000 coins. | `pocket_money` |
+| **Market Trader**: Earn 100,000 coins. | `market_trader` |
+| **Vegetable Tycoon**: Earn 5,000,000 coins. | `vegetable_tycoon` |
+| **Market Day**: Earn 1,000 coins in a single day. | `market_day` |
+| **Harvest Festival**: Earn 25,000 coins in a single day. | `harvest_festival` |
+| **Into the Barn**: Buy your first upgrade. | `into_the_barn` |
+| **Well Equipped**: Buy 25 upgrades. | `well_equipped` |
+| **Barn Raiser**: Buy 100 upgrades. | `barn_raiser` |
+| **Lend a Hand**: Get the Helping Hand to pick for you. | `lend_a_hand` |
+| **Extra Hands**: Hire your first farmer. | `extra_hands` |
+| **Full Crew**: Hire every farmer. | `full_crew` |
+| **Mixed Veg**: Grow every kind of vegetable. | `mixed_veg` |
+| **Week on the Farm**: Reach day 7. | `week_on_the_farm` |
+| **Seasoned Farmer**: Reach day 50. | `seasoned_farmer` |
+| **The Barn Is Full**: Buy every upgrade. | `the_barn_is_full` |
+
+**Steam** (desktop):
+1. In Steamworks, under *Stats & Achievements > Achievements*, add each one with its **API Name** set to the id above, give it a name, description and icons, and publish.
+2. Download the Steamworks SDK (partner.steamgames.com > SDK, version 1.61 or newer) and unzip it.
+3. Build with Steam: `make release STEAM=1 STEAMWORKS=path/to/sdk` (or `make`, `make win`, `make release-win`). With CMake: `-DINCRA_STEAM=ON -DINCRA_STEAMWORKS_SDK=path/to/sdk`. Steam's library (`libsteam_api.dylib` / `steam_api64.dll`) is copied next to the game; ship it with the game.
+4. Development builds also get a `steam_appid.txt` so they talk to Steam when you run them yourself (Steam must be running). Set your app id with `STEAM_APPID=1234560` (`-DINCRA_STEAM_APPID=` with CMake); the default, 480, is Valve's test game. Don't ship `steam_appid.txt`; release builds don't make one.
+5. To clear achievements while testing, use the Steam console (`steam://open/console`): `reset_all_stats <appid>`.
+
+**Game Center** (iPhone and iPad), on by default:
+1. In App Store Connect, open your app's *Game Center* section, add each achievement with its **Achievement ID** set to the id above, and give it a name, description, image and points.
+2. The Xcode project gets the Game Center capability (`platform/ios/IncraVegetable.entitlements`). A free Apple account ("Personal Team") can't sign that: build with `./build-ios.sh TEAM BUNDLE -DINCRA_GAME_CENTER=OFF` until you're on the paid Apple Developer Program.
+3. Players already signed in to Game Center are signed in automatically; otherwise iOS shows its sign-in once.
+
+**Google Play Games** (Android), off until you set it up:
+1. In the Play Console, set up *Play Games Services* for your game, and add each achievement with the **same name** as in the game (e.g. "Green Thumb"). Play makes its own ids for them.
+2. On the achievements page, click *Get resources*, and copy the `achievement_...` lines into `android/app/src/main/res/values/games-ids.xml`. Put your project id (`app_id`, also on the Configuration page) in `game_services_project_id`. The game finds each achievement as `achievement_<id>`, so the names must match.
+3. Players are signed in to Play Games automatically.
+
+**Testing on your computer:** delete `achievements.sav` from the save folder (see Saving) to lock them all again.
+
 ## Debug screen
 
 Press **F1** (or tap the purple bug button in the bottom-left corner of any screen) to open it. The game pauses while it's open. Everything takes effect immediately, including on a day that's in progress.
@@ -389,7 +435,7 @@ IncraVegetable/
 ├── include/        all the .h files (including the stb image headers)
 ├── assets/         your artwork
 ├── art_templates/  every image at the right size, ready to paint over
-├── platform/ios/   iOS Info.plist and app icon
+├── platform/ios/   iOS Info.plist, app icon, Game Center code and entitlements
 ├── android/        Android Gradle project (SDL's Java activity, manifest, icons)
 └── CMakeLists.txt
 ```

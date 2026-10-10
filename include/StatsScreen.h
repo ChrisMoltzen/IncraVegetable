@@ -16,9 +16,11 @@ public:
         bool indent = false;  // a breakdown of the row above
     };
 
+    enum class Action { None, Close, Achievements };
+
     void open(std::vector<Row> rows);
     void setRows(std::vector<Row> rows) { rows_ = std::move(rows); } // refresh while open
-    bool handleEvent(const SDL_Event& e); // true = close
+    Action handleEvent(const SDL_Event& e);
     void render(SDL_Renderer* r) const;
 
     // The chart button in the top bar.

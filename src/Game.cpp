@@ -3,6 +3,7 @@
 #include "Art.h"
 #include "AssetPack.h"
 #include "Draw.h"
+#include "PlatformServices.h"
 #include "Screen.h"
 #include "Grass.h"
 #include "Palette.h"
@@ -70,6 +71,8 @@ bool Game::init() {
     audio_.setSfxVolume(settings_.sfxVolume);
     loadSounds();
 
+    services::init(window_); // Steam / Game Center / Google Play Games, if this build has one
+    loadAchievements();
 
     lastTicks_ = SDL_GetTicksNS();
     setupDebugMenu();
@@ -80,6 +83,7 @@ bool Game::init() {
 void Game::shutdown() {
     saveGame();
     saveSettings();
+    services::shutdown();
 }
 
 // ---------------------------------------------------------------------------
@@ -88,7 +92,9 @@ void Game::shutdown() {
 
 bool Game::inGame() const {
     return state_ == State::Farming || state_ == State::DaySummary || state_ == State::TechTree ||
-           state_ == State::Paused || state_ == State::Stats || state_ == State::Complete || (state_ == State::Settings && settingsFrom_ == State::Paused);
+           state_ == State::Paused || state_ == State::Stats || state_ == State::Complete ||
+           (state_ == State::Settings && settingsFrom_ == State::Paused) ||
+           (state_ == State::Achievements && achievementsFrom_ == State::Stats);
 }
 
 void Game::goToMainMenu() {
@@ -275,6 +281,7 @@ void Game::endDay() {
     state_ = State::DaySummary;
     summaryTimer_ = 0.f;
     audio_.play(Sfx::Sunset);
+    checkAchievements();
     saveGame();
 }
 
@@ -330,6 +337,65 @@ void Game::closeStats() {
     state_ = statsFrom_;
     lastTicks_ = SDL_GetTicksNS(); // the day was stopped while the page was open
 }
+
+void Game::openAchievements() {
+    if (state_ != State::MainMenu && state_ != State::Stats) return;
+    achievementsFrom_ = state_;
+    achievementsScreen_.open();
+    state_ = State::Achievements;
+}
+
+// ---------------------------------------------------------------------------
+// Achievements
+// ---------------------------------------------------------------------------
+
+AchievementProgress Game::achievementProgress() const {
+    AchievementProgress p;
+    const bool midDay = dayRunning();
+    p.picked = playStats_.picked;
+    p.lifetimeCoins = lifetimeCoins_ + (midDay ? farm_.earnedToday() : 0.0);
+    p.bestDayCoins = std::max(playStats_.bestDayCoins, midDay ? farm_.earnedToday() : 0.0);
+    p.day = day_;
+    for (const auto& n : tree_.nodes()) p.upgrades += n.level;
+    const Stats st = tree_.computeStats(); // without debug overrides
+    p.farmers = st.farmers;
+    p.helpingHand = st.autoPickChance > 0.f;
+    p.allCrops = true;
+    for (Crop c = 0; c < cropCount(); ++c) p.allCrops = p.allCrops && st.cropUnlocked(cropDef(c).tier);
+    p.allUpgrades = tree_.allBought();
+    static const int maxFarmers = [this] {
+        TechTree all = tree_;
+        for (auto& n : all.nodes()) n.level = n.maxLevel;
+        return all.computeStats().farmers;
+    }();
+    p.maxFarmers = maxFarmers;
+    return p;
+}
+
+void Game::checkAchievements() {
+    if (currentSlot_ < 0) return;
+    const std::vector<int> fresh = achievements_.check(achievementProgress());
+    if (fresh.empty()) return;
+    for (int i : fresh) {
+        services::unlockAchievement(Achievements::all()[i].id);
+        SDL_Log("Achievement unlocked: %s", Achievements::all()[i].name);
+    }
+    if (services::showsOwnPopups()) achievements_.popups().clear(); // the platform shows its own
+    else audio_.play(Sfx::Buy, 1.3f);
+    saveAchievements();
+}
+
+void Game::loadAchievements() {
+    std::string text;
+    if (saves_.readExtra("achievements.sav", text)) achievements_.parse(text);
+    // Re-send everything already unlocked, in case some were earned offline or
+    // before signing in. (Platforms ignore ones they already have.)
+    for (int i = 0; i < static_cast<int>(Achievements::all().size()); ++i)
+        if (achievements_.unlocked(i)) services::unlockAchievement(Achievements::all()[i].id);
+    achievements_.popups().clear();
+}
+
+void Game::saveAchievements() const { saves_.writeExtra("achievements.sav", achievements_.serialize()); }
 
 // What the stats page shows. Coins and vegetables from the day in progress are included.
 std::vector<StatsScreen::Row> Game::statsRows() const {
@@ -408,6 +474,7 @@ std::string Game::serialize() const {
     SDL_GetCurrentTime(&now);
     State playing = state_ == State::Paused  ? pausedFrom_
                     : state_ == State::Stats  ? statsFrom_
+                    : state_ == State::Achievements ? statsFrom_ // only saved when opened from the stats page
                     : state_ == State::Complete ? State::TechTree
                                                 : state_;
     if (state_ == State::Settings && settingsFrom_ == State::Paused) playing = pausedFrom_;
@@ -629,6 +696,23 @@ void Game::handleEvent(SDL_Event& e) {
 
     switch (state_) {
     case State::MainMenu: {
+        // The trophy button in the top-right corner opens the achievements page.
+        {
+            const SDL_FRect trophy = screen::at(screen::Edge::Top, trophyButton_);
+            if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT &&
+                draw::pointInRect(e.button.x, e.button.y, trophy)) {
+                trophyButtonDown_ = true;
+                break;
+            }
+            if (isMouseUp(e) && trophyButtonDown_) {
+                trophyButtonDown_ = false;
+                if (draw::pointInRect(e.button.x, e.button.y, trophy)) {
+                    audio_.play(Sfx::Click);
+                    openAchievements();
+                }
+                break;
+            }
+        }
         MainMenu::Action action = mainMenu_.handleEvent(e);
         switch (action) {
         case MainMenu::Action::None:
@@ -732,9 +816,23 @@ void Game::handleEvent(SDL_Event& e) {
         break;
 
     case State::Stats:
-        if (statsScreen_.handleEvent(e)) {
+        switch (statsScreen_.handleEvent(e)) {
+        case StatsScreen::Action::None: break;
+        case StatsScreen::Action::Close:
             audio_.play(Sfx::Click);
             closeStats();
+            break;
+        case StatsScreen::Action::Achievements:
+            audio_.play(Sfx::Click);
+            openAchievements();
+            break;
+        }
+        break;
+
+    case State::Achievements:
+        if (achievementsScreen_.handleEvent(e)) {
+            audio_.play(Sfx::Click);
+            state_ = achievementsFrom_;
         }
         break;
 
@@ -792,6 +890,7 @@ void Game::handleEvent(SDL_Event& e) {
         case TechTreeScreen::Action::Purchased:
             playStats_.coinsSpent += std::max(0.0, coinsBefore - coins_);
             audio_.play(Sfx::Buy);
+            checkAchievements();
             if (!completionSeen_ && (tree_.allBought() || tree_.demoComplete())) openCompletion();
             saveGame();
             break;
@@ -847,6 +946,7 @@ int Game::loadSounds() {
 void Game::updateMusic() {
     State s = state_;
     if (s == State::Paused) s = pausedFrom_;
+    if (s == State::Achievements) s = achievementsFrom_;
     if (s == State::Stats) s = statsFrom_;
     if (s == State::Complete) s = State::TechTree;
     if (s == State::Settings) s = settingsFrom_ == State::Paused ? pausedFrom_ : settingsFrom_;
@@ -860,6 +960,15 @@ void Game::updateMusic() {
 
 void Game::update(float dt) {
     toastTime_ = std::max(0.f, toastTime_ - dt);
+    services::update();
+    // The unlock banner waits while a menu page is over the game.
+    const bool bannerOk = state_ == State::Farming || state_ == State::DaySummary || state_ == State::TechTree ||
+                          state_ == State::MainMenu;
+    if (bannerOk) achievementBanner_.update(dt, achievements_);
+    if (inGame() && (achievementTimer_ += dt) >= 0.5f) {
+        achievementTimer_ = 0.f;
+        checkAchievements();
+    }
     updateMusic();
     farm_.setTimerFrozen(debug_.freezeTimer);
     farm_.setDebugView(debug_.showTileInfo);
@@ -901,6 +1010,9 @@ void Game::update(float dt) {
     case State::Paused:
     case State::Stats:
         break;
+    case State::Achievements:
+        if (achievementsFrom_ == State::MainMenu) mainMenu_.update(dt);
+        break;
     }
 }
 
@@ -937,9 +1049,13 @@ void Game::render(bool present) {
     screen::fit(renderer_); // phones and tablets: fill the whole screen, not just a 16:9 box
 
     switch (state_) {
-    case State::MainMenu:
+    case State::MainMenu: {
         mainMenu_.render(renderer_);
+        screen::Pinned top(renderer_, screen::Edge::Top);
+        const bool hover = !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, screen::at(screen::Edge::Top, trophyButton_));
+        AchievementsScreen::drawButton(renderer_, trophyButton_, hover);
         break;
+    }
     case State::SlotSelect:
         slotMenu_.render(renderer_);
         break;
@@ -960,10 +1076,22 @@ void Game::render(bool present) {
         renderPlayScene(State::TechTree);
         completeScreen_.render(renderer_);
         break;
+    case State::Achievements:
+        if (achievementsFrom_ == State::MainMenu) {
+            mainMenu_.render(renderer_);
+        } else {
+            renderPlayScene(statsFrom_);
+            statsScreen_.render(renderer_);
+        }
+        achievementsScreen_.render(renderer_, achievements_);
+        break;
     default:
         renderPlayScene(state_);
         break;
     }
+
+    if (state_ == State::Farming || state_ == State::DaySummary || state_ == State::TechTree || state_ == State::MainMenu)
+        achievementBanner_.render(renderer_);
 
     if (toastTime_ > 0.f) {
         screen::Pinned top(renderer_, screen::Edge::Top); // just under the top bar
@@ -1153,6 +1281,7 @@ const char* Game::stateName(State s) const {
     case State::Paused: return "Paused";
     case State::Stats: return "Stats";
     case State::Complete: return "Barn complete";
+    case State::Achievements: return "Achievements";
     }
     return "?";
 }

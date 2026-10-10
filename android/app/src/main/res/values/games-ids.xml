@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Google Play Games ids (see the README, "Achievements").
+
+  In the Play Console: Play Games Services > Setup and management > Configuration,
+  then Achievements: add each achievement with the SAME NAME as in the game
+  (src/Achievements.cpp), e.g. "Green Thumb". Then "Get resources" (Android) and
+  paste what it gives you over this file. It looks like:
+
+    <string name="app_id" translatable="false">123456789012</string>
+    <string name="achievement_green_thumb" translatable="false">CgkI...</string>
+
+  Keep the game_services_project_id line below and put the same number in it
+  as app_id. While it's 0, Play Games is off and the game keeps achievements
+  to itself.
+-->
+<resources>
+    <string name="game_services_project_id" translatable="false">0</string>
+</resources>

@@ -28,7 +28,7 @@ android {
     defaultConfig {
         // Your app's ID on Google Play. It can never change once the app is published.
         applicationId = project.findProperty('incraAppId') ?: 'com.incravegetable.game'
-        minSdk = 21        // Android 5.0, the oldest SDL 3 supports
+        minSdk = 23        // Android 6.0 (Google Play Games needs it)
         targetSdk = 36     // Google Play requires a recent target for new apps and updates
         // Raise versionCode for every upload to Google Play (or pass -PincraVersionCode=N).
         versionCode = (project.findProperty('incraVersionCode') ?: '1') as int
@@ -93,4 +93,9 @@ android {
     lint {
         abortOnError = false
     }
+}
+
+dependencies {
+    // Google Play Games, for achievements (only used once res/values/games-ids.xml is filled in)
+    implementation 'com.google.android.gms:play-services-games-v2:21.0.0'
 }

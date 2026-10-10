@@ -166,6 +166,18 @@ bool SaveSystem::readSlot(int slot, std::string& out) const {
     return false;
 }
 
+bool SaveSystem::writeExtra(const std::string& name, const std::string& contents) const {
+    if (dir_.empty()) return false;
+    return writeFileAtomic(dir_ + name, encodeSave(contents), true);
+}
+
+bool SaveSystem::readExtra(const std::string& name, std::string& out) const {
+    if (dir_.empty()) return false;
+    std::string file;
+    return (readFile(dir_ + name, file) && decodeSave(file, out)) ||
+           (readFile(dir_ + name + ".bak", file) && decodeSave(file, out));
+}
+
 std::string SaveSystem::cleanName(const std::string& raw) {
     std::string out;
     for (char c : raw) {
