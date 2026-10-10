@@ -84,28 +84,60 @@ else()
 endif()
 
 if(INCRA_PACK_ASSETS)
-    # AssetPacker runs on the computer doing the build, not on the device, so
-    # it's compiled here with the computer's own compiler (when cross-compiling
-    # for iOS, CMake's compiler makes iPhone programs, which can't run on a Mac).
+    # AssetPacker runs on the computer doing the build, not on the device.
     set(PACKER_SRC ${CMAKE_CURRENT_SOURCE_DIR}/tools/AssetPacker/main.cpp)
-    set(PACKER ${CMAKE_CURRENT_BINARY_DIR}/AssetPacker${CMAKE_HOST_EXECUTABLE_SUFFIX})
-    if(CMAKE_HOST_APPLE)
-        set(HOST_CXX xcrun --sdk macosx clang++)
-    elseif(CMAKE_CROSSCOMPILING)
-        find_program(HOST_CXX_PROGRAM NAMES c++ clang++ g++ REQUIRED)
-        set(HOST_CXX ${HOST_CXX_PROGRAM})
+    if(NOT CMAKE_CROSSCOMPILING)
+        # Building for this computer: the packer is just another program in the build.
+        add_executable(AssetPacker ${PACKER_SRC})
+        target_include_directories(AssetPacker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        set(PACKER AssetPacker) # a target name: CMake runs the built program
     else()
-        set(HOST_CXX ${CMAKE_CXX_COMPILER})
-    endif()
-    if(NOT EXISTS ${PACKER} OR ${PACKER_SRC} IS_NEWER_THAN ${PACKER}
-       OR ${CMAKE_CURRENT_SOURCE_DIR}/include/AssetPackFormat.h IS_NEWER_THAN ${PACKER})
-        message(STATUS "Building AssetPacker")
-        execute_process(
-            COMMAND ${HOST_CXX} -std=c++17 -O2 -I${CMAKE_CURRENT_SOURCE_DIR}/include ${PACKER_SRC} -o ${PACKER}
-            RESULT_VARIABLE packer_result
-            ERROR_VARIABLE packer_error)
-        if(NOT packer_result EQUAL 0)
-            message(FATAL_ERROR "Couldn't build tools/AssetPacker:\n${packer_error}")
+        # Building for a phone: CMake's compiler makes phone programs, which can't run
+        # here, so the packer is compiled now with the computer's own C++ compiler.
+        # (Pick one with -DINCRA_HOST_CXX=path/to/clang++ if the wrong one is found.)
+        set(INCRA_HOST_CXX "" CACHE STRING "C++ compiler for programs that run during the build (AssetPacker)")
+        if(CMAKE_HOST_WIN32)
+            set(_exe ".exe")
+        else()
+            set(_exe "")
+        endif()
+        set(PACKER ${CMAKE_CURRENT_BINARY_DIR}/AssetPacker${_exe})
+        set(_static "")
+        if(INCRA_HOST_CXX)
+            set(HOST_CXX ${INCRA_HOST_CXX})
+        elseif(CMAKE_HOST_APPLE)
+            set(HOST_CXX xcrun --sdk macosx clang++)
+        else()
+            find_program(HOST_CXX_PROGRAM NAMES c++ g++ clang++)
+            if(NOT HOST_CXX_PROGRAM)
+                message(FATAL_ERROR "The build needs a C++ compiler for this computer, to pack assets/ into the game.\n"
+                    "Windows: install MSYS2's g++ (the one the Makefile uses) and add its bin folder (e.g. "
+                    "C:/msys64/ucrt64/bin) to PATH, then restart Android Studio. Or pass -DINCRA_HOST_CXX=path/to/g++.exe")
+            endif()
+            set(HOST_CXX ${HOST_CXX_PROGRAM})
+        endif()
+        if(CMAKE_HOST_WIN32)
+            # Built in, so it runs without MinGW's DLLs on PATH (Gradle's build often doesn't have them).
+            set(_static -static)
+        endif()
+        if(NOT EXISTS ${PACKER} OR ${PACKER_SRC} IS_NEWER_THAN ${PACKER}
+           OR ${CMAKE_CURRENT_SOURCE_DIR}/include/AssetPackFormat.h IS_NEWER_THAN ${PACKER})
+            message(STATUS "Building AssetPacker with ${HOST_CXX}")
+            execute_process(
+                COMMAND ${HOST_CXX} -std=c++17 -O2 ${_static} -I${CMAKE_CURRENT_SOURCE_DIR}/include ${PACKER_SRC} -o ${PACKER}
+                RESULT_VARIABLE packer_result
+                ERROR_VARIABLE packer_error)
+            if(NOT packer_result EQUAL 0 OR NOT EXISTS ${PACKER})
+                file(REMOVE ${PACKER})
+                message(FATAL_ERROR "Couldn't build tools/AssetPacker with ${HOST_CXX}:\n${packer_error}")
+            endif()
+        endif()
+        # Check it runs (with no arguments it prints its usage and returns 1).
+        execute_process(COMMAND ${PACKER} RESULT_VARIABLE packer_run OUTPUT_QUIET ERROR_QUIET)
+        if(NOT packer_run STREQUAL "1")
+            file(REMOVE ${PACKER})
+            message(FATAL_ERROR "tools/AssetPacker was built with ${HOST_CXX} but won't run (${packer_run}). "
+                "Pass a different compiler with -DINCRA_HOST_CXX=path/to/compiler.")
         endif()
     endif()
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
