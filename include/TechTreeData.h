@@ -281,7 +281,7 @@ tech carrots
   max 1
   cost 14
   growth 1
-  pos -0 2.357
+  pos 0 2.5
   requires patch 1
   effect cropTier atleast 1
 end
@@ -709,7 +709,7 @@ tech pumpkins
   max 1
   cost 370
   growth 1
-  pos -0 5.893
+  pos 0 6
   requires patch_5 1
   effect cropTier atleast 2
 end
@@ -1373,9 +1373,9 @@ end
 
 tech turnip
   name Turnips
-  desc Unlocks turnips. The slowest crop of all, but worth 38 coins each.
+  desc Unlocks Turnips. Sell for 38 coins each.
   max 1
-  cost 13000
+  cost 15000
   growth 1
   pos 0 12.5
   icon crop_turnip
@@ -1653,7 +1653,7 @@ tech daylength_24
   max 1
   cost 67000
   growth 1
-  pos 0.817 10.018
+  pos 1 10
   icon daylength
   requires seeds_11 1
   effect dayLength add 2
@@ -1712,10 +1712,10 @@ tech daylength_25
   desc Wake up a little earlier: 2 more seconds of picking every day.
   max 1
   cost 78000
-)TECHTREE",
-R"TECHTREE(  growth 1
+  growth 1
   pos -9.816999 5.911
-  icon daylength
+)TECHTREE",
+R"TECHTREE(  icon daylength
   requires growspeed_7 1
   effect dayLength add 2
 end
@@ -1858,7 +1858,7 @@ tech seeds_23
   max 1
   cost 110000
   growth 1
-  pos -0.817 14.375
+  pos -1 14.5
   icon seeds
   requires farmcrew_4 1
   effect maxCrops add 136
@@ -2038,7 +2038,7 @@ tech patch_27
   max 1
   cost 170000
   growth 1
-  pos 0.817 14.375
+  pos 1 14.5
   icon patch
   requires farmcrew_4 1
   effect patchSize add 1
@@ -2050,7 +2050,7 @@ tech daylength_30
   max 1
   cost 180000
   growth 1
-  pos 0 14.964
+  pos 0 15
   icon daylength
   requires farmcrew_4 1
   effect dayLength add 2
@@ -2072,7 +2072,7 @@ tech chilli
   name Chilli
   desc Unlocks Chilli. Sells for 60 coins each.
   max 1
-  cost 100000
+  cost 20000
   growth 1
   pos 8 5.5
   icon crop_chilli
@@ -2084,7 +2084,7 @@ tech broccoli
   name Broccoli
   desc Unlocks Broccoli. Sells for 70 coins each.
   max 1
-  cost 250000
+  cost 30000
   growth 1
   pos -7.5 5.5
   icon crop_broccoli
@@ -2096,7 +2096,7 @@ tech corn
   name Corn
   desc Unlocks Corn. Sells for 80 coins each.
   max 1
-  cost 15000
+  cost 40000
   growth 1
   pos -8 -6
   icon crop_corn
@@ -2108,7 +2108,7 @@ tech eggplant
   name Eggplant
   desc Unlocks Eggplant. Sells for 90 coins each.
   max 1
-  cost 9000
+  cost 50000
   growth 1
   pos 7.5 -5.5
   icon crop_eggplant
