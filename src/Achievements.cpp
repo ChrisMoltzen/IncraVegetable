@@ -121,7 +121,7 @@ void AchievementBanner::render(SDL_Renderer* r) const {
     t = 1.f - (1.f - t) * (1.f - t);
     const SDL_FRect rc{1280.f - 16.f - kBannerW * t, 84.f, kBannerW, kBannerH};
     ui::drawPanel(r, rc);
-    AchievementsScreen::drawTrophy(r, SDL_FRect{rc.x + 12, rc.y + 11, 48, 48}, true);
+    AchievementsScreen::drawTrophy(r, SDL_FRect{rc.x + 12, rc.y + 11, 48, 48}, true, current_);
     const auto& def = Achievements::all()[current_];
     draw::text(r, rc.x + 74, rc.y + 14, tr("Achievement unlocked"), 1.25f, kHeading);
     draw::text(r, rc.x + 74, rc.y + 34, tr(def.name), 2.f, kInk);
@@ -163,7 +163,7 @@ void AchievementsScreen::render(SDL_Renderer* r, const Achievements& a) const {
         const float x = x0 + (i % 2) * (cardW + gapX), y = y0 + (i / 2) * rowH;
         const float h = rowH - 6.f, icon = std::min(40.f, h - 6.f);
         draw::fillRoundRect(r, x, y, cardW, h, 8, got ? pal::alpha(pal::PaleGold, 150) : pal::alpha(pal::Straw, 70));
-        drawTrophy(r, SDL_FRect{x + 8, y + (h - icon) * 0.5f, icon, icon}, got);
+        drawTrophy(r, SDL_FRect{x + 8, y + (h - icon) * 0.5f, icon, icon}, got, i);
         const float tx = x + 16 + icon;
         const float nameScale = h >= 44.f ? 1.75f : 1.5f;
         const float textW = cardW - (tx - x) - 8.f; // long translations shrink to fit the card
@@ -180,7 +180,21 @@ void AchievementsScreen::render(SDL_Renderer* r, const Achievements& a) const {
     buttons_.render(r);
 }
 
-void AchievementsScreen::drawTrophy(SDL_Renderer* r, const SDL_FRect& rc, bool got) {
+std::string AchievementsScreen::artName(int index, bool got) {
+    return std::string("achievements/") + Achievements::all()[index].id + (got ? "" : "_locked");
+}
+
+void AchievementsScreen::drawTrophy(SDL_Renderer* r, const SDL_FRect& rc, bool got, int index) {
+    if (index >= 0 && index < static_cast<int>(Achievements::all().size())) {
+        const std::string own = artName(index, true);
+        if (got && art::has(own)) return art::draw(r, own, rc);
+        if (!got) {
+            const std::string locked = artName(index, false);
+            if (art::has(locked)) return art::draw(r, locked, rc);
+            // Only the unlocked picture: shown dark and see-through, like a silhouette.
+            if (art::drawTinted(r, own, rc, SDL_Color{70, 74, 70, 170})) return;
+        }
+    }
     art::draw(r, got ? "ui/trophy" : "ui/trophy_locked", rc);
 }
 

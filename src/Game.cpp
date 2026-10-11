@@ -12,6 +12,8 @@
 #include "Platform.h"
 #include "UI.h"
 
+#include "stb_image_write.h"
+
 #include <algorithm>
 #include <cmath>
 #include <sstream>
@@ -983,6 +985,49 @@ void Game::iterate() {
 void Game::showToast(const std::string& msg) {
     toast_ = msg;
     toastTime_ = 2.5f;
+}
+
+// The trophies, flattened onto the game's dark green at each store's size:
+//   steam/<id>.png + steam/<id>_locked.png   64 x 64    (Steam wants both)
+//   game_center/<id>.png                     1024 x 1024
+//   google_play/<id>.png                     512 x 512  (Play makes the locked one itself)
+int Game::exportAchievementIcons(const std::string& folderIn) {
+    std::string folder = folderIn;
+    if (!folder.empty() && folder.back() != '/' && folder.back() != '\\') folder += '/';
+    struct Kind {
+        const char* dir;
+        int size;
+        bool got;
+    };
+    const Kind kinds[] = {{"steam", 64, true}, {"steam", 64, false}, {"game_center", 1024, true}, {"google_play", 512, true}};
+    SDL_CreateDirectory(folder.c_str());
+    for (const Kind& k : kinds) SDL_CreateDirectory((folder + k.dir).c_str());
+    SDL_Texture* old = SDL_GetRenderTarget(renderer_);
+    int written = 0;
+    for (int i = 0; i < static_cast<int>(Achievements::all().size()); ++i) {
+        for (const Kind& k : kinds) {
+            SDL_Texture* target =
+                SDL_CreateTexture(renderer_, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, k.size, k.size);
+            if (!target) continue;
+            SDL_SetRenderTarget(renderer_, target);
+            const SDL_Color bg = pal::Moss;
+            SDL_SetRenderDrawColor(renderer_, bg.r, bg.g, bg.b, 255);
+            SDL_RenderClear(renderer_);
+            const float s = static_cast<float>(k.size), m = s * 0.1f;
+            AchievementsScreen::drawTrophy(renderer_, SDL_FRect{m, m, s - 2 * m, s - 2 * m}, k.got, i);
+            SDL_Surface* shot = SDL_RenderReadPixels(renderer_, nullptr);
+            SDL_Surface* rgba = shot ? SDL_ConvertSurface(shot, SDL_PIXELFORMAT_RGBA32) : nullptr;
+            if (rgba) {
+                const std::string path = folder + k.dir + "/" + Achievements::all()[i].id + (k.got ? "" : "_locked") + ".png";
+                if (stbi_write_png(path.c_str(), rgba->w, rgba->h, 4, rgba->pixels, rgba->pitch)) ++written;
+                SDL_DestroySurface(rgba);
+            }
+            if (shot) SDL_DestroySurface(shot);
+            SDL_SetRenderTarget(renderer_, old);
+            SDL_DestroyTexture(target);
+        }
+    }
+    return written;
 }
 
 int Game::exportArtTemplates(const std::string& folder) {
