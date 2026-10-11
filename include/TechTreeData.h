@@ -2072,7 +2072,7 @@ tech chilli
   name Chilli
   desc Unlocks Chilli. Sells for 60 coins each.
   max 1
-  cost 20000
+  cost 50000
   growth 1
   pos 8 5.5
   icon crop_chilli
@@ -2084,7 +2084,7 @@ tech broccoli
   name Broccoli
   desc Unlocks Broccoli. Sells for 70 coins each.
   max 1
-  cost 30000
+  cost 150000
   growth 1
   pos -7.5 5.5
   icon crop_broccoli
@@ -2096,7 +2096,7 @@ tech corn
   name Corn
   desc Unlocks Corn. Sells for 80 coins each.
   max 1
-  cost 40000
+  cost 200000
   growth 1
   pos -8 -6
   icon crop_corn
@@ -2108,7 +2108,7 @@ tech eggplant
   name Eggplant
   desc Unlocks Eggplant. Sells for 90 coins each.
   max 1
-  cost 50000
+  cost 250000
   growth 1
   pos 7.5 -5.5
   icon crop_eggplant
