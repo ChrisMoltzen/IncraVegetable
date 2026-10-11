@@ -22,12 +22,19 @@ void StatsScreen::open(std::vector<Row> rows) {
     b.style = ui::Style::Secondary;
     b.textScale = 2.f;
     buttons_.buttons.push_back(b);
+    b.label = "Achievements";
+    b.style = ui::Style::Primary;
+    buttons_.buttons.push_back(b);
 }
 
-bool StatsScreen::handleEvent(const SDL_Event& e) {
+StatsScreen::Action StatsScreen::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_EVENT_KEY_DOWN && (e.key.key == SDLK_ESCAPE || e.key.key == SDLK_AC_BACK || e.key.key == SDLK_TAB))
-        return true;
-    return buttons_.handleEvent(e) == 0;
+        return Action::Close;
+    switch (buttons_.handleEvent(e)) {
+    case 0: return Action::Close;
+    case 1: return Action::Achievements;
+    default: return Action::None;
+    }
 }
 
 void StatsScreen::render(SDL_Renderer* r) const {
@@ -54,8 +61,9 @@ void StatsScreen::render(SDL_Renderer* r) const {
         y += rowH;
     }
 
-    auto& back = const_cast<ui::ButtonList&>(buttons_).buttons[0];
-    back.rect = SDL_FRect{640.f - 120.f, panel.y + panel.h - 76.f, 240.f, 54.f};
+    auto& buttons = const_cast<ui::ButtonList&>(buttons_).buttons;
+    buttons[0].rect = SDL_FRect{640.f - 8.f - 220.f, panel.y + panel.h - 76.f, 220.f, 54.f}; // Back
+    buttons[1].rect = SDL_FRect{640.f + 8.f, panel.y + panel.h - 76.f, 220.f, 54.f};         // Achievements
     buttons_.render(r);
 }
 

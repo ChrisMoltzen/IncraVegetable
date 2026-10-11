@@ -44,6 +44,10 @@ public:
     bool anySaves() const;
     int mostRecentSlot() const; // -1 if there are no saves
 
+    // Other scrambled files in the save folder, e.g. "achievements.sav" (backed up like the slots).
+    bool writeExtra(const std::string& name, const std::string& contents) const;
+    bool readExtra(const std::string& name, std::string& out) const;
+
     Settings loadSettings() const;
     void saveSettings(const Settings& s) const;
 

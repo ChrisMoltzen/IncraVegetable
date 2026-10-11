@@ -40,6 +40,14 @@ endif()
 # ---------------------------------------------------------------------------
 set(INCRA_BUNDLE_ID "com.example.incravegetable" CACHE STRING "iOS bundle identifier (must be unique to you)")
 set(INCRA_DEVELOPMENT_TEAM "" CACHE STRING "Apple Developer Team ID used to sign the iOS app")
+# Game Center achievements need the Game Center capability, which a free Apple
+# account ("Personal Team") can't sign. Turn this off to build with one.
+option(INCRA_GAME_CENTER "iOS: Game Center achievements" ON)
+
+# Steam achievements on desktop: -DINCRA_STEAM=ON -DINCRA_STEAMWORKS_SDK=/path/to/steamworks_sdk
+option(INCRA_STEAM "Desktop: Steam achievements (needs the Steamworks SDK)" OFF)
+set(INCRA_STEAMWORKS_SDK "" CACHE PATH "The unzipped Steamworks SDK (the folder with public/ and redistributable_bin/)")
+set(INCRA_STEAM_APPID "480" CACHE STRING "Your Steam app id, for steam_appid.txt in development builds (480 = Valve's test app)")
 
 # ---------------------------------------------------------------------------
 # SDL3: use an installed copy if there is one, otherwise download and build it.
@@ -159,7 +167,18 @@ endif()
 # ---------------------------------------------------------------------------
 if(IOS)
     set(IOS_ASSETS ${CMAKE_CURRENT_SOURCE_DIR}/platform/ios/Assets.xcassets)
-    add_executable(IncraVegetable MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS} ${IOS_ASSETS})
+    set(IOS_SOURCES "")
+    if(INCRA_GAME_CENTER)
+        set(IOS_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/platform/ios/GameCenter.mm)
+        set_source_files_properties(${IOS_SOURCES} PROPERTIES COMPILE_FLAGS "-fobjc-arc")
+    endif()
+    add_executable(IncraVegetable MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS} ${IOS_SOURCES} ${IOS_ASSETS})
+    if(INCRA_GAME_CENTER)
+        target_compile_definitions(IncraVegetable PRIVATE INCRA_GAME_CENTER)
+        target_link_libraries(IncraVegetable PRIVATE "-framework GameKit" "-framework UIKit")
+        set_target_properties(IncraVegetable PROPERTIES
+            XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/platform/ios/IncraVegetable.entitlements")
+    endif()
     set_source_files_properties(${IOS_ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_target_properties(IncraVegetable PROPERTIES
         OUTPUT_NAME "IncraVegetable"
@@ -212,6 +231,38 @@ else()
 endif()
 
 # Put SDL3.dll next to the .exe on Windows so it runs straight away.
+# Steam: link the Steamworks library and put it (and, for development builds,
+# steam_appid.txt) next to the game.
+if(INCRA_STEAM AND NOT IOS AND NOT ANDROID)
+    if(NOT EXISTS "${INCRA_STEAMWORKS_SDK}/public/steam/steam_api.h")
+        message(FATAL_ERROR "INCRA_STEAM is on but INCRA_STEAMWORKS_SDK (${INCRA_STEAMWORKS_SDK}) isn't the Steamworks SDK folder")
+    endif()
+    set(_steam_bin "${INCRA_STEAMWORKS_SDK}/redistributable_bin")
+    if(WIN32)
+        set(_steam_lib "${_steam_bin}/win64/steam_api64.lib")
+        set(_steam_dll "${_steam_bin}/win64/steam_api64.dll")
+    elseif(APPLE)
+        set(_steam_lib "${_steam_bin}/osx/libsteam_api.dylib")
+        set(_steam_dll "${_steam_lib}")
+        set_target_properties(IncraVegetable PROPERTIES BUILD_RPATH "@executable_path" INSTALL_RPATH "@executable_path")
+    else()
+        set(_steam_lib "${_steam_bin}/linux64/libsteam_api.so")
+        set(_steam_dll "${_steam_lib}")
+        set_target_properties(IncraVegetable PROPERTIES BUILD_RPATH "$ORIGIN" INSTALL_RPATH "$ORIGIN")
+    endif()
+    target_include_directories(IncraVegetable PRIVATE "${INCRA_STEAMWORKS_SDK}/public")
+    target_compile_definitions(IncraVegetable PRIVATE INCRA_STEAM)
+    target_link_libraries(IncraVegetable PRIVATE "${_steam_lib}")
+    add_custom_command(TARGET IncraVegetable POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_steam_dll}" $<TARGET_FILE_DIR:IncraVegetable>)
+    if(NOT INCRA_RELEASE)
+        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/steam_appid.txt" "${INCRA_STEAM_APPID}")
+        add_custom_command(TARGET IncraVegetable POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/steam_appid.txt"
+                    $<TARGET_FILE_DIR:IncraVegetable>)
+    endif()
+endif()
+
 if(WIN32 AND TARGET SDL3::SDL3-shared)
     add_custom_command(TARGET IncraVegetable POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different

@@ -13,11 +13,33 @@ INCLUDE_DIRS = -Iinclude
 ASSETS_DEF = -DINCRA_SOURCE_ASSETS_DIR=\"$(CURDIR)/assets\"
 
 SRC = $(wildcard src/*.cpp)
+
+# Steam achievements (see the README, "Achievements"): add STEAM=1 to make,
+# make release, make win or make release-win, e.g.
+#   make release STEAM=1 STEAMWORKS=~/sdks/steamworks_sdk
+# STEAMWORKS is the unzipped Steamworks SDK (from partner.steamgames.com).
+# Dev builds also get a steam_appid.txt so they talk to Steam when run outside
+# it; STEAM_APPID is your game's app id (480 is Valve's test app, Spacewar).
+STEAM ?= 0
+STEAMWORKS ?= ../steamworks_sdk
+STEAM_APPID ?= 480
+ifeq ($(STEAM),1)
+STEAM_DEFS = -DINCRA_STEAM -I$(STEAMWORKS)/public
+MAC_STEAM_LIBS = -L$(STEAMWORKS)/redistributable_bin/osx -lsteam_api -Wl,-rpath,@executable_path
+WIN_STEAM_LIBS = -L$(STEAMWORKS)/redistributable_bin/win64 -lsteam_api64
+# $(call ...,folder): copy Steam's library next to the game / write steam_appid.txt there.
+MAC_STEAM_COPY = cp "$(STEAMWORKS)/redistributable_bin/osx/libsteam_api.dylib" "$(1)/"
+WIN_STEAM_COPY = powershell -NoProfile -Command "Copy-Item -Force '$(STEAMWORKS)/redistributable_bin/win64/steam_api64.dll' '$(1)/'"
+STEAM_APPID_FILE = echo $(STEAM_APPID)> "$(1)/steam_appid.txt"
+endif
+
 # Optimised builds: without -O2 the game and editor run several times slower.
 OPT = -O2
 
 default:
-	clang++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(ASSETS_DEF) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
+	clang++ $(SRC) -o $(OUTPUT_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(ASSETS_DEF) $(STEAM_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) $(MAC_STEAM_LIBS) -std=c++20 $(OPT)
+	$(call MAC_STEAM_COPY,$(OUTPUT_DIR))
+	$(call STEAM_APPID_FILE,$(OUTPUT_DIR))
 
 # Tech tree editor: make editor, then run build/techtree/TechTreeEditor.
 # It gets its own folder (with its own SDL3.dll on Windows), so the game can be
@@ -59,8 +81,10 @@ WIN_ICON = windres -I icon icon/IncraVegetable.rc -O coff -o $(WIN_ICON_RES)
 
 win:
 	$(WIN_ICON)
-	g++ $(SRC) $(WIN_ICON_RES) -o $(OUTPUT_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(WIN_LIBS) -std=c++20 $(OPT)
+	g++ $(SRC) $(WIN_ICON_RES) -o $(OUTPUT_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(ASSETS_DEF) $(STEAM_DEFS) $(WIN_LIBS) $(WIN_STEAM_LIBS) -std=c++20 $(OPT)
 	$(WIN_COPY_DLL)
+	$(call WIN_STEAM_COPY,$(OUTPUT_DIR))
+	$(call STEAM_APPID_FILE,$(OUTPUT_DIR))
 
 editor-win:
 	$(WIN_EDITOR_DIR)
@@ -84,7 +108,8 @@ release:
 	mkdir -p $(RELEASE_DIR)
 	clang++ $(PACKER_SRC) -o $(RELEASE_DIR)/AssetPacker $(INCLUDE_DIRS) -std=c++20 -O2
 	$(RELEASE_DIR)/AssetPacker assets $(RELEASE_DIR)/AssetPack.cpp
-	clang++ $(SRC) $(RELEASE_DIR)/AssetPack.cpp -o $(RELEASE_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(RELEASE_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) -std=c++20 $(OPT)
+	clang++ $(SRC) $(RELEASE_DIR)/AssetPack.cpp -o $(RELEASE_DIR)/$(PROJECTNAME) $(INCLUDE_DIRS) $(RELEASE_DEFS) $(STEAM_DEFS) $(RPATH) $(FRAMEWORK) $(FRAMEWORK_BIN) $(MAC_STEAM_LIBS) -std=c++20 $(OPT)
+	$(call MAC_STEAM_COPY,$(RELEASE_DIR))
 
 WIN_RELEASE_DIR = powershell -NoProfile -Command "New-Item -ItemType Directory -Force '$(RELEASE_DIR)' | Out-Null"
 WIN_RUN_PACKER = powershell -NoProfile -Command "& './$(RELEASE_DIR)/AssetPacker.exe' assets '$(RELEASE_DIR)/AssetPack.cpp'"
@@ -95,8 +120,9 @@ release-win:
 	g++ $(PACKER_SRC) -o $(RELEASE_DIR)/AssetPacker.exe $(INCLUDE_DIRS) -static -std=c++20 -O2
 	$(WIN_RUN_PACKER)
 	$(WIN_ICON)
-	g++ $(SRC) $(RELEASE_DIR)/AssetPack.cpp $(WIN_ICON_RES) -o $(RELEASE_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(RELEASE_DEFS) $(WIN_LIBS) -std=c++20 $(OPT) -mwindows
+	g++ $(SRC) $(RELEASE_DIR)/AssetPack.cpp $(WIN_ICON_RES) -o $(RELEASE_DIR)/$(PROJECTNAME).exe $(WIN_INCLUDE_DIRS) $(RELEASE_DEFS) $(STEAM_DEFS) $(WIN_LIBS) $(WIN_STEAM_LIBS) -std=c++20 $(OPT) -mwindows
 	$(WIN_COPY_DLL_RELEASE)
+	$(call WIN_STEAM_COPY,$(RELEASE_DIR))
 
 .PHONY: default editor win editor-win release release-win
 

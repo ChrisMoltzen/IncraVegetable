@@ -5,6 +5,7 @@
 // built-in drawing used when no image is provided. To give something new in
 // the game replaceable art: add an entry here and draw it with art::draw().
 
+#include "Achievements.h"
 #include "Art.h"
 #include "DebugMenu.h"
 #include "Draw.h"
@@ -185,6 +186,14 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          [](SDL_Renderer* r, const SDL_FRect& rc) { StatsScreen::drawButtonBuiltin(r, rc, false); }});
     add({"ui/stats_button_hover", 96, 96, "Stats button with the mouse over it (optional)", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { StatsScreen::drawButtonBuiltin(r, rc, true); }});
+    add({"ui/achievements_button", 96, 96, "Achievements button, top-right of the main menu", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { AchievementsScreen::drawButtonBuiltin(r, rc, false); }});
+    add({"ui/achievements_button_hover", 96, 96, "Achievements button with the mouse over it (optional)", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { AchievementsScreen::drawButtonBuiltin(r, rc, true); }});
+    add({"ui/trophy", 64, 64, "An achievement you've got (achievements page and the unlock banner)", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { AchievementsScreen::drawTrophyBuiltin(r, rc, true); }});
+    add({"ui/trophy_locked", 64, 64, "An achievement you haven't got yet", false,
+         [](SDL_Renderer* r, const SDL_FRect& rc) { AchievementsScreen::drawTrophyBuiltin(r, rc, false); }});
     add({"ui/debug_button", 80, 80, "Debug screen button, bottom-left", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { DebugMenu::drawOpenButtonBuiltin(r, rc, false); }});
     add({"ui/debug_button_hover", 80, 80, "Debug button with the mouse over it (optional)", false,
