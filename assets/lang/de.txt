@@ -1,0 +1,266 @@
+# IncraVegetable - German. See include/Lang.h for how this file works,
+# and run tools/lang/update.py after changing the game's text.
+@name Deutsch
+@locale de
+
+
+# ---- src/Achievements.cpp
+First Harvest = Erste Ernte
+Pick your first vegetable. = Ernte dein erstes Gemüse.
+Green Thumb = Grüner Daumen
+Pick 1,000 vegetables. = Ernte 1.000 Gemüse.
+Bumper Crop = Rekordernte
+Pick 50,000 vegetables. = Ernte 50.000 Gemüse.
+Pocket Money = Taschengeld
+Earn 1,000 coins. = Verdiene 1.000 Münzen.
+Market Trader = Markthändler
+Earn 100,000 coins. = Verdiene 100.000 Münzen.
+Vegetable Tycoon = Gemüsemagnat
+Earn 5,000,000 coins. = Verdiene 5.000.000 Münzen.
+Market Day = Markttag
+Earn 1,000 coins in a single day. = Verdiene 1.000 Münzen an einem einzigen Tag.
+Harvest Festival = Erntefest
+Earn 25,000 coins in a single day. = Verdiene 25.000 Münzen an einem einzigen Tag.
+Into the Barn = Ab in die Scheune
+Buy your first upgrade. = Kaufe deine erste Verbesserung.
+Well Equipped = Gut ausgestattet
+Buy 25 upgrades. = Kaufe 25 Verbesserungen.
+Barn Raiser = Scheunenbauer
+Buy 100 upgrades. = Kaufe 100 Verbesserungen.
+Lend a Hand = Mit anpacken
+Get the Helping Hand to pick for you. = Lass die Helfende Hand für dich ernten.
+Extra Hands = Zusätzliche Hände
+Hire your first farmer. = Stelle deinen ersten Erntehelfer ein.
+Full Crew = Volle Mannschaft
+Hire every farmer. = Stelle alle Erntehelfer ein.
+Mixed Veg = Gemischtes Gemüse
+Grow every kind of vegetable. = Baue jede Gemüsesorte an.
+Week on the Farm = Eine Woche auf dem Hof
+Reach day 7. = Erreiche Tag 7.
+Seasoned Farmer = Erfahrener Bauer
+Reach day 50. = Erreiche Tag 50.
+The Barn Is Full = Die Scheune ist voll
+Buy every upgrade. = Kaufe alle Verbesserungen.
+Achievement unlocked = Erfolg freigeschaltet
+Back = Zurück
+Achievements = Erfolge
+%d of %d = %d von %d
+
+# ---- src/CompleteScreen.cpp
+Keep Playing = Weiterspielen
+Main Menu = Hauptmenü
+
+# ---- src/Farm.cpp
+Auto-pick! = Mitgeerntet!
+
+# ---- src/Game.cpp
+%s  -  Day %d  -  %s coins = %s  -  Tag %d  -  %s Münzen
+Slot %d = Platz %d
+%lldm = %lld Min.
+%lldh %02lldm = %lld Std. %02lld Min.
+%d upgrades bought in %d days = %d Verbesserungen in %d Tagen gekauft
+%s coins earned  -  %s vegetables picked = %s Münzen verdient  -  %s Gemüse geerntet
+Time played: %s = Spielzeit: %s
+You've finished the demo! = Du hast die Demo geschafft!
+Thank you for playing my game. = Danke, dass du mein Spiel gespielt hast.
+The full game has %d upgrades to unlock. = Das volle Spiel hat %d Verbesserungen zum Freischalten.
+Your farm carries over to it. = Dein Hof wird übernommen.
+The Barn is fully unlocked! = Die Scheune ist komplett freigeschaltet!
+%llds = %lld Sek.
+%lldm %02llds = %lld Min. %02lld Sek.
+TIME = ZEIT
+Time played = Spielzeit
+Out in the patch = Draußen im Beet
+Days farmed = Tage auf dem Hof
+VEGETABLES = GEMÜSE
+Vegetables picked = Gemüse geerntet
+Picked by you = Von dir geerntet
+Picked by Helping Hand = Von der Helfenden Hand
+Picked by farmers = Von Erntehelfern geerntet
+Most picked in a day = Meiste an einem Tag
+COINS = MÜNZEN
+Coins earned = Münzen verdient
+Coins spent in the barn = In der Scheune ausgegeben
+Best day = Bester Tag
+Average day = Durchschnittlicher Tag
+Upgrades bought = Gekaufte Verbesserungen
+End Day = Tag beenden
+Day %d = Tag %d
+%.1fs = %.1fs
+until sunset = bis Sonnenuntergang
++%s today = +%s heute
+Hold your finger on ripe vegetables to pick them! = Halte den Finger auf reifes Gemüse, um es zu ernten!
+Hover over ripe vegetables to pick them! = Fahre über reifes Gemüse, um es zu ernten!
+Sunset - Day %d done! = Sonnenuntergang - Tag %d geschafft!
+Vegetables picked: %d = Gemüse geerntet: %d
+%s x%d = %s x%d
+Coins earned: %s = Münzen verdient: %s
+Total coins: %s = Münzen gesamt: %s
+The Barn > = Die Scheune >
+
+# ---- src/Menus.cpp
+Continue = Fortsetzen
+No saved farm yet = Noch kein gespeicherter Hof
+New Game = Neues Spiel
+Load Game = Spiel laden
+Settings = Einstellungen
+Quit = Beenden
+an incremental farming game = ein inkrementelles Farmspiel
+demo = Demo
+DEMO = DEMO
+Start = Starten
+Rename = Umbenennen
+Cancel = Abbrechen
+Day %d   -   %s coins = Tag %d   -   %s Münzen
+Day %d   -   %s coins   -   saved %s = Tag %d   -   %s Münzen   -   gespeichert %s
+Empty - start a new farm here = Leer - hier einen neuen Hof beginnen
+Empty = Leer
+< Back = < Zurück
+Overwrite = Überschreiben
+Choose a slot for your new farm = Wähle einen Platz für deinen neuen Hof
+Choose a farm to load = Wähle einen Hof zum Laden
+Overwrite %s? = %s überschreiben?
+The farm on day %d with %s coins = Der Hof an Tag %d mit %s Münzen
+will be lost for good. = geht für immer verloren.
+Name your farm = Benenne deinen Hof
+Rename your farm = Benenne deinen Hof um
+Up to %d letters. Leave it blank for "%s". = Bis zu %d Zeichen. Leer lassen für "%s".
+On = An
+Off = Aus
+Done = Fertig
+Music = Musik
+Sound FX = Effekte
+Language = Sprache
+Resolution = Auflösung
+Full screen = Vollbild
+Fullscreen = Vollbild
+Resume = Weiter
+Quit Game = Spiel beenden
+Paused = Pausiert
+Your farm is saved automatically = Dein Hof wird automatisch gespeichert
+
+# ---- src/SaveSystem.cpp
+Jan = Jan.
+Feb = Feb.
+Mar = März
+Apr = Apr.
+May = Mai
+Jun = Juni
+Jul = Juli
+Aug = Aug.
+Sep = Sep.
+Oct = Okt.
+Nov = Nov.
+Dec = Dez.
+%d %s %02d:%02d = %d. %s %02d:%02d
+
+# ---- src/StatsScreen.cpp
+Stats = Statistik
+
+# ---- src/TechData.cpp
+room for %.0f plants = Platz für %.0f Pflanzen
+%.0f crop at once = %.0f Pflanze gleichzeitig
+%.0f crops at once = %.0f Pflanzen gleichzeitig
+%.0f second days = %.0f Sekunden pro Tag
+%.1f second days = %.1f Sekunden pro Tag
+%.2fs to pick = %.2fs zum Ernten
+%.2fs to grow = %.2fs zum Wachsen
+x%.2f coins = x%.2f Münzen
+1 plant at a time = 1 Pflanze auf einmal
+reach radius %.0f = Reichweite %.0f
+no crops = keine Pflanzen
+%s, %s + %d more = %s, %s + %d weitere
+& = &
+%.0f%% ripe at dawn = %.0f%% reif bei Tagesanbruch
+%.0f%% auto-pick chance = %.0f%% Chance auf Miternte
+%.1f%% auto-pick chance = %.1f%% Chance auf Miternte
+no auto-pick = keine Miternte
+auto-picks %.0f crop = erntet %.0f Pflanze mit
+auto-picks up to %.0f crops = erntet bis zu %.0f Pflanzen mit
+auto-pick off = Miternte aus
+auto-pick within %.1f plants = Miternte im Umkreis von %.1f Pflanzen
+no farmers = keine Erntehelfer
+%.0f farmer = %.0f Erntehelfer
+%.0f farmers = %.0f Erntehelfer
+farmers walk %.2f plants/s = Erntehelfer laufen %.2f Pflanzen/s
+farmers pick in %.2fs = Erntehelfer ernten in %.2fs
+no effect = keine Wirkung
+
+# ---- src/TechTreeScreen.cpp
+Lv%d = St.%d
+THE BARN = DIE SCHEUNE
+%s coins = %s Münzen
+Thanks for playing. The full game has %d upgrades. = Danke fürs Spielen. Das volle Spiel hat %d Verbesserungen.
+Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom. = Tippe für Details, nochmal tippen zum Kaufen.  Ziehen zum Verschieben, Finger spreizen zum Zoomen.
+Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit. = Zeigen für Details, klicken zum Kaufen.  Ziehen zum Verschieben, Mausrad zum Zoomen, Pos1 für alles.
+Start Day %d = Tag %d beginnen
+Level %d / %d  -  MAX = Stufe %d / %d  -  MAX
+Level %d / %d = Stufe %d / %d
+Now: %s = Jetzt: %s
+Next: %s = Nächste: %s
+At max: %s = Maximal: %s
+Unlocks: %s = Schaltet frei: %s
+Needs %s Lv %d = Benötigt %s St. %d
+Fully upgraded! = Voll ausgebaut!
+UNLOCKED = FREIGESCHALTET
+Full game only = Nur im vollen Spiel
+This one's past the edge of the demo = Diese liegt hinter der Grenze der Demo
+Price: %s coins = Preis: %s Münzen
+Locked = Gesperrt
+Not enough coins = Nicht genug Münzen
+Tap again to buy = Nochmal tippen zum Kaufen
+Click to buy = Klicken zum Kaufen
+
+# ---- tech tree
+Lettuce = Salat
+Carrot = Karotte
+Pumpkin = Kürbis
+Turnip = Rübe
+Chilli = Chili
+Broccoli = Brokkoli
+Corn = Mais
+Eggplant = Aubergine
+The Barn = Die Scheune
+Unlocks the barn. = Schaltet die Scheune frei.
+Bigger Patch = Größeres Beet
+Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30). = Grabe ein größeres Beet: eine Reihe und eine Spalte mehr Platz für Gemüse (bis 30 x 30).
+Longer Days = Längere Tage
+Wake up a little earlier: 2 more seconds of picking every day. = Steh etwas früher auf: jeden Tag 2 Sekunden mehr zum Ernten.
+More Seeds = Mehr Saatgut
+Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch. = Säe mehr Samen: etwa 25% mehr Gemüse wächst gleichzeitig, so viel dein Beet fasst.
+Quick Hands = Flinke Hände
+Practice makes perfect: pick vegetables 18% faster. = Übung macht den Meister: ernte Gemüse 18% schneller.
+Fertile Soil = Fruchtbarer Boden
+Richer compost: vegetables grow 12% faster. = Besserer Kompost: Gemüse wächst 12% schneller.
+Carrots = Karotten
+Unlocks carrots. They grow slower but sell for 4 coins each. = Schaltet Karotten frei. Sie wachsen langsamer, bringen aber je 4 Münzen.
+Prize Produce = Preisgemüse
+Bigger, shinier vegetables: every vegetable sells for a little more. = Größeres, schöneres Gemüse: jedes bringt etwas mehr ein.
+Helping Hand = Helfende Hand
+Sometimes picking a crop also picks a ripe one next to it: 10% chance, 1 crop, within 1.5 plant widths. = Manchmal erntest du eine reife Pflanze daneben mit: 10% Chance, 1 Pflanze, im Umkreis von 1,5 Pflanzenbreiten.
+Head Start = Vorsprung
+Crops keep growing overnight. Part of the patch is already ripe when the day begins. = Pflanzen wachsen über Nacht weiter. Ein Teil des Beets ist schon reif, wenn der Tag beginnt.
+Lucky Streak = Glückssträhne
+Helping Hand happens more often: +5% chance. = Die Helfende Hand hilft öfter: +5% Chance.
+Wide Reach = Weiter Griff
+Long arms. Pick every ripe vegetable inside a circle around the mouse. = Lange Arme. Ernte alles reife Gemüse in einem Kreis um die Maus.
+Farmhand = Erntehelfer
+Hire a farmer who walks the patch picking ripe crops for you. Farmers pick the nearest ripe crop no one else is going for. = Stelle einen Erntehelfer ein, der durchs Beet läuft und reife Pflanzen für dich erntet. Jeder geht zur nächsten reifen Pflanze, die sonst niemand ansteuert.
+Pumpkins = Kürbisse
+Unlocks pumpkins. Slow to grow and hard to pick, but worth 15 coins each. = Schaltet Kürbisse frei. Wachsen langsam und sind schwer zu ernten, bringen aber je 15 Münzen.
+Comfy Boots = Bequeme Stiefel
+Farmers walk faster. = Erntehelfer laufen schneller.
+Spreading Roots = Weite Wurzeln
+Helping Hand reaches further: +0.5 plant widths. = Die Helfende Hand reicht weiter: +0,5 Pflanzenbreiten.
+Farm Crew = Erntetrupp
+Hire one more farmer to walk the patch picking ripe crops for you. = Stelle einen weiteren Erntehelfer ein, der reife Pflanzen für dich erntet.
+Sharp Shears = Scharfe Schere
+Farmers pick 15% faster. = Erntehelfer ernten 15% schneller.
+Bumper Bunch = Üppiger Bund
+Helping Hand picks one more nearby crop. = Die Helfende Hand erntet eine Pflanze mehr in der Nähe.
+Turnips = Rüben
+Unlocks Turnips. Sell for 38 coins each. = Schaltet Rüben frei. Bringen je 38 Münzen.
+Unlocks Chilli. Sells for 60 coins each. = Schaltet Chili frei. Bringt je 60 Münzen.
+Unlocks Broccoli. Sells for 70 coins each. = Schaltet Brokkoli frei. Bringt je 70 Münzen.
+Unlocks Corn. Sells for 80 coins each. = Schaltet Mais frei. Bringt je 80 Münzen.
+Unlocks Eggplant. Sells for 90 coins each. = Schaltet Auberginen frei. Bringen je 90 Münzen.

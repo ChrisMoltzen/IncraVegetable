@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Lang.h"
 #include "Farm.h"
 #include "Palette.h"
 
@@ -38,12 +39,12 @@ void CompleteScreen::open(const std::string& title, const std::string& message, 
     buttons_.buttons.clear();
     const float y = 0.f; // placed in render()
     ui::Button keep;
-    keep.label = "Keep Playing";
+    keep.label = tr("Keep Playing");
     keep.style = ui::Style::Secondary;
     keep.textScale = 2.f;
     keep.rect = {640.f - 260.f, y, 250.f, 58.f};
     ui::Button menu = keep;
-    menu.label = "Main Menu";
+    menu.label = tr("Main Menu");
     menu.style = ui::Style::Primary;
     menu.rect = {640.f + 10.f, y, 250.f, 58.f};
     buttons_.buttons = {keep, menu};
@@ -86,16 +87,17 @@ void CompleteScreen::render(SDL_Renderer* r) const {
     const float lines = static_cast<float>(facts_.size());
     const float h = 250.f + lines * 26.f;
     const float slide = (1.f - in) * 40.f;
-    const float w = std::max(kPanelW, draw::textWidth(title_, 3.f) + 90.f);
+    const float w = std::min(1240.f, std::max(kPanelW, draw::textWidth(title_, 3.f) + 90.f));
     const SDL_FRect panel{640.f - w * 0.5f, (720.f - h) * 0.5f + slide, w, h};
     ui::drawPanel(r, panel);
     art::draw(r, "ui/panel_header", SDL_FRect{panel.x, panel.y, panel.w, 74});
-    draw::textShadow(r, 640.f, panel.y + 24, title_, 3.f, pal::Cream, draw::Align::Center);
+    const float room = w - 60.f; // long translations shrink to fit
+    draw::textShadow(r, 640.f, panel.y + 24, title_, draw::fitScale(title_, 3.f, room), pal::Cream, draw::Align::Center);
     float y = panel.y + 100;
-    draw::text(r, 640.f, y, message_, 2.f, pal::DeepSoil, draw::Align::Center);
+    draw::text(r, 640.f, y, message_, draw::fitScale(message_, 2.f, room), pal::DeepSoil, draw::Align::Center);
     y += 42;
     for (const auto& f : facts_) {
-        draw::text(r, 640.f, y, f, 1.5f, pal::Soil, draw::Align::Center);
+        draw::text(r, 640.f, y, f, draw::fitScale(f, 1.5f, room), pal::Soil, draw::Align::Center);
         y += 26.f;
     }
 

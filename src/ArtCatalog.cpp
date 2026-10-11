@@ -9,6 +9,7 @@
 #include "Art.h"
 #include "DebugMenu.h"
 #include "Draw.h"
+#include "FontLatin.h"
 #include "Grass.h"
 #include "StatsScreen.h"
 #include "Palette.h"
@@ -216,6 +217,11 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          "Optional font: 16 x 6 grid of equal-sized characters, ASCII 32 (space) to 127 in order, drawn WHITE "
          "(the game colours them). Leave it out to keep the built-in font",
          false, nullptr, drawFontTemplate});
+    add({"ui/font_latin1", 256, 96,
+         "Optional accented letters for other languages, laid out like ui/font: 16 x 6, from U+00A0 (no-break "
+         "space) to U+00FF (y with two dots), in order: \u00a1 \u00bf \u00e9 \u00f1 \u00fc \u00e7 \u00df... "
+         "Leave it out and the game makes them from ui/font (the template shows what it makes)",
+         false, nullptr, fontlatin::drawTemplate});
 
     // ---------------- Menus ----------------
     add({"menu/background", 1280, 720, "Main menu background (vegetable rows drift over it; turn them off in art.txt)", false,

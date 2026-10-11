@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <string>
+#include <vector>
 
 namespace assetpack {
 
@@ -18,5 +19,7 @@ bool embedded();                    // true in a release build with the assets c
 bool exists(const std::string& path); // a file (on disk, or "pack://..." in the pack)
 // The whole file, or nullptr. Free it with SDL_free.
 void* load(const std::string& path, std::size_t* size);
+// The names of the files in a folder (on disk, or "pack://..."), e.g. list(dir + "lang", ".txt").
+std::vector<std::string> list(const std::string& folder, const std::string& extension);
 
 } // namespace assetpack

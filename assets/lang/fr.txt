@@ -1,0 +1,266 @@
+# IncraVegetable - French. See include/Lang.h for how this file works,
+# and run tools/lang/update.py after changing the game's text.
+@name Français
+@locale fr
+
+
+# ---- src/Achievements.cpp
+First Harvest = Première récolte
+Pick your first vegetable. = Cueille ton premier légume.
+Green Thumb = Main verte
+Pick 1,000 vegetables. = Cueille 1 000 légumes.
+Bumper Crop = Récolte record
+Pick 50,000 vegetables. = Cueille 50 000 légumes.
+Pocket Money = Argent de poche
+Earn 1,000 coins. = Gagne 1 000 pièces.
+Market Trader = Marchand
+Earn 100,000 coins. = Gagne 100 000 pièces.
+Vegetable Tycoon = Magnat du légume
+Earn 5,000,000 coins. = Gagne 5 000 000 de pièces.
+Market Day = Jour de marché
+Earn 1,000 coins in a single day. = Gagne 1 000 pièces en une seule journée.
+Harvest Festival = Fête des récoltes
+Earn 25,000 coins in a single day. = Gagne 25 000 pièces en une seule journée.
+Into the Barn = Direction la grange
+Buy your first upgrade. = Achète ta première amélioration.
+Well Equipped = Bien équipé
+Buy 25 upgrades. = Achète 25 améliorations.
+Barn Raiser = Bâtisseur de granges
+Buy 100 upgrades. = Achète 100 améliorations.
+Lend a Hand = Un coup de main
+Get the Helping Hand to pick for you. = Obtiens le Coup de main pour qu'il cueille à ta place.
+Extra Hands = Bras supplémentaires
+Hire your first farmer. = Embauche ton premier ouvrier agricole.
+Full Crew = Équipe au complet
+Hire every farmer. = Embauche tous les ouvriers agricoles.
+Mixed Veg = Macédoine
+Grow every kind of vegetable. = Cultive toutes les sortes de légumes.
+Week on the Farm = Une semaine à la ferme
+Reach day 7. = Atteins le jour 7.
+Seasoned Farmer = Fermier aguerri
+Reach day 50. = Atteins le jour 50.
+The Barn Is Full = La grange est pleine
+Buy every upgrade. = Achète toutes les améliorations.
+Achievement unlocked = Succès débloqué
+Back = Retour
+Achievements = Succès
+%d of %d = %d sur %d
+
+# ---- src/CompleteScreen.cpp
+Keep Playing = Continuer à jouer
+Main Menu = Menu principal
+
+# ---- src/Farm.cpp
+Auto-pick! = Cueillette bonus !
+
+# ---- src/Game.cpp
+%s  -  Day %d  -  %s coins = %s  -  Jour %d  -  %s pièces
+Slot %d = Emplacement %d
+%lldm = %lld min
+%lldh %02lldm = %lldh %02lld
+%d upgrades bought in %d days = %d améliorations achetées en %d jours
+%s coins earned  -  %s vegetables picked = %s pièces gagnées  -  %s légumes cueillis
+Time played: %s = Temps de jeu : %s
+You've finished the demo! = Tu as terminé la démo !
+Thank you for playing my game. = Merci d'avoir joué à mon jeu.
+The full game has %d upgrades to unlock. = Le jeu complet a %d améliorations à débloquer.
+Your farm carries over to it. = Ta ferme y est conservée.
+The Barn is fully unlocked! = La Grange est entièrement débloquée !
+%llds = %lld s
+%lldm %02llds = %lld min %02lld s
+TIME = TEMPS
+Time played = Temps de jeu
+Out in the patch = Au potager
+Days farmed = Jours à la ferme
+VEGETABLES = LÉGUMES
+Vegetables picked = Légumes cueillis
+Picked by you = Cueillis par toi
+Picked by Helping Hand = Cueillis par le Coup de main
+Picked by farmers = Cueillis par les ouvriers
+Most picked in a day = Record en une journée
+COINS = PIÈCES
+Coins earned = Pièces gagnées
+Coins spent in the barn = Pièces dépensées à la grange
+Best day = Meilleure journée
+Average day = Journée moyenne
+Upgrades bought = Améliorations achetées
+End Day = Finir la journée
+Day %d = Jour %d
+%.1fs = %.1fs
+until sunset = avant le coucher
++%s today = +%s aujourd'hui
+Hold your finger on ripe vegetables to pick them! = Garde le doigt sur les légumes mûrs pour les cueillir !
+Hover over ripe vegetables to pick them! = Survole les légumes mûrs pour les cueillir !
+Sunset - Day %d done! = Coucher du soleil - Jour %d fini !
+Vegetables picked: %d = Légumes cueillis : %d
+%s x%d = %s x%d
+Coins earned: %s = Pièces gagnées : %s
+Total coins: %s = Total des pièces : %s
+The Barn > = La Grange >
+
+# ---- src/Menus.cpp
+Continue = Continuer
+No saved farm yet = Aucune ferme sauvegardée
+New Game = Nouvelle partie
+Load Game = Charger une partie
+Settings = Paramètres
+Quit = Quitter
+an incremental farming game = un jeu de ferme incrémental
+demo = démo
+DEMO = DÉMO
+Start = Commencer
+Rename = Renommer
+Cancel = Annuler
+Day %d   -   %s coins = Jour %d   -   %s pièces
+Day %d   -   %s coins   -   saved %s = Jour %d   -   %s pièces   -   sauvegardé le %s
+Empty - start a new farm here = Vide - commence une nouvelle ferme ici
+Empty = Vide
+< Back = < Retour
+Overwrite = Écraser
+Choose a slot for your new farm = Choisis un emplacement pour ta nouvelle ferme
+Choose a farm to load = Choisis une ferme à charger
+Overwrite %s? = Écraser %s ?
+The farm on day %d with %s coins = La ferme au jour %d avec %s pièces
+will be lost for good. = sera perdue pour toujours.
+Name your farm = Nomme ta ferme
+Rename your farm = Renomme ta ferme
+Up to %d letters. Leave it blank for "%s". = Jusqu'à %d lettres. Laisse vide pour "%s".
+On = Oui
+Off = Non
+Done = Terminé
+Music = Musique
+Sound FX = Effets
+Language = Langue
+Resolution = Résolution
+Full screen = Plein écran
+Fullscreen = Plein écran
+Resume = Reprendre
+Quit Game = Quitter le jeu
+Paused = Pause
+Your farm is saved automatically = Ta ferme est sauvegardée automatiquement
+
+# ---- src/SaveSystem.cpp
+Jan = janv.
+Feb = févr.
+Mar = mars
+Apr = avr.
+May = mai
+Jun = juin
+Jul = juil.
+Aug = août
+Sep = sept.
+Oct = oct.
+Nov = nov.
+Dec = déc.
+%d %s %02d:%02d = %d %s %02d:%02d
+
+# ---- src/StatsScreen.cpp
+Stats = Statistiques
+
+# ---- src/TechData.cpp
+room for %.0f plants = place pour %.0f plantes
+%.0f crop at once = %.0f légume à la fois
+%.0f crops at once = %.0f légumes à la fois
+%.0f second days = journées de %.0f secondes
+%.1f second days = journées de %.1f secondes
+%.2fs to pick = %.2fs pour cueillir
+%.2fs to grow = %.2fs pour pousser
+x%.2f coins = x%.2f pièces
+1 plant at a time = 1 plante à la fois
+reach radius %.0f = rayon de portée %.0f
+no crops = aucun légume
+%s, %s + %d more = %s, %s + %d autres
+& = et
+%.0f%% ripe at dawn = %.0f%% mûr à l'aube
+%.0f%% auto-pick chance = %.0f%% de cueillette bonus
+%.1f%% auto-pick chance = %.1f%% de cueillette bonus
+no auto-pick = pas de cueillette bonus
+auto-picks %.0f crop = cueille %.0f légume en plus
+auto-picks up to %.0f crops = cueille jusqu'à %.0f légumes en plus
+auto-pick off = cueillette bonus désactivée
+auto-pick within %.1f plants = cueillette bonus à %.1f plantes
+no farmers = aucun ouvrier
+%.0f farmer = %.0f ouvrier
+%.0f farmers = %.0f ouvriers
+farmers walk %.2f plants/s = les ouvriers marchent à %.2f plantes/s
+farmers pick in %.2fs = les ouvriers cueillent en %.2fs
+no effect = aucun effet
+
+# ---- src/TechTreeScreen.cpp
+Lv%d = Niv.%d
+THE BARN = LA GRANGE
+%s coins = %s pièces
+Thanks for playing. The full game has %d upgrades. = Merci d'avoir joué. Le jeu complet a %d améliorations.
+Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom. = Touche pour voir une amélioration, touche encore pour l'acheter.  Glisse pour bouger, pince pour zoomer.
+Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit. = Survole pour voir, clique pour acheter.  Glisse pour bouger, molette pour zoomer, Origine pour tout voir.
+Start Day %d = Commencer le jour %d
+Level %d / %d  -  MAX = Niveau %d / %d  -  MAX
+Level %d / %d = Niveau %d / %d
+Now: %s = Actuel : %s
+Next: %s = Suivant : %s
+At max: %s = Au max : %s
+Unlocks: %s = Débloque : %s
+Needs %s Lv %d = Nécessite %s niv. %d
+Fully upgraded! = Au maximum !
+UNLOCKED = DÉBLOQUÉ
+Full game only = Jeu complet uniquement
+This one's past the edge of the demo = Celle-ci est au-delà de la limite de la démo
+Price: %s coins = Prix : %s pièces
+Locked = Verrouillé
+Not enough coins = Pas assez de pièces
+Tap again to buy = Touche encore pour acheter
+Click to buy = Clique pour acheter
+
+# ---- tech tree
+Lettuce = Laitue
+Carrot = Carotte
+Pumpkin = Citrouille
+Turnip = Navet
+Chilli = Piment
+Broccoli = Brocoli
+Corn = Maïs
+Eggplant = Aubergine
+The Barn = La Grange
+Unlocks the barn. = Débloque la grange.
+Bigger Patch = Potager agrandi
+Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30). = Agrandis le potager : une rangée et une colonne de plus pour les légumes (jusqu'à 30 x 30).
+Longer Days = Journées plus longues
+Wake up a little earlier: 2 more seconds of picking every day. = Lève-toi un peu plus tôt : 2 secondes de cueillette en plus chaque jour.
+More Seeds = Plus de graines
+Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch. = Sème plus de graines : environ 25% de légumes en plus poussent à la fois, dans la limite de ton potager.
+Quick Hands = Mains agiles
+Practice makes perfect: pick vegetables 18% faster. = C'est en forgeant qu'on devient forgeron : cueille les légumes 18% plus vite.
+Fertile Soil = Sol fertile
+Richer compost: vegetables grow 12% faster. = Un compost plus riche : les légumes poussent 12% plus vite.
+Carrots = Carottes
+Unlocks carrots. They grow slower but sell for 4 coins each. = Débloque les carottes. Elles poussent plus lentement mais se vendent 4 pièces chacune.
+Prize Produce = Légumes primés
+Bigger, shinier vegetables: every vegetable sells for a little more. = Des légumes plus gros et plus brillants : chacun se vend un peu plus cher.
+Helping Hand = Coup de main
+Sometimes picking a crop also picks a ripe one next to it: 10% chance, 1 crop, within 1.5 plant widths. = Parfois, cueillir un légume en cueille aussi un mûr à côté : 10% de chances, 1 légume, à moins de 1,5 plante.
+Head Start = Longueur d'avance
+Crops keep growing overnight. Part of the patch is already ripe when the day begins. = Les légumes poussent pendant la nuit. Une partie du potager est déjà mûre au début de la journée.
+Lucky Streak = Série chanceuse
+Helping Hand happens more often: +5% chance. = Le Coup de main arrive plus souvent : +5% de chances.
+Wide Reach = Grande portée
+Long arms. Pick every ripe vegetable inside a circle around the mouse. = De longs bras. Cueille tous les légumes mûrs dans un cercle autour de la souris.
+Farmhand = Ouvrier agricole
+Hire a farmer who walks the patch picking ripe crops for you. Farmers pick the nearest ripe crop no one else is going for. = Embauche un ouvrier qui parcourt le potager et cueille les légumes mûrs pour toi. Chacun va vers le légume mûr le plus proche que personne d'autre ne vise.
+Pumpkins = Citrouilles
+Unlocks pumpkins. Slow to grow and hard to pick, but worth 15 coins each. = Débloque les citrouilles. Lentes à pousser et dures à cueillir, mais elles valent 15 pièces chacune.
+Comfy Boots = Bottes confortables
+Farmers walk faster. = Les ouvriers marchent plus vite.
+Spreading Roots = Racines étendues
+Helping Hand reaches further: +0.5 plant widths. = Le Coup de main porte plus loin : +0,5 plante.
+Farm Crew = Équipe agricole
+Hire one more farmer to walk the patch picking ripe crops for you. = Embauche un ouvrier de plus pour parcourir le potager et cueillir les légumes mûrs pour toi.
+Sharp Shears = Sécateur affûté
+Farmers pick 15% faster. = Les ouvriers cueillent 15% plus vite.
+Bumper Bunch = Botte généreuse
+Helping Hand picks one more nearby crop. = Le Coup de main cueille un légume voisin de plus.
+Turnips = Navets
+Unlocks Turnips. Sell for 38 coins each. = Débloque les navets. Ils se vendent 38 pièces chacun.
+Unlocks Chilli. Sells for 60 coins each. = Débloque le piment. Il se vend 60 pièces chacun.
+Unlocks Broccoli. Sells for 70 coins each. = Débloque le brocoli. Il se vend 70 pièces chacun.
+Unlocks Corn. Sells for 80 coins each. = Débloque le maïs. Il se vend 80 pièces chacun.
+Unlocks Eggplant. Sells for 90 coins each. = Débloque l'aubergine. Elle se vend 90 pièces chacune.

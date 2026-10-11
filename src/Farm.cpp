@@ -3,6 +3,7 @@
 #include "Art.h"
 #include "CropLooks.h"
 #include "Draw.h"
+#include "Lang.h"
 #include "Palette.h"
 #include "Platform.h"
 
@@ -696,7 +697,7 @@ void Farm::harvest(int index, double& coins, std::mt19937& rng, PickedBy by) {
         }
         std::sort(near.begin(), near.end());
         for (int k = 0; k < static_cast<int>(near.size()) && k < stats_.autoPickCount; ++k) extra.push_back(near[k].second);
-        if (!extra.empty()) floatTexts_.push_back({cx, cy - plantSize_ * 0.75f, 1.1f, "Auto-pick!", pal::PaleShoot});
+        if (!extra.empty()) floatTexts_.push_back({cx, cy - plantSize_ * 0.75f, 1.1f, tr("Auto-pick!"), pal::PaleShoot});
     }
 
     // Replant straight away, in a new random spot.

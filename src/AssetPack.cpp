@@ -60,4 +60,31 @@ void* load(const std::string& path, std::size_t* size) {
 #endif
 }
 
+std::vector<std::string> list(const std::string& folder, const std::string& extension) {
+    std::vector<std::string> out;
+    [[maybe_unused]] auto ends = [&extension](const std::string& n) {
+        return n.size() > extension.size() && n.compare(n.size() - extension.size(), extension.size(), extension) == 0;
+    };
+    if (inPack(folder)) {
+#ifdef INCRA_PACKED_ASSETS
+        std::string want = folder.substr(std::strlen(kPrefix));
+        if (!want.empty() && want.back() != '/') want += '/';
+        for (std::size_t i = 0; i < kIncraPackCount; ++i) {
+            const std::string name = kIncraPackEntries[i].name;
+            if (name.rfind(want, 0) == 0 && name.find('/', want.size()) == std::string::npos && ends(name))
+                out.push_back(name.substr(want.size()));
+        }
+#endif
+        return out;
+    }
+    int count = 0;
+    char** files = SDL_GlobDirectory(folder.c_str(), ("*" + extension).c_str(), 0, &count);
+    if (files) {
+        for (int i = 0; i < count; ++i)
+            if (!std::strchr(files[i], '/')) out.push_back(files[i]);
+        SDL_free(files);
+    }
+    return out;
+}
+
 } // namespace assetpack

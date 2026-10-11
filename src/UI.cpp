@@ -57,15 +57,21 @@ void drawButton(SDL_Renderer* r, const Button& b, bool hovered, bool pressed) {
     art::drawVariant(r, name, variant, SDL_FRect{rc.x, rc.y + press, rc.w, rc.h});
 
     float cy = rc.y + rc.h * 0.5f + press;
-    float glyph = 8.f * b.textScale;
+    // Text too long for the button (often a translation) is drawn smaller to fit.
+    const float room = std::max(10.f, rc.w - 24.f);
+    const float scale = std::min(b.textScale, room / std::max(1.f, draw::textWidth(b.label, 1.f)));
+    float glyph = 8.f * scale;
     if (b.subLabel.empty()) {
-        draw::textShadow(r, rc.x + rc.w * 0.5f, cy - glyph * 0.5f, b.label, b.textScale, text, draw::Align::Center);
+        draw::textShadow(r, rc.x + rc.w * 0.5f, cy - glyph * 0.5f, b.label, scale, text, draw::Align::Center);
     } else {
-        float sub = 8.f * b.subScale;
-        float top = cy - (glyph + 8.f + sub) * 0.5f;
-        draw::textShadow(r, rc.x + rc.w * 0.5f, top, b.label, b.textScale, text, draw::Align::Center);
-        draw::text(r, rc.x + rc.w * 0.5f, top + glyph + 8.f, b.subLabel, b.subScale,
-                   draw::withAlpha(text, 210), draw::Align::Center);
+        const float subScale = std::min(b.subScale, room / std::max(1.f, draw::textWidth(b.subLabel, 1.f)));
+        float sub = 8.f * subScale;
+        float top = cy - (8.f * b.textScale + 8.f + 8.f * b.subScale) * 0.5f;
+        draw::textShadow(r, rc.x + rc.w * 0.5f, top + 8.f * (b.textScale - scale) * 0.5f, b.label, scale, text,
+                         draw::Align::Center);
+        draw::text(r, rc.x + rc.w * 0.5f, top + 8.f * b.textScale + 8.f + 8.f * (b.subScale - subScale) * 0.5f,
+                   b.subLabel, subScale, draw::withAlpha(text, 210), draw::Align::Center);
+        (void)sub;
     }
 }
 

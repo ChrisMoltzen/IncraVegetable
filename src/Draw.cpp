@@ -3,12 +3,14 @@
 #include "Palette.h"
 
 #include "Art.h"
+#include "FontLatin.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstdarg>
 #include <cstdio>
 #include <sstream>
+#include <vector>
 
 namespace draw {
 
@@ -157,6 +159,7 @@ void thickLine(SDL_Renderer* r, float x1, float y1, float x2, float y2, float th
 // An artist-supplied font: assets/ui/font.png, a grid of 16 x 6 characters
 // (ASCII 32 to 127, in order, left to right then top to bottom). All
 // characters are the same width. Text height is always 8 x scale pixels.
+// Accented letters (U+00A0..U+00FF) come from a second sheet, see FontLatin.h.
 static SDL_Texture* customFont(float& cellW, float& cellH) {
     SDL_Texture* tex = art::texture("ui/font");
     if (!tex) return nullptr;
@@ -167,10 +170,58 @@ static SDL_Texture* customFont(float& cellW, float& cellH) {
     return cellW > 0 && cellH > 0 ? tex : nullptr;
 }
 
+namespace {
+// One character to draw: from font.png (latin = false, code 32..127) or the
+// accented sheet (latin = true, code 0xA0..0xFF).
+struct Glyph {
+    bool latin;
+    unsigned code;
+};
+
+// Text is UTF-8. Characters the font hasn't got become the nearest it has.
+void glyphs(const std::string& s, std::vector<Glyph>& out) {
+    out.clear();
+    auto plain = [&out](const char* ascii) {
+        for (const char* p = ascii; *p; ++p) out.push_back({false, static_cast<unsigned char>(*p)});
+    };
+    for (size_t i = 0; i < s.size();) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        unsigned cp = c;
+        int len = 1;
+        if (c >= 0xC0 && c < 0xE0 && i + 1 < s.size()) cp = ((c & 0x1Fu) << 6) | (s[i + 1] & 0x3F), len = 2;
+        else if (c >= 0xE0 && c < 0xF0 && i + 2 < s.size())
+            cp = ((c & 0x0Fu) << 12) | ((s[i + 1] & 0x3F) << 6) | (s[i + 2] & 0x3F), len = 3;
+        else if (c >= 0xF0 && i + 3 < s.size()) cp = '?', len = 4;
+        i += len;
+        if (cp < 128) out.push_back({false, cp});
+        else if (cp >= 0xA0 && cp <= 0xFF) out.push_back({true, cp});
+        else if (cp == 0x2018 || cp == 0x2019 || cp == 0x201A) plain("'");
+        else if (cp == 0x201C || cp == 0x201D || cp == 0x201E) plain("\"");
+        else if (cp == 0x2013 || cp == 0x2014) plain("-");
+        else if (cp == 0x2026) plain("...");
+        else if (cp == 0x0152) plain("OE");
+        else if (cp == 0x0153) plain("oe");
+        else plain("?");
+    }
+}
+std::vector<Glyph> gGlyphs;
+} // namespace
+
+float fitScale(const std::string& s, float scale, float maxWidth) {
+    const float w = textWidth(s, scale);
+    return w > maxWidth && w > 0.f ? scale * maxWidth / w : scale;
+}
+
+size_t length(const std::string& s) {
+    glyphs(s, gGlyphs);
+    return gGlyphs.size();
+}
+
 float textWidth(const std::string& s, float scale) {
+    const float n = static_cast<float>(length(s));
     float cw = 0, ch = 0;
-    if (customFont(cw, ch)) return static_cast<float>(s.size()) * 8.f * scale * (cw / ch);
-    return static_cast<float>(s.size()) * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale;
+    if (customFont(cw, ch)) return n * 8.f * scale * (cw / ch);
+    return n * SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale;
 }
 
 void text(SDL_Renderer* r, float x, float y, const std::string& s, float scale, SDL_Color c, Align align) {
@@ -179,24 +230,42 @@ void text(SDL_Renderer* r, float x, float y, const std::string& s, float scale, 
     if (align == Align::Center) x -= w * 0.5f;
     else if (align == Align::Right) x -= w;
 
+    glyphs(s, gGlyphs);
     float cw = 0, ch = 0;
     if (SDL_Texture* font = customFont(cw, ch)) {
+        SDL_Texture* latin = nullptr;
+        for (const Glyph& g : gGlyphs)
+            if (g.latin) latin = fontlatin::texture(r);
         float h = 8.f * scale, adv = h * (cw / ch);
-        SDL_SetTextureColorMod(font, c.r, c.g, c.b);
-        SDL_SetTextureAlphaMod(font, c.a);
-        for (unsigned char chr : s) {
-            if (chr > 32 && chr < 128) {
-                int i = chr - 32;
+        for (SDL_Texture* t : {font, latin}) {
+            if (!t) continue;
+            SDL_SetTextureColorMod(t, c.r, c.g, c.b);
+            SDL_SetTextureAlphaMod(t, c.a);
+        }
+        for (const Glyph& g : gGlyphs) {
+            SDL_Texture* t = font;
+            int i = static_cast<int>(g.code) - 32;
+            if (g.latin) {
+                if (latin) t = latin, i = static_cast<int>(g.code) - 0xA0;
+                else i = fontlatin::plain(g.code) - 32;
+            }
+            if (i > 0 && i < 96) {
                 SDL_FRect src{(i % 16) * cw, (i / 16) * ch, cw, ch};
                 SDL_FRect dst{x, y, adv, h};
-                SDL_RenderTexture(r, font, &src, &dst);
+                SDL_RenderTexture(r, t, &src, &dst);
             }
             x += adv;
         }
-        SDL_SetTextureColorMod(font, 255, 255, 255);
-        SDL_SetTextureAlphaMod(font, 255);
+        for (SDL_Texture* t : {font, latin}) {
+            if (!t) continue;
+            SDL_SetTextureColorMod(t, 255, 255, 255);
+            SDL_SetTextureAlphaMod(t, 255);
+        }
         return;
     }
+    // SDL's built-in font is plain ASCII: accents are dropped (é -> e).
+    std::string ascii;
+    for (const Glyph& g : gGlyphs) ascii += g.latin ? fontlatin::plain(g.code) : static_cast<char>(g.code);
     setColor(r, c);
     // The render scale scales the viewport's position too, so on a filled phone screen
     // (where the stage is a viewport, see Screen.h) step out to the whole screen first.
@@ -205,7 +274,7 @@ void text(SDL_Renderer* r, float x, float y, const std::string& s, float scale, 
     const bool moved = vp.x != 0 || vp.y != 0;
     if (moved) SDL_SetRenderViewport(r, nullptr);
     SDL_SetRenderScale(r, scale, scale);
-    SDL_RenderDebugText(r, (x + vp.x) / scale, (y + vp.y) / scale, s.c_str());
+    SDL_RenderDebugText(r, (x + vp.x) / scale, (y + vp.y) / scale, ascii.c_str());
     SDL_SetRenderScale(r, 1.f, 1.f);
     if (moved) SDL_SetRenderViewport(r, &vp);
 }
@@ -221,7 +290,7 @@ std::vector<std::string> wrap(const std::string& s, size_t maxChars) {
     std::istringstream in(s);
     std::string word, line;
     while (in >> word) {
-        if (!line.empty() && line.size() + 1 + word.size() > maxChars) {
+        if (!line.empty() && length(line) + 1 + length(word) > maxChars) {
             lines.push_back(line);
             line.clear();
         }

@@ -5,6 +5,7 @@
 // game coordinates (1280x720).
 #pragma once
 
+#include "Lang.h"
 #include "SaveSystem.h"
 #include "UI.h"
 
@@ -73,13 +74,16 @@ private:
 // ---------------------------------------------------------------------------
 class SettingsMenu {
 public:
-    enum class Action { None, Back, MusicChanged, SfxChanged, SfxReleased, DisplayChanged };
+    enum class Action { None, Back, MusicChanged, SfxChanged, SfxReleased, DisplayChanged, LanguageChanged };
     struct Resolution {
         int w, h;
     };
 
-    // Edits *settings directly. resolutions is the list offered on desktop.
-    void open(Settings* settings, std::vector<Resolution> resolutions);
+    // Edits *settings directly. resolutions is the list offered on desktop;
+    // languages the ones in assets/lang (English first); inUse the code being shown now.
+    void open(Settings* settings, std::vector<Resolution> resolutions, std::vector<lang::Language> languages,
+              const std::string& inUse);
+    void setLanguageInUse(const std::string& code); // after a LanguageChanged: relabels everything
     Action handleEvent(const SDL_Event& e);
     void render(SDL_Renderer* r) const;
 
@@ -91,11 +95,15 @@ private:
     SDL_FRect sliderTrack(int which) const;
     float* sliderValue(int which) const;
     int currentResolution() const;
+    int currentLanguage() const;
     void buildButtons();
+    float top() const; // the panel's top edge (the desktop panel is taller)
 
     Settings* settings_ = nullptr;
     std::vector<Resolution> resolutions_;
-    ui::ButtonList buttons_; // [prev res, next res, fullscreen, back] or just [back]
+    std::vector<lang::Language> languages_;
+    std::string languageInUse_ = "en";
+    ui::ButtonList buttons_; // [prev language, next language, (prev res, next res, fullscreen,) done]
     int dragging_ = None;
     float mouseX_ = -1000.f, mouseY_ = -1000.f;
 };

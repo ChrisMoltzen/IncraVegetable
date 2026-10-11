@@ -44,7 +44,7 @@ default:
 # Tech tree editor: make editor, then run build/techtree/TechTreeEditor.
 # It gets its own folder (with its own SDL3.dll on Windows), so the game can be
 # rebuilt while the editor is open.
-EDITOR_SRC = $(wildcard tools/TechTreeEditor/src/*.cpp) src/TechData.cpp src/CropLooks.cpp src/TileShapes.cpp
+EDITOR_SRC = $(wildcard tools/TechTreeEditor/src/*.cpp) src/TechData.cpp src/CropLooks.cpp src/TileShapes.cpp src/Lang.cpp
 EDITOR_DIR = $(OUTPUT_DIR)/techtree
 
 editor:

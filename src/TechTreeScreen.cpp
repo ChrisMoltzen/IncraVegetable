@@ -4,6 +4,7 @@
 #include "CropLooks.h"
 #include "TileShapes.h"
 #include "Draw.h"
+#include "Lang.h"
 #include "Screen.h"
 #include "Grass.h"
 #include "Palette.h"
@@ -325,7 +326,7 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
             // Show the level needed at the midpoint of the line when it isn't met yet.
             if (!met && zoom_ >= 0.6f) {
                 float mx = (x1 + x2) * 0.5f, my = (y1 + y2) * 0.5f;
-                std::string need = draw::strf("Lv%d", p.level);
+                std::string need = trf("Lv%d", p.level);
                 draw::fillRoundRect(r, mx - 22, my - 10, 44, 20, 8, pal::Panel);
                 draw::text(r, mx, my - 4, need, 1.f, kGrey, draw::Align::Center);
             }
@@ -429,31 +430,40 @@ void TechTreeScreen::render(SDL_Renderer* r, const TechTree& tree, double coins,
     screen::topBar(r, "tree/header_bar", 64);
     {
     screen::Pinned top(r, screen::Edge::Top);
-    draw::textShadow(r, 24, 18, "THE BARN", 3.f, kWhite);
-    std::string coinText = draw::number(coins) + " coins";
+    draw::textShadow(r, 24, 18, tr("THE BARN"), 3.f, kWhite);
+    std::string coinText = trf("%s coins", draw::number(coins).c_str());
     float coinX = 1136.f - draw::textWidth(coinText, 3.f); // clear of the stats and pause buttons
     ui::drawCoin(r, coinX - 22, 32, 12);
     draw::textShadow(r, coinX, 21, coinText, 3.f, kGold);
     if (tree.demoComplete()) {
         const SDL_FRect b{260, 76, 760, 74};
         ui::drawPanel(r, b);
-        draw::text(r, 640, b.y + 16, "You've finished the demo!", 2.5f, pal::DeepSoil, draw::Align::Center);
-        draw::text(r, 640, b.y + 44, draw::strf("Thanks for playing. The full game has %d upgrades.",
+        draw::text(r, 640, b.y + 16, tr("You've finished the demo!"), 2.5f, pal::DeepSoil, draw::Align::Center);
+        draw::text(r, 640, b.y + 44, trf("Thanks for playing. The full game has %d upgrades.",
                                                 static_cast<int>(nodes.size())),
                    1.25f, pal::Tilled, draw::Align::Center);
     }
     }
     {
     screen::Pinned bottom(r, screen::Edge::Bottom); // the rest sits along the bottom of the screen
-    draw::textShadow(r, 64, 690,
-               touchMode_ ? "Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom."
-                          : "Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit.",
-               1.5f, kGrey);
+    const std::string& hint = touchMode_ ? tr("Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom.")
+                                         : tr("Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit.");
+    const float room = startButton_.x - 64.f - 24.f;
+    const size_t gap = hint.find("  ");
+    if (draw::textWidth(hint, 1.5f) > room && gap != std::string::npos) {
+        // Too long for one line (a translation): its two sentences on two lines.
+        const std::string a = hint.substr(0, gap), b = hint.substr(hint.find_first_not_of(' ', gap));
+        const float s = std::min(draw::fitScale(a, 1.5f, room), draw::fitScale(b, 1.5f, room));
+        draw::textShadow(r, 64, 702 - 8.f * s * 2.f - 4.f, a, s, kGrey);
+        draw::textShadow(r, 64, 702 - 8.f * s, b, s, kGrey);
+    } else {
+        draw::textShadow(r, 64, 690, hint, draw::fitScale(hint, 1.5f, room), kGrey);
+    }
 
     // Start day button.
     ui::Button start;
     start.rect = startButton_;
-    start.label = draw::strf("Start Day %d", nextDay);
+    start.label = trf("Start Day %d", nextDay);
     ui::drawButton(r, start, !touchMode_ && draw::pointInRect(mouseX_, mouseY_, screen::at(screen::Edge::Bottom, startButton_)), false);
 
     // Zoom buttons.
@@ -487,30 +497,38 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
     std::vector<Line> lines;
     const bool maxed = tree.isMaxed(n), unlocked = tree.prereqsMet(n);
     const bool demoLocked = !maxed && tree.demoLocked(n);
-    lines.push_back({n.name, 2.5f, maxed ? kTipGold : kTipTitle});
+    lines.push_back({tr(n.name), 2.5f, maxed ? kTipGold : kTipTitle});
     if (n.maxLevel > 1) // a one-level tech is either bought or not; no level line
-        lines.push_back({maxed ? draw::strf("Level %d / %d  -  MAX", n.level, n.maxLevel)
-                               : draw::strf("Level %d / %d", n.level, n.maxLevel),
+        lines.push_back({maxed ? trf("Level %d / %d  -  MAX", n.level, n.maxLevel)
+                               : trf("Level %d / %d", n.level, n.maxLevel),
                          1.5f, maxed ? kTipGold : kTipDim});
     lines.push_back({"", 0.6f, kWhite});
-    for (const auto& w : draw::wrap(n.description, 36)) lines.push_back({w, 1.5f, kTipText});
+    for (const auto& w : draw::wrap(tr(n.description), 36)) lines.push_back({w, 1.5f, kTipText});
     lines.push_back({"", 0.8f, kWhite});
     if (n.describeStats) {
         // Worked out from all your upgrades, so e.g. a second farmer reads "2 farmers".
-        lines.push_back({"Now:  " + n.describeStats(tree.computeStats()), 1.5f, kTipNow});
-        if (!maxed) lines.push_back({"Next: " + n.describeStats(tree.computeStatsWith(n, n.level + 1)), 1.5f, kTipGood});
+        // Long ones (several effects, or a long translation) wrap, the rest of the lines indented.
+        auto statLine = [&lines](const std::string& text, SDL_Color c) {
+            bool first = true;
+            for (const auto& w : draw::wrap(text, 48)) {
+                lines.push_back({(first ? "" : "  ") + w, 1.5f, c});
+                first = false;
+            }
+        };
+        statLine(trf("Now: %s", n.describeStats(tree.computeStats()).c_str()), kTipNow);
+        if (!maxed) statLine(trf("Next: %s", n.describeStats(tree.computeStatsWith(n, n.level + 1)).c_str()), kTipGood);
         if (n.maxLevel > 1 && n.level + 1 < n.maxLevel)
-            lines.push_back({"At max: " + n.describeStats(tree.computeStatsWith(n, n.maxLevel)), 1.5f, kTipDim});
+            statLine(trf("At max: %s", n.describeStats(tree.computeStatsWith(n, n.maxLevel)).c_str()), kTipDim);
     }
     if (!n.describeStats) {
         // A tech that only unlocks others: say which.
         std::string names;
         for (const auto& o : tree.nodes())
             for (const auto& p : o.prereqs)
-                if (p.id == n.id) names += (names.empty() ? "" : ", ") + o.name;
+                if (p.id == n.id) names += (names.empty() ? "" : ", ") + tr(o.name);
         if (!names.empty()) {
             bool first = true;
-            for (const auto& w : draw::wrap("Unlocks: " + names, 36)) {
+            for (const auto& w : draw::wrap(trf("Unlocks: %s", names.c_str()), 36)) {
                 lines.push_back({(first ? "" : "  ") + w, 1.5f, kTipNow});
                 first = false;
             }
@@ -519,21 +537,21 @@ void TechTreeScreen::renderTooltip(SDL_Renderer* r, const TechTree& tree, const 
     for (const auto& p : n.prereqs) {
         const TechNode* other = tree.find(p.id);
         if (other && other->level < p.level)
-            lines.push_back({draw::strf("Needs %s Lv %d", other->name.c_str(), p.level), 1.5f, kTipBad});
+            lines.push_back({trf("Needs %s Lv %d", tr(other->name).c_str(), p.level), 1.5f, kTipBad});
     }
     lines.push_back({"", 0.8f, kWhite});
     if (maxed) {
-        lines.push_back({n.maxLevel > 1 ? "Fully upgraded!" : "UNLOCKED", 2.f, kTipGold});
+        lines.push_back({n.maxLevel > 1 ? tr("Fully upgraded!") : tr("UNLOCKED"), 2.f, kTipGold});
     } else if (demoLocked) {
-        lines.push_back({"Full game only", 2.f, kTipGold});
-        lines.push_back({"This one's past the edge of the demo", 1.25f, kTipDim});
+        lines.push_back({tr("Full game only"), 2.f, kTipGold});
+        lines.push_back({tr("This one's past the edge of the demo"), 1.25f, kTipDim});
     } else {
         double c = tree.cost(n);
-        lines.push_back({"Price: " + draw::number(c) + " coins", 2.f, coins >= c ? kTipGold : kTipBad});
-        const char* hint = !unlocked      ? "Locked"
-                           : coins < c    ? "Not enough coins"
-                           : touchMode_   ? "Tap again to buy"
-                                          : "Click to buy";
+        lines.push_back({trf("Price: %s coins", draw::number(c).c_str()), 2.f, coins >= c ? kTipGold : kTipBad});
+        const std::string& hint = !unlocked      ? tr("Locked")
+                                  : coins < c    ? tr("Not enough coins")
+                                  : touchMode_   ? tr("Tap again to buy")
+                                                 : tr("Click to buy");
         lines.push_back({hint, 1.25f, unlocked && coins >= c ? kTipGood : kTipDim});
     }
 

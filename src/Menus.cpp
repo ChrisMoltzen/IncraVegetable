@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Lang.h"
 #include "Screen.h"
 #include "Palette.h"
 #include "Farm.h"
@@ -43,11 +44,11 @@ void MainMenu::refresh(bool hasSave, const std::string& continueInfo) {
         actions_.push_back(a);
         y += h + 16.f;
     };
-    add("Continue", Action::Continue, ui::Style::Secondary, hasSave, hasSave ? continueInfo : "No saved farm yet");
-    add("New Game", Action::NewGame, ui::Style::Primary);
-    add("Load Game", Action::LoadGame, ui::Style::Primary, hasSave);
-    add("Settings", Action::Settings, ui::Style::Ghost);
-    if (kIsDesktop) add("Quit", Action::Quit, ui::Style::Ghost);
+    add(tr("Continue"), Action::Continue, ui::Style::Secondary, hasSave, hasSave ? continueInfo : tr("No saved farm yet"));
+    add(tr("New Game"), Action::NewGame, ui::Style::Primary);
+    add(tr("Load Game"), Action::LoadGame, ui::Style::Primary, hasSave);
+    add(tr("Settings"), Action::Settings, ui::Style::Ghost);
+    if (kIsDesktop) add(tr("Quit"), Action::Quit, ui::Style::Ghost);
 }
 
 MainMenu::Action MainMenu::handleEvent(const SDL_Event& e) {
@@ -82,7 +83,7 @@ void MainMenu::drawLogoBuiltin(SDL_Renderer* r, const SDL_FRect& rc) {
     draw::text(r, x + 6, y + 6, "IncraVegetable", scale, pal::alpha(pal::DeepSoil, 160));
     draw::text(r, x, y, "Incra", scale, pal::FreshLeaf);
     draw::text(r, x + draw::textWidth("Incra", scale), y, "Vegetable", scale, pal::Pumpkin);
-    draw::text(r, rc.x + rc.w * 0.5f, rc.y + 86.f * scale / 7.f, "an incremental farming game", 2.f * scale / 7.f,
+    draw::text(r, rc.x + rc.w * 0.5f, rc.y + 86.f * scale / 7.f, tr("an incremental farming game"), 2.f * scale / 7.f,
                SDL_Color{120, 60, 30, 255}, draw::Align::Center);
 }
 
@@ -147,15 +148,15 @@ void MainMenu::render(SDL_Renderer* r) const {
     buttons_.render(r);
     {
         screen::Pinned bottom(r, screen::Edge::Bottom); // in the screen's corner
-        draw::text(r, 1270, 704, std::string("v") + kGameVersion + (kIsDemo ? " demo" : ""), 1.5f,
+        draw::text(r, 1270, 704, std::string("v") + kGameVersion + (kIsDemo ? " " + tr("demo") : std::string()), 1.5f,
                    pal::alpha(pal::Cream, 180), draw::Align::Right);
     }
     if (kIsDemo) { // a little "DEMO" tag between the logo and the buttons
         const float x = 640.f, y = 184.f + bounce;
         draw::fillRoundRect(r, x - 70, y, 140, 40, 10, pal::Carrot);
         draw::fillRoundRect(r, x - 66, y + 4, 132, 32, 8, pal::Pumpkin);
-        draw::text(r, x + 2, y + 10, "DEMO", 2.5f, pal::DeepSoil, draw::Align::Center);
-        draw::text(r, x, y + 8, "DEMO", 2.5f, pal::Cream, draw::Align::Center);
+        draw::text(r, x + 2, y + 10, tr("DEMO"), 2.5f, pal::DeepSoil, draw::Align::Center);
+        draw::text(r, x, y + 8, tr("DEMO"), 2.5f, pal::Cream, draw::Align::Center);
     }
 }
 
@@ -184,11 +185,11 @@ void SlotMenu::startNaming(int slot, bool forNewFarm) {
     nameButtons_.buttons.clear();
     ui::Button ok;
     ok.rect = {400.f, 430.f, 220.f, 60.f};
-    ok.label = forNewFarm ? "Start" : "Rename";
+    ok.label = forNewFarm ? tr("Start") : tr("Rename");
     ok.style = ui::Style::Secondary;
     ui::Button cancel;
     cancel.rect = {660.f, 430.f, 220.f, 60.f};
-    cancel.label = "Cancel";
+    cancel.label = tr("Cancel");
     cancel.style = ui::Style::Ghost;
     nameButtons_.buttons = {ok, cancel};
     nameButtons_.clearPress();
@@ -210,19 +211,20 @@ void SlotMenu::buildButtons() {
         b.enabled = s.exists || mode_ == Mode::NewGame;
         b.textScale = 3.f;
         b.subScale = 1.75f;
-        b.label = s.exists && !s.name.empty() ? s.name : draw::strf("Slot %d", i + 1);
+        b.label = s.exists && !s.name.empty() ? s.name : trf("Slot %d", i + 1);
         if (s.exists) {
-            b.subLabel = draw::strf("Day %d   -   %s coins", s.day, draw::number(s.coins).c_str());
             std::string when = SaveSystem::formatTime(s.savedAt);
-            if (!when.empty()) b.subLabel += "   -   saved " + when;
+            b.subLabel = when.empty() ? trf("Day %d   -   %s coins", s.day, draw::number(s.coins).c_str())
+                                      : trf("Day %d   -   %s coins   -   saved %s", s.day, draw::number(s.coins).c_str(),
+                                            when.c_str());
         } else {
-            b.subLabel = mode_ == Mode::NewGame ? "Empty - start a new farm here" : "Empty";
+            b.subLabel = mode_ == Mode::NewGame ? tr("Empty - start a new farm here") : tr("Empty");
         }
         buttons_.buttons.push_back(b);
     }
     ui::Button back;
     back.rect = {64.f, 630.f, 200.f, 58.f};
-    back.label = "< Back";
+    back.label = tr("< Back");
     back.style = ui::Style::Ghost;
     buttons_.buttons.push_back(back);
     // A Rename button beside each farm.
@@ -231,7 +233,7 @@ void SlotMenu::buildButtons() {
         if (!slots_[i].exists) continue;
         ui::Button rn;
         rn.rect = {1006.f, 160.f + i * 135.f + 30.f, 150.f, 52.f};
-        rn.label = "Rename";
+        rn.label = tr("Rename");
         rn.style = ui::Style::Ghost;
         rn.textScale = 2.f;
         buttons_.buttons.push_back(rn);
@@ -241,11 +243,11 @@ void SlotMenu::buildButtons() {
     confirmButtons_.buttons.clear();
     ui::Button yes;
     yes.rect = {400.f, 420.f, 220.f, 60.f};
-    yes.label = "Overwrite";
+    yes.label = tr("Overwrite");
     yes.style = ui::Style::Danger;
     ui::Button no;
     no.rect = {660.f, 420.f, 220.f, 60.f};
-    no.label = "Cancel";
+    no.label = tr("Cancel");
     no.style = ui::Style::Ghost;
     confirmButtons_.buttons = {yes, no};
 }
@@ -260,13 +262,16 @@ SlotMenu::Action SlotMenu::handleEvent(const SDL_Event& e) {
             return isNew ? Action::Chosen : Action::Renamed;
         };
         if (e.type == SDL_EVENT_TEXT_INPUT) {
-            for (const char* c = e.text.text; *c; ++c) // plain letters, numbers and punctuation (what the font has)
-                if (*c >= 32 && *c < 127 && static_cast<int>(nameText_.size()) < SaveSystem::kMaxNameLength)
-                    nameText_ += *c;
+            // Letters, numbers, punctuation and accented letters (what the font has).
+            nameText_ = SaveSystem::typeable(nameText_ + e.text.text);
             return Action::None;
         }
         if (e.type == SDL_EVENT_KEY_DOWN) {
-            if (e.key.key == SDLK_BACKSPACE && !nameText_.empty()) nameText_.pop_back();
+            if (e.key.key == SDLK_BACKSPACE && !nameText_.empty()) {
+                while (nameText_.size() > 1 && (static_cast<unsigned char>(nameText_.back()) & 0xC0) == 0x80)
+                    nameText_.pop_back(); // the rest of an accented letter (UTF-8)
+                nameText_.pop_back();
+            }
             else if (e.key.key == SDLK_RETURN || e.key.key == SDLK_KP_ENTER) return finish();
             else if (isBack(e)) stopNaming();
             return Action::None;
@@ -316,23 +321,23 @@ SlotMenu::Action SlotMenu::handleEvent(const SDL_Event& e) {
 void SlotMenu::render(SDL_Renderer* r) const {
     grass::drawField(r); // the farm's field, a little darker
 
-    const char* title = mode_ == Mode::NewGame ? "New Game" : "Load Game";
-    draw::textShadow(r, 640, 50, title, 5.f, kWhite, draw::Align::Center);
-    draw::text(r, 640, 108, mode_ == Mode::NewGame ? "Choose a slot for your new farm" : "Choose a farm to load", 2.f,
-               SDL_Color{200, 225, 190, 255}, draw::Align::Center);
+    const std::string& title = mode_ == Mode::NewGame ? tr("New Game") : tr("Load Game");
+    draw::textShadow(r, 640, 50, title, draw::fitScale(title, 5.f, 1180.f), kWhite, draw::Align::Center);
+    const std::string& sub = mode_ == Mode::NewGame ? tr("Choose a slot for your new farm") : tr("Choose a farm to load");
+    draw::text(r, 640, 108, sub, draw::fitScale(sub, 2.f, 1180.f), SDL_Color{200, 225, 190, 255}, draw::Align::Center);
     buttons_.render(r);
 
     if (confirming_ >= 0) {
         ui::dim(r, 150);
         SDL_FRect panel{340.f, 220.f, 600.f, 290.f};
         ui::drawPanel(r, panel);
-        const std::string what = slots_[confirming_].name.empty() ? draw::strf("Slot %d", confirming_ + 1)
+        const std::string what = slots_[confirming_].name.empty() ? trf("Slot %d", confirming_ + 1)
                                                                   : "\"" + slots_[confirming_].name + "\"";
-        draw::text(r, 640, 255, "Overwrite " + what + "?", 3.f, kInk, draw::Align::Center);
+        draw::text(r, 640, 255, trf("Overwrite %s?", what.c_str()), 3.f, kInk, draw::Align::Center);
         const SlotInfo& s = slots_[confirming_];
-        draw::text(r, 640, 315, draw::strf("The farm on day %d with %s coins", s.day, draw::number(s.coins).c_str()),
+        draw::text(r, 640, 315, trf("The farm on day %d with %s coins", s.day, draw::number(s.coins).c_str()),
                    1.75f, kInkSoft, draw::Align::Center);
-        draw::text(r, 640, 345, "will be lost for good.", 1.75f, kInkSoft, draw::Align::Center);
+        draw::text(r, 640, 345, tr("will be lost for good."), 1.75f, kInkSoft, draw::Align::Center);
         confirmButtons_.render(r);
     }
 
@@ -340,18 +345,18 @@ void SlotMenu::render(SDL_Renderer* r) const {
         ui::dim(r, 150);
         SDL_FRect panel{340.f, 200.f, 600.f, 320.f};
         ui::drawPanel(r, panel);
-        draw::text(r, 640, 235, namingNew_ ? "Name your farm" : "Rename your farm", 3.f, kInk, draw::Align::Center);
+        draw::text(r, 640, 235, namingNew_ ? tr("Name your farm") : tr("Rename your farm"), 3.f, kInk, draw::Align::Center);
         // The text box, with a blinking caret.
         SDL_FRect box{400.f, 300.f, 480.f, 60.f};
         draw::fillRoundRect(r, box.x, box.y, box.w, box.h, 10.f, pal::DeepSoil);
         draw::fillRoundRect(r, box.x + 3, box.y + 3, box.w - 6, box.h - 6, 8.f, pal::Parchment);
-        const std::string placeholder = draw::strf("Slot %d", naming_ + 1);
+        const std::string placeholder = trf("Slot %d", naming_ + 1);
         const bool empty = nameText_.empty();
         const float tx = box.x + 18, ty = box.y + 20;
         draw::text(r, tx, ty, empty ? placeholder : nameText_, 2.5f, empty ? pal::alpha(pal::Tilled, 140) : kInk);
         if ((SDL_GetTicks() / 500) % 2 == 0)
             draw::fillRect(r, tx + (empty ? 0.f : draw::textWidth(nameText_, 2.5f)) + 2, ty - 2, 3, 24, kInk);
-        draw::text(r, 640, 380, draw::strf("Up to %d letters. Leave it blank for \"%s\".", SaveSystem::kMaxNameLength,
+        draw::text(r, 640, 380, trf("Up to %d letters. Leave it blank for \"%s\".", SaveSystem::kMaxNameLength,
                                            placeholder.c_str()),
                    1.25f, kInkSoft, draw::Align::Center);
         nameButtons_.render(r);
@@ -362,42 +367,75 @@ void SlotMenu::render(SDL_Renderer* r) const {
 // Settings
 // ===========================================================================
 
-void SettingsMenu::open(Settings* settings, std::vector<Resolution> resolutions) {
+void SettingsMenu::open(Settings* settings, std::vector<Resolution> resolutions, std::vector<lang::Language> languages,
+                        const std::string& inUse) {
     settings_ = settings;
     resolutions_ = std::move(resolutions);
+    languages_ = std::move(languages);
+    languageInUse_ = inUse;
     dragging_ = None;
     buildButtons();
 }
 
+void SettingsMenu::setLanguageInUse(const std::string& code) {
+    languageInUse_ = code;
+    buildButtons();
+}
+
+// Rows, from the top of the panel: title, Music, Sound FX, Language, (Resolution, Fullscreen,) Done.
+float SettingsMenu::top() const { return kIsDesktop ? 50.f : 90.f; }
+
+int SettingsMenu::currentLanguage() const {
+    for (int i = 0; i < static_cast<int>(languages_.size()); ++i)
+        if (languages_[i].code == languageInUse_) return i;
+    return 0;
+}
+
 void SettingsMenu::buildButtons() {
     buttons_.buttons.clear();
+    const float t = top();
+    {
+        const int cur = currentLanguage(), n = static_cast<int>(languages_.size());
+        ui::Button prev;
+        prev.rect = {560.f, t + 284.f, 56.f, 52.f};
+        prev.label = "<";
+        prev.style = ui::Style::Ghost;
+        prev.enabled = n > 1 && cur > 0;
+        ui::Button next = prev;
+        next.rect = {880.f, t + 284.f, 56.f, 52.f};
+        next.label = ">";
+        next.enabled = n > 1 && cur + 1 < n;
+        buttons_.buttons = {prev, next};
+    }
     if (kIsDesktop) {
         bool windowed = !settings_->fullscreen;
         int cur = currentResolution();
         ui::Button prev;
-        prev.rect = {560.f, 372.f, 56.f, 52.f};
+        prev.rect = {560.f, t + 364.f, 56.f, 52.f};
         prev.label = "<";
         prev.style = ui::Style::Ghost;
         prev.enabled = windowed && cur > 0;
         ui::Button next = prev;
-        next.rect = {880.f, 372.f, 56.f, 52.f};
+        next.rect = {880.f, t + 364.f, 56.f, 52.f};
         next.label = ">";
         next.enabled = windowed && cur + 1 < static_cast<int>(resolutions_.size());
         ui::Button fs;
-        fs.rect = {560.f, 452.f, 376.f, 52.f};
-        fs.label = settings_->fullscreen ? "On" : "Off";
+        fs.rect = {560.f, t + 444.f, 376.f, 52.f};
+        fs.label = settings_->fullscreen ? tr("On") : tr("Off");
         fs.style = settings_->fullscreen ? ui::Style::Secondary : ui::Style::Ghost;
-        buttons_.buttons = {prev, next, fs};
+        buttons_.buttons.push_back(prev);
+        buttons_.buttons.push_back(next);
+        buttons_.buttons.push_back(fs);
     }
     ui::Button back;
-    back.rect = {640.f - 130.f, kIsDesktop ? 548.f : 420.f, 260.f, 60.f};
-    back.label = "Done";
+    back.rect = {640.f - 130.f, t + (kIsDesktop ? 538.f : 380.f), 260.f, 60.f};
+    back.label = tr("Done");
     back.style = ui::Style::Primary;
     buttons_.buttons.push_back(back);
 }
 
 SDL_FRect SettingsMenu::sliderTrack(int which) const {
-    return SDL_FRect{560.f, which == Music ? 233.f : 313.f, 300.f, 14.f};
+    return SDL_FRect{560.f, top() + (which == Music ? 143.f : 223.f), 300.f, 14.f};
 }
 
 float* SettingsMenu::sliderValue(int which) const {
@@ -451,6 +489,14 @@ SettingsMenu::Action SettingsMenu::handleEvent(const SDL_Event& e) {
     if (i < 0) return Action::None;
     if (i == static_cast<int>(buttons_.buttons.size()) - 1) return Action::Back;
 
+    // 0 / 1: previous / next language.
+    if (i == 0 || i == 1) {
+        const int cur = std::clamp(currentLanguage() + (i == 0 ? -1 : 1), 0, static_cast<int>(languages_.size()) - 1);
+        if (languages_.empty()) return Action::None;
+        settings_->language = languages_[cur].code;
+        return Action::LanguageChanged; // the game loads it and calls setLanguageInUse()
+    }
+    i -= 2;
     // Desktop-only buttons: 0 = previous resolution, 1 = next, 2 = fullscreen.
     if (i == 0 || i == 1) {
         int cur = std::clamp(currentResolution() + (i == 0 ? -1 : 1), 0, static_cast<int>(resolutions_.size()) - 1);
@@ -466,16 +512,19 @@ SettingsMenu::Action SettingsMenu::handleEvent(const SDL_Event& e) {
 void SettingsMenu::render(SDL_Renderer* r) const {
     if (!settings_) return;
     ui::dim(r, 140);
-    SDL_FRect panel{290.f, 90.f, 700.f, kIsDesktop ? 550.f : 420.f};
+    const float t = top();
+    SDL_FRect panel{290.f, t, 700.f, kIsDesktop ? 630.f : 470.f};
     ui::drawPanel(r, panel);
-    draw::text(r, 640, 128, "Settings", 4.f, kInk, draw::Align::Center);
+    draw::text(r, 640, t + 38.f, tr("Settings"), 4.f, kInk, draw::Align::Center);
 
-    auto label = [&](float y, const char* text) { draw::text(r, 340, y, text, 2.25f, kInk); };
+    auto label = [&](float y, const std::string& s) { // long translations shrink to fit before the controls
+        draw::text(r, 340, y, s, std::min(2.25f, 205.f / std::max(1.f, draw::textWidth(s, 1.f))), kInk);
+    };
 
     for (int which : {Music, Sfx}) {
         SDL_FRect t = sliderTrack(which);
         float v = *sliderValue(which);
-        label(t.y - 2, which == Music ? "Music" : "Sound FX");
+        label(t.y - 2, which == Music ? tr("Music") : tr("Sound FX"));
         art::draw(r, "ui/slider_track", t);
         if (v > 0.f && !art::drawFill(r, "ui/slider_fill", t, v))
             drawSliderBarBuiltin(r, SDL_FRect{t.x, t.y, std::max(t.h, t.w * v), t.h}, true);
@@ -483,16 +532,22 @@ void SettingsMenu::render(SDL_Renderer* r) const {
         bool active = dragging_ == which;
         float knob = active ? 22.f : 20.f;
         art::draw(r, "ui/slider_knob", SDL_FRect{hx - knob, hy - knob, knob * 2, knob * 2});
-        draw::text(r, 886, t.y - 2, v <= 0.001f ? "Off" : draw::strf("%d%%", static_cast<int>(std::lround(v * 100))),
+        draw::text(r, 886, t.y - 2, v <= 0.001f ? tr("Off") : draw::strf("%d%%", static_cast<int>(std::lround(v * 100))),
                    2.f, kInkSoft);
     }
 
+    label(t + 298.f, tr("Language"));
+    if (!languages_.empty()) {
+        const std::string& name = languages_[currentLanguage()].name;
+        draw::text(r, 748, t + 299.f, name, std::min(2.f, 240.f / std::max(1.f, draw::textWidth(name, 1.f))), kInk,
+                   draw::Align::Center);
+    }
     if (kIsDesktop) {
-        label(388, "Resolution");
+        label(t + 378.f, tr("Resolution"));
         const auto& res = resolutions_[std::clamp(currentResolution(), 0, static_cast<int>(resolutions_.size()) - 1)];
-        std::string text = settings_->fullscreen ? "Full screen" : draw::strf("%d x %d", res.w, res.h);
-        draw::text(r, 748, 389, text, 2.f, settings_->fullscreen ? kInkSoft : kInk, draw::Align::Center);
-        label(468, "Fullscreen");
+        std::string text = settings_->fullscreen ? tr("Full screen") : draw::strf("%d x %d", res.w, res.h);
+        draw::text(r, 748, t + 379.f, text, 2.f, settings_->fullscreen ? kInkSoft : kInk, draw::Align::Center);
+        label(t + 458.f, tr("Fullscreen"));
     }
     buttons_.render(r);
 }
@@ -505,7 +560,7 @@ void PauseMenu::open() {
     buttons_.buttons.clear();
     actions_.clear();
     float y = 250.f;
-    auto add = [&](const char* label, Action a, ui::Style style) {
+    auto add = [&](const std::string& label, Action a, ui::Style style) {
         ui::Button b;
         b.rect = {640.f - 170.f, y, 340.f, 60.f};
         b.label = label;
@@ -514,10 +569,10 @@ void PauseMenu::open() {
         actions_.push_back(a);
         y += 76.f;
     };
-    add("Resume", Action::Resume, ui::Style::Secondary);
-    add("Settings", Action::Settings, ui::Style::Ghost);
-    add("Main Menu", Action::MainMenu, ui::Style::Primary);
-    if (kIsDesktop) add("Quit Game", Action::Quit, ui::Style::Danger);
+    add(tr("Resume"), Action::Resume, ui::Style::Secondary);
+    add(tr("Settings"), Action::Settings, ui::Style::Ghost);
+    add(tr("Main Menu"), Action::MainMenu, ui::Style::Primary);
+    if (kIsDesktop) add(tr("Quit Game"), Action::Quit, ui::Style::Danger);
 }
 
 PauseMenu::Action PauseMenu::handleEvent(const SDL_Event& e) {
@@ -530,8 +585,9 @@ void PauseMenu::render(SDL_Renderer* r) const {
     ui::dim(r, 150);
     SDL_FRect panel{640.f - 230.f, 140.f, 460.f, kIsDesktop ? 450.f : 374.f};
     ui::drawPanel(r, panel);
-    draw::text(r, 640, 175, "Paused", 4.f, kInk, draw::Align::Center);
-    draw::text(r, 640, 218, "Your farm is saved automatically", 1.5f, kInkSoft, draw::Align::Center);
+    draw::text(r, 640, 175, tr("Paused"), 4.f, kInk, draw::Align::Center);
+    const std::string& saved = tr("Your farm is saved automatically");
+    draw::text(r, 640, 218, saved, draw::fitScale(saved, 1.5f, panel.w - 40.f), kInkSoft, draw::Align::Center);
     buttons_.render(r);
 }
 
