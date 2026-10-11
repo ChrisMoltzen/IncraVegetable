@@ -275,6 +275,16 @@ Each build also passes unlocks on to the store's own achievements, using the id 
 | **Seasoned Farmer**: Reach day 50. | `seasoned_farmer` |
 | **The Barn Is Full**: Buy every upgrade. | `the_barn_is_full` |
 
+**Your own trophies.** Every achievement can have its own picture: put `assets/achievements/<id>.png` (e.g. `achievements/green_thumb.png`, 64 x 64 is the designed size) in the assets folder. It's shown on the achievements page and the unlock banner. Before it's unlocked, the page shows `achievements/<id>_locked.png` if you've drawn one, or else your picture as a dark silhouette. Achievements without their own picture use the general trophy (`ui/trophy` and `ui/trophy_locked`, which you can also replace). The art templates (`--export-art-templates`) include a starting image for each, and F5 reloads them while the game is running.
+
+**Icons for the stores.** `make achievement-icons` (or run the game with `--export-achievement-icons [folder]`) writes every trophy, on the game's dark green, at the sizes the stores ask for:
+
+| Folder | Size | For |
+| --- | --- | --- |
+| `achievement_icons/steam/<id>.png` and `<id>_locked.png` | 64 x 64 | Steamworks: the "achieved" and "unachieved" icons |
+| `achievement_icons/game_center/<id>.png` | 1024 x 1024 | App Store Connect, Game Center achievement image |
+| `achievement_icons/google_play/<id>.png` | 512 x 512 | Play Console achievement icon (Play greys out the locked one itself) |
+
 **Steam** (desktop):
 1. In Steamworks, under *Stats & Achievements > Achievements*, add each one with its **API Name** set to the id above, give it a name, description and icons, and publish.
 2. Download the Steamworks SDK (partner.steamgames.com > SDK, version 1.61 or newer) and unzip it.

@@ -270,3 +270,14 @@ android-install: android
 	adb install -r "$(ANDROID_DIR)/$(PROJECTNAME).apk"
 
 .PHONY: android android-release demo-android demo-android-release android-install
+
+# ---------------------------------------------------------------------------
+# Achievement icons for the stores, made from your trophy art (assets/achievements/,
+# see the README, "Achievements"): achievement_icons/steam (64 x 64, unlocked and
+# locked), game_center (1024 x 1024) and google_play (512 x 512).
+# On Windows, run: build\IncraVegetable.exe --export-achievement-icons
+# ---------------------------------------------------------------------------
+achievement-icons: default
+	$(OUTPUT_DIR)/$(PROJECTNAME) --export-achievement-icons achievement_icons
+
+.PHONY: achievement-icons

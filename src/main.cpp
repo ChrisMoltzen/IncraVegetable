@@ -22,6 +22,17 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     }
     *appstate = game;
 
+    // IncraVegetable --export-achievement-icons [folder]
+    // Writes each achievement's trophy at the sizes Steam, Game Center and Google Play want, then exits.
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "--export-achievement-icons") {
+            std::string folder = (i + 1 < argc) ? argv[i + 1] : "achievement_icons";
+            int n = game->exportAchievementIcons(folder);
+            SDL_Log("Wrote %d achievement icons to %s", n, folder.c_str());
+            return SDL_APP_SUCCESS;
+        }
+    }
+
     // IncraVegetable --export-art-templates [folder]
     // Writes every built-in picture as a PNG to paint over, then exits.
     for (int i = 1; i < argc; ++i) {

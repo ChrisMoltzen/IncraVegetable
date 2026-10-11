@@ -36,6 +36,8 @@ public:
 
     // Writes the built-in art as PNG templates (see Art.h). Returns files written.
     int exportArtTemplates(const std::string& folder);
+    // Every achievement's trophy as the images Steam, Game Center and Google Play ask for.
+    int exportAchievementIcons(const std::string& folder);
 
 private:
     enum class State { MainMenu, SlotSelect, Settings, Farming, DaySummary, TechTree, Paused, Stats, Complete, Achievements };

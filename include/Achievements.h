@@ -89,8 +89,13 @@ public:
     bool handleEvent(const SDL_Event& e); // true = close
     void render(SDL_Renderer* r, const Achievements& a) const;
 
-    // The trophy: in the top-right corner of the main menu, on the banner, and on the page.
-    static void drawTrophy(SDL_Renderer* r, const SDL_FRect& rc, bool got);
+    // An achievement's trophy (on the banner and the page). Your own art for it, if you've
+    // drawn some: assets/achievements/<id>.png, and optionally <id>_locked.png for before
+    // it's unlocked (without one, <id>.png is shown faded). Achievements without their own
+    // art use ui/trophy and ui/trophy_locked. index -1 = the general trophy.
+    static void drawTrophy(SDL_Renderer* r, const SDL_FRect& rc, bool got, int index = -1);
+    // The art names for an achievement's own trophy.
+    static std::string artName(int index, bool got);
     static void drawTrophyBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool got);
     static void drawButton(SDL_Renderer* r, const SDL_FRect& rc, bool hovered); // the main menu's trophy button
     static void drawButtonBuiltin(SDL_Renderer* r, const SDL_FRect& rc, bool hovered);

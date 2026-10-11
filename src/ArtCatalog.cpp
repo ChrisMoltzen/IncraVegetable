@@ -195,6 +195,18 @@ void registerCatalog(const std::vector<std::pair<std::string, std::string>>& tec
          [](SDL_Renderer* r, const SDL_FRect& rc) { AchievementsScreen::drawTrophyBuiltin(r, rc, true); }});
     add({"ui/trophy_locked", 64, 64, "An achievement you haven't got yet", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { AchievementsScreen::drawTrophyBuiltin(r, rc, false); }});
+    // Each achievement can have its own trophy (optional). The templates show the
+    // general trophy (your ui/trophy if you've drawn one) to start from.
+    for (int i = 0; i < static_cast<int>(Achievements::all().size()); ++i) {
+        const AchievementDef& a = Achievements::all()[i];
+        add({AchievementsScreen::artName(i, true), 64, 64,
+             std::string("Optional trophy for \"") + a.name + "\" (" + a.description +
+                 ") Leave it out to use ui/trophy",
+             false, [](SDL_Renderer* r, const SDL_FRect& rc) { AchievementsScreen::drawTrophy(r, rc, true); }});
+        add({AchievementsScreen::artName(i, false), 64, 64,
+             std::string("Optional: \"") + a.name + "\" before it's unlocked. Leave it out to show its trophy faded",
+             false, [i](SDL_Renderer* r, const SDL_FRect& rc) { AchievementsScreen::drawTrophy(r, rc, false, i); }});
+    }
     add({"ui/debug_button", 80, 80, "Debug screen button, bottom-left", false,
          [](SDL_Renderer* r, const SDL_FRect& rc) { DebugMenu::drawOpenButtonBuiltin(r, rc, false); }});
     add({"ui/debug_button_hover", 80, 80, "Debug button with the mouse over it (optional)", false,
