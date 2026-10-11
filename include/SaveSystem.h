@@ -19,6 +19,7 @@ struct Settings {
     int windowHeight = 720;   // desktop only
     bool fullscreen = false;  // desktop only
     int lastSlot = -1;        // slot used by "Continue"; -1 = none yet
+    std::string language;     // file in assets/lang/ (e.g. "es"); "" = the device's language
 };
 
 struct SlotInfo {
@@ -39,6 +40,7 @@ public:
     bool readSlot(int slot, std::string& out) const; // falls back to the .bak file
     bool renameSlot(int slot, const std::string& name) const; // changes just the farm's name in a save
     static std::string cleanName(const std::string& name);  // trims, drops characters the font hasn't got, max kMaxNameLength
+    static std::string typeable(const std::string& utf8);    // the same without trimming (while typing)
     static constexpr int kMaxNameLength = 20;
     SlotInfo slotInfo(int slot) const;
     bool anySaves() const;

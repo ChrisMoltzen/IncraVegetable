@@ -1,5 +1,7 @@
 #include "TechData.h"
 
+#include "Lang.h"
+
 #include "CropLooks.h"
 #include "TileShapes.h"
 
@@ -147,37 +149,40 @@ void setStat(Stats& s, int index, float v) {
 std::string formatStat(int index, const Stats& s) {
     float v = getStat(s, index);
     switch (index) {
-    case 0: return fmt("room for %.0f plants", static_cast<double>(s.patchSize) * s.patchSize);
-    case 1: return fmt(s.maxCrops == 1 ? "%.0f crop at once" : "%.0f crops at once", v);
-    case 2: return fmt(std::fabs(v - std::round(v)) < 0.01f ? "%.0f second days" : "%.1f second days", v);
-    case 3: return fmt("%.2fs to pick", v);
-    case 4: return fmt("%.2fs to grow", v);
-    case 5: return fmt("x%.2f coins", v);
-    case 6: return s.reach <= 0 ? std::string("1 plant at a time") : fmt("reach radius %.0f", v);
+    case 0: return fmt(trc("room for %.0f plants"), static_cast<double>(s.patchSize) * s.patchSize);
+    case 1: return fmt(s.maxCrops == 1 ? trc("%.0f crop at once") : trc("%.0f crops at once"), v);
+    case 2: return fmt(std::fabs(v - std::round(v)) < 0.01f ? trc("%.0f second days") : trc("%.1f second days"), v);
+    case 3: return fmt(trc("%.2fs to pick"), v);
+    case 4: return fmt(trc("%.2fs to grow"), v);
+    case 5: return fmt(trc("x%.2f coins"), v);
+    case 6: return s.reach <= 0 ? tr("1 plant at a time") : fmt(trc("reach radius %.0f"), v);
     case 7: {
         // Names of the crops this level plants, e.g. "lettuce, carrot & pumpkin".
         std::vector<std::string> names;
         for (const auto& c : crops())
             if (s.cropUnlocked(c.tier)) {
-                std::string n = c.name;
-                for (char& ch : n) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+                std::string n = tr(c.name);
+                // Small letters in English ("lettuce & carrot"); other languages keep their own.
+                if (lang::current() == "en")
+                    for (char& ch : n) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
                 names.push_back(n);
             }
-        if (names.empty()) return std::string("no crops");
-        if (names.size() > 4) return names[0] + ", " + names[1] + " + " + std::to_string(names.size() - 2) + " more";
+        if (names.empty()) return tr("no crops");
+        if (names.size() > 4)
+            return lang::trf("%s, %s + %d more", names[0].c_str(), names[1].c_str(), static_cast<int>(names.size() - 2));
         std::string out;
         for (size_t k = 0; k < names.size(); ++k)
-            out += (k == 0 ? "" : k + 1 == names.size() ? " & " : ", ") + names[k];
+            out += (k == 0 ? "" : k + 1 == names.size() ? " " + tr("&") + " " : std::string(", ")) + names[k];
         return out;
     }
-    case 8: return fmt("%.0f%% ripe at dawn", std::clamp(v, 0.f, 1.f) * 100.0);
-    case 9: return fmt(std::fabs(v - std::round(v)) < 0.01f ? "%.0f%% auto-pick chance" : "%.1f%% auto-pick chance", v);
-    case 10: return s.autoPickCount <= 0 ? std::string("no auto-pick")
-                   : fmt(s.autoPickCount == 1 ? "auto-picks %.0f crop" : "auto-picks up to %.0f crops", v);
-    case 11: return v <= 0.f ? std::string("auto-pick off") : fmt("auto-pick within %.1f plants", v);
-    case 12: return s.farmers <= 0 ? std::string("no farmers") : fmt(s.farmers == 1 ? "%.0f farmer" : "%.0f farmers", v);
-    case 13: return fmt("farmers walk %.2f plants/s", v);
-    case 14: return fmt("farmers pick in %.2fs", v);
+    case 8: return fmt(trc("%.0f%% ripe at dawn"), std::clamp(v, 0.f, 1.f) * 100.0);
+    case 9: return fmt(std::fabs(v - std::round(v)) < 0.01f ? trc("%.0f%% auto-pick chance") : trc("%.1f%% auto-pick chance"), v);
+    case 10: return s.autoPickCount <= 0 ? tr("no auto-pick")
+                   : fmt(s.autoPickCount == 1 ? trc("auto-picks %.0f crop") : trc("auto-picks up to %.0f crops"), v);
+    case 11: return v <= 0.f ? tr("auto-pick off") : fmt(trc("auto-pick within %.1f plants"), v);
+    case 12: return s.farmers <= 0 ? tr("no farmers") : fmt(s.farmers == 1 ? trc("%.0f farmer") : trc("%.0f farmers"), v);
+    case 13: return fmt(trc("farmers walk %.2f plants/s"), v);
+    case 14: return fmt(trc("farmers pick in %.2fs"), v);
     }
     return "";
 }
@@ -285,7 +290,7 @@ std::string describe(const TechDef& t, int level) {
         if (!out.empty()) out += ", ";
         out += formatStat(idx, s);
     }
-    return out.empty() ? std::string("no effect") : out;
+    return out.empty() ? tr("no effect") : out;
 }
 
 double costAt(const TechDef& t, int owned) { return std::ceil(t.baseCost * std::pow(t.costGrowth, owned)); }

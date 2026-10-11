@@ -26,13 +26,19 @@ void thickLine(SDL_Renderer* r, float x1, float y1, float x2, float y2, float th
 void arc(SDL_Renderer* r, float cx, float cy, float radius, float thickness, float from, float to, SDL_Color c,
          int segments = 48);
 
-// Text uses SDL's 8x8 debug font, scaled up. Scale 2 = 16px tall glyphs.
+// Text is UTF-8, drawn with assets/ui/font.png (plus ui/font_latin1.png for
+// accented letters), or SDL's 8x8 debug font if there's no font image. Scale 2 =
+// 16px tall glyphs.
 void text(SDL_Renderer* r, float x, float y, const std::string& s, float scale, SDL_Color c,
           Align align = Align::Left);
 // Same as text() but with a dark drop shadow, easier to read over busy backgrounds.
 void textShadow(SDL_Renderer* r, float x, float y, const std::string& s, float scale, SDL_Color c,
                 Align align = Align::Left);
 float textWidth(const std::string& s, float scale);
+// `scale`, or less if s would be wider than maxWidth at it (long translations).
+float fitScale(const std::string& s, float scale, float maxWidth);
+// How many characters s has (text is UTF-8, so not always its size in bytes).
+size_t length(const std::string& s);
 
 // Splits text into lines of at most maxChars characters (on word boundaries).
 std::vector<std::string> wrap(const std::string& s, size_t maxChars);

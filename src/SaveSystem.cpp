@@ -1,5 +1,7 @@
 #include "SaveSystem.h"
 
+#include "Lang.h"
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
@@ -178,12 +180,34 @@ bool SaveSystem::readExtra(const std::string& name, std::string& out) const {
            (readFile(dir_ + name + ".bak", file) && decodeSave(file, out));
 }
 
-std::string SaveSystem::cleanName(const std::string& raw) {
+std::string SaveSystem::typeable(const std::string& raw) {
+    // UTF-8 in and out. Kept: plain ASCII and the accented letters U+00A0..U+00FF
+    // (what the pixel font has, see FontLatin.h).
     std::string out;
-    for (char c : raw) {
-        if (c >= 32 && c < 127) out += c; // the pixel font is plain ASCII
-        if (static_cast<int>(out.size()) >= kMaxNameLength) break;
+    int count = 0;
+    for (size_t i = 0; i < raw.size() && count < kMaxNameLength;) {
+        const unsigned char c = static_cast<unsigned char>(raw[i]);
+        if (c >= 32 && c < 127) {
+            out += static_cast<char>(c);
+            ++count;
+            ++i;
+        } else if ((c == 0xC2 || c == 0xC3) && i + 1 < raw.size()) {
+            const unsigned cp = ((c & 0x1Fu) << 6) | (static_cast<unsigned char>(raw[i + 1]) & 0x3F);
+            if (cp >= 0xA1 && cp != 0xAD) {
+                out += raw.substr(i, 2);
+                ++count;
+            }
+            i += 2;
+        } else {
+            ++i;
+            while (i < raw.size() && (static_cast<unsigned char>(raw[i]) & 0xC0) == 0x80) ++i; // skip the rest of it
+        }
     }
+    return out;
+}
+
+std::string SaveSystem::cleanName(const std::string& raw) {
+    std::string out = typeable(raw);
     const size_t a = out.find_first_not_of(' '), b = out.find_last_not_of(' ');
     return a == std::string::npos ? std::string() : out.substr(a, b - a + 1);
 }
@@ -268,6 +292,7 @@ Settings SaveSystem::loadSettings() const {
         else if (key == "window") ss >> s.windowWidth >> s.windowHeight;
         else if (key == "fullscreen") ss >> s.fullscreen;
         else if (key == "lastSlot") ss >> s.lastSlot;
+        else if (key == "language") ss >> s.language;
     }
     s.musicVolume = std::clamp(s.musicVolume, 0.f, 1.f);
     s.sfxVolume = std::clamp(s.sfxVolume, 0.f, 1.f);
@@ -287,13 +312,15 @@ void SaveSystem::saveSettings(const Settings& s) const {
     out << "window " << s.windowWidth << " " << s.windowHeight << "\n";
     out << "fullscreen " << (s.fullscreen ? 1 : 0) << "\n";
     out << "lastSlot " << s.lastSlot << "\n";
+    if (!s.language.empty()) out << "language " << s.language << "\n";
     writeFileAtomic(dir_ + "settings.txt", out.str(), false);
 }
 
 std::string SaveSystem::formatTime(SDL_Time t) {
-    static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    static const char* months[] = {N_("Jan"), N_("Feb"), N_("Mar"), N_("Apr"), N_("May"), N_("Jun"),
+                                   N_("Jul"), N_("Aug"), N_("Sep"), N_("Oct"), N_("Nov"), N_("Dec")};
     SDL_DateTime dt;
     if (t == 0 || !SDL_TimeToDateTime(t, &dt, true)) return "";
-    return draw::strf("%d %s %02d:%02d", dt.day, months[std::clamp(dt.month, 1, 12) - 1], dt.hour, dt.minute);
+    // "6 Oct 14:32": the month names and the order are translatable.
+    return trf("%d %s %02d:%02d", dt.day, tr(months[std::clamp(dt.month, 1, 12) - 1]).c_str(), dt.hour, dt.minute);
 }

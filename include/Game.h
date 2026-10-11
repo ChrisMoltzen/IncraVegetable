@@ -66,6 +66,9 @@ private:
     void resume();
     void openSettings();
     void closeSettings();
+    void findLanguages();  // what's in assets/lang
+    void applyLanguage();  // loads the language picked in Settings (or the device's)
+    bool readLanguageFile(const std::string& code, std::string& out) const;
     bool inGame() const;
 
     // Saving
@@ -136,6 +139,7 @@ private:
     Audio audio_;
     SaveSystem saves_;
     Settings settings_;
+    std::vector<lang::Language> languages_; // English first
     std::mt19937 rng_{std::random_device{}()};
 
     SlotMenu::Mode slotMode_ = SlotMenu::Mode::NewGame;

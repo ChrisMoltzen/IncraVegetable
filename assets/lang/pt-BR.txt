@@ -1,0 +1,266 @@
+# IncraVegetable - Portuguese (Brazil). See include/Lang.h for how this file works,
+# and run tools/lang/update.py after changing the game's text.
+@name Português (Brasil)
+@locale pt-BR
+
+
+# ---- src/Achievements.cpp
+First Harvest = Primeira colheita
+Pick your first vegetable. = Colha seu primeiro legume.
+Green Thumb = Dedo verde
+Pick 1,000 vegetables. = Colha 1.000 legumes.
+Bumper Crop = Colheita farta
+Pick 50,000 vegetables. = Colha 50.000 legumes.
+Pocket Money = Trocados
+Earn 1,000 coins. = Ganhe 1.000 moedas.
+Market Trader = Feirante
+Earn 100,000 coins. = Ganhe 100.000 moedas.
+Vegetable Tycoon = Magnata dos legumes
+Earn 5,000,000 coins. = Ganhe 5.000.000 de moedas.
+Market Day = Dia de feira
+Earn 1,000 coins in a single day. = Ganhe 1.000 moedas em um só dia.
+Harvest Festival = Festa da colheita
+Earn 25,000 coins in a single day. = Ganhe 25.000 moedas em um só dia.
+Into the Barn = Rumo ao celeiro
+Buy your first upgrade. = Compre sua primeira melhoria.
+Well Equipped = Bem equipado
+Buy 25 upgrades. = Compre 25 melhorias.
+Barn Raiser = Construtor de celeiros
+Buy 100 upgrades. = Compre 100 melhorias.
+Lend a Hand = Uma mãozinha
+Get the Helping Hand to pick for you. = Faça a Mão amiga colher por você.
+Extra Hands = Mãos extras
+Hire your first farmer. = Contrate seu primeiro ajudante.
+Full Crew = Equipe completa
+Hire every farmer. = Contrate todos os ajudantes.
+Mixed Veg = Salada mista
+Grow every kind of vegetable. = Plante todos os tipos de legume.
+Week on the Farm = Uma semana na fazenda
+Reach day 7. = Chegue ao dia 7.
+Seasoned Farmer = Fazendeiro experiente
+Reach day 50. = Chegue ao dia 50.
+The Barn Is Full = O celeiro está cheio
+Buy every upgrade. = Compre todas as melhorias.
+Achievement unlocked = Conquista desbloqueada
+Back = Voltar
+Achievements = Conquistas
+%d of %d = %d de %d
+
+# ---- src/CompleteScreen.cpp
+Keep Playing = Continuar jogando
+Main Menu = Menu principal
+
+# ---- src/Farm.cpp
+Auto-pick! = Colheita extra!
+
+# ---- src/Game.cpp
+%s  -  Day %d  -  %s coins = %s  -  Dia %d  -  %s moedas
+Slot %d = Espaço %d
+%lldm = %lldm
+%lldh %02lldm = %lldh %02lldm
+%d upgrades bought in %d days = %d melhorias compradas em %d dias
+%s coins earned  -  %s vegetables picked = %s moedas ganhas  -  %s legumes colhidos
+Time played: %s = Tempo de jogo: %s
+You've finished the demo! = Você terminou a demo!
+Thank you for playing my game. = Obrigado por jogar meu jogo.
+The full game has %d upgrades to unlock. = O jogo completo tem %d melhorias para desbloquear.
+Your farm carries over to it. = Sua fazenda continua nele.
+The Barn is fully unlocked! = O Celeiro está todo desbloqueado!
+%llds = %llds
+%lldm %02llds = %lldm %02llds
+TIME = TEMPO
+Time played = Tempo de jogo
+Out in the patch = Na horta
+Days farmed = Dias na fazenda
+VEGETABLES = LEGUMES
+Vegetables picked = Legumes colhidos
+Picked by you = Colhidos por você
+Picked by Helping Hand = Colhidos pela Mão amiga
+Picked by farmers = Colhidos pelos ajudantes
+Most picked in a day = Recorde em um dia
+COINS = MOEDAS
+Coins earned = Moedas ganhas
+Coins spent in the barn = Moedas gastas no celeiro
+Best day = Melhor dia
+Average day = Dia médio
+Upgrades bought = Melhorias compradas
+End Day = Encerrar dia
+Day %d = Dia %d
+%.1fs = %.1fs
+until sunset = até o pôr do sol
++%s today = +%s hoje
+Hold your finger on ripe vegetables to pick them! = Segure o dedo sobre os legumes maduros para colhê-los!
+Hover over ripe vegetables to pick them! = Passe o mouse sobre os legumes maduros para colhê-los!
+Sunset - Day %d done! = Pôr do sol - Dia %d concluído!
+Vegetables picked: %d = Legumes colhidos: %d
+%s x%d = %s x%d
+Coins earned: %s = Moedas ganhas: %s
+Total coins: %s = Total de moedas: %s
+The Barn > = O Celeiro >
+
+# ---- src/Menus.cpp
+Continue = Continuar
+No saved farm yet = Nenhuma fazenda salva ainda
+New Game = Novo jogo
+Load Game = Carregar jogo
+Settings = Configurações
+Quit = Sair
+an incremental farming game = um jogo incremental de fazenda
+demo = demo
+DEMO = DEMO
+Start = Começar
+Rename = Renomear
+Cancel = Cancelar
+Day %d   -   %s coins = Dia %d   -   %s moedas
+Day %d   -   %s coins   -   saved %s = Dia %d   -   %s moedas   -   salvo em %s
+Empty - start a new farm here = Vazio - comece uma fazenda nova aqui
+Empty = Vazio
+< Back = < Voltar
+Overwrite = Substituir
+Choose a slot for your new farm = Escolha um espaço para sua nova fazenda
+Choose a farm to load = Escolha uma fazenda para carregar
+Overwrite %s? = Substituir %s?
+The farm on day %d with %s coins = A fazenda no dia %d com %s moedas
+will be lost for good. = será perdida para sempre.
+Name your farm = Dê um nome à sua fazenda
+Rename your farm = Renomeie sua fazenda
+Up to %d letters. Leave it blank for "%s". = Até %d letras. Deixe em branco para "%s".
+On = Sim
+Off = Não
+Done = Pronto
+Music = Música
+Sound FX = Efeitos
+Language = Idioma
+Resolution = Resolução
+Full screen = Tela cheia
+Fullscreen = Tela cheia
+Resume = Retomar
+Quit Game = Sair do jogo
+Paused = Pausado
+Your farm is saved automatically = Sua fazenda é salva automaticamente
+
+# ---- src/SaveSystem.cpp
+Jan = jan
+Feb = fev
+Mar = mar
+Apr = abr
+May = mai
+Jun = jun
+Jul = jul
+Aug = ago
+Sep = set
+Oct = out
+Nov = nov
+Dec = dez
+%d %s %02d:%02d = %d %s %02d:%02d
+
+# ---- src/StatsScreen.cpp
+Stats = Estatísticas
+
+# ---- src/TechData.cpp
+room for %.0f plants = espaço para %.0f plantas
+%.0f crop at once = %.0f planta por vez
+%.0f crops at once = %.0f plantas por vez
+%.0f second days = dias de %.0f segundos
+%.1f second days = dias de %.1f segundos
+%.2fs to pick = %.2fs para colher
+%.2fs to grow = %.2fs para crescer
+x%.2f coins = x%.2f moedas
+1 plant at a time = 1 planta por vez
+reach radius %.0f = raio de alcance %.0f
+no crops = nenhuma planta
+%s, %s + %d more = %s, %s + %d outros
+& = e
+%.0f%% ripe at dawn = %.0f%% maduro ao amanhecer
+%.0f%% auto-pick chance = %.0f%% de colheita extra
+%.1f%% auto-pick chance = %.1f%% de colheita extra
+no auto-pick = sem colheita extra
+auto-picks %.0f crop = colhe %.0f planta extra
+auto-picks up to %.0f crops = colhe até %.0f plantas extras
+auto-pick off = colheita extra desligada
+auto-pick within %.1f plants = colheita extra a %.1f plantas
+no farmers = nenhum ajudante
+%.0f farmer = %.0f ajudante
+%.0f farmers = %.0f ajudantes
+farmers walk %.2f plants/s = ajudantes andam %.2f plantas/s
+farmers pick in %.2fs = ajudantes colhem em %.2fs
+no effect = sem efeito
+
+# ---- src/TechTreeScreen.cpp
+Lv%d = Nv.%d
+THE BARN = O CELEIRO
+%s coins = %s moedas
+Thanks for playing. The full game has %d upgrades. = Obrigado por jogar. O jogo completo tem %d melhorias.
+Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom. = Toque para ver uma melhoria, toque de novo para comprar.  Arraste para mover, pince para dar zoom.
+Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit. = Passe o mouse para ver, clique para comprar.  Arraste para mover, roda para zoom, Home para ajustar.
+Start Day %d = Começar o dia %d
+Level %d / %d  -  MAX = Nível %d / %d  -  MÁX
+Level %d / %d = Nível %d / %d
+Now: %s = Agora: %s
+Next: %s = Próximo: %s
+At max: %s = No máximo: %s
+Unlocks: %s = Desbloqueia: %s
+Needs %s Lv %d = Precisa de %s Nv. %d
+Fully upgraded! = No máximo!
+UNLOCKED = DESBLOQUEADO
+Full game only = Só no jogo completo
+This one's past the edge of the demo = Esta fica além do limite da demo
+Price: %s coins = Preço: %s moedas
+Locked = Bloqueado
+Not enough coins = Moedas insuficientes
+Tap again to buy = Toque de novo para comprar
+Click to buy = Clique para comprar
+
+# ---- tech tree
+Lettuce = Alface
+Carrot = Cenoura
+Pumpkin = Abóbora
+Turnip = Nabo
+Chilli = Pimenta
+Broccoli = Brócolis
+Corn = Milho
+Eggplant = Berinjela
+The Barn = O Celeiro
+Unlocks the barn. = Desbloqueia o celeiro.
+Bigger Patch = Horta maior
+Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30). = Cave uma horta maior: mais uma linha e uma coluna de espaço para legumes (até 30 x 30).
+Longer Days = Dias mais longos
+Wake up a little earlier: 2 more seconds of picking every day. = Acorde um pouco mais cedo: 2 segundos a mais de colheita por dia.
+More Seeds = Mais sementes
+Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch. = Plante mais sementes: cerca de 25% mais legumes crescem ao mesmo tempo, até o espaço da sua horta.
+Quick Hands = Mãos rápidas
+Practice makes perfect: pick vegetables 18% faster. = A prática leva à perfeição: colha legumes 18% mais rápido.
+Fertile Soil = Solo fértil
+Richer compost: vegetables grow 12% faster. = Adubo mais rico: os legumes crescem 12% mais rápido.
+Carrots = Cenouras
+Unlocks carrots. They grow slower but sell for 4 coins each. = Desbloqueia cenouras. Crescem mais devagar, mas valem 4 moedas cada.
+Prize Produce = Produtos premiados
+Bigger, shinier vegetables: every vegetable sells for a little more. = Legumes maiores e mais bonitos: todos valem um pouco mais.
+Helping Hand = Mão amiga
+Sometimes picking a crop also picks a ripe one next to it: 10% chance, 1 crop, within 1.5 plant widths. = Às vezes, colher uma planta também colhe uma madura ao lado: 10% de chance, 1 planta, a até 1,5 planta de distância.
+Head Start = Vantagem inicial
+Crops keep growing overnight. Part of the patch is already ripe when the day begins. = As plantas continuam crescendo à noite. Parte da horta já está madura quando o dia começa.
+Lucky Streak = Maré de sorte
+Helping Hand happens more often: +5% chance. = A Mão amiga acontece com mais frequência: +5% de chance.
+Wide Reach = Longo alcance
+Long arms. Pick every ripe vegetable inside a circle around the mouse. = Braços longos. Colha todos os legumes maduros dentro de um círculo ao redor do mouse.
+Farmhand = Ajudante
+Hire a farmer who walks the patch picking ripe crops for you. Farmers pick the nearest ripe crop no one else is going for. = Contrate um ajudante que anda pela horta colhendo plantas maduras para você. Cada um vai até a planta madura mais próxima que ninguém está buscando.
+Pumpkins = Abóboras
+Unlocks pumpkins. Slow to grow and hard to pick, but worth 15 coins each. = Desbloqueia abóboras. Demoram a crescer e são difíceis de colher, mas valem 15 moedas cada.
+Comfy Boots = Botas confortáveis
+Farmers walk faster. = Os ajudantes andam mais rápido.
+Spreading Roots = Raízes espalhadas
+Helping Hand reaches further: +0.5 plant widths. = A Mão amiga alcança mais longe: +0,5 planta de distância.
+Farm Crew = Equipe da fazenda
+Hire one more farmer to walk the patch picking ripe crops for you. = Contrate mais um ajudante para andar pela horta colhendo plantas maduras para você.
+Sharp Shears = Tesoura afiada
+Farmers pick 15% faster. = Os ajudantes colhem 15% mais rápido.
+Bumper Bunch = Cacho farto
+Helping Hand picks one more nearby crop. = A Mão amiga colhe mais uma planta próxima.
+Turnips = Nabos
+Unlocks Turnips. Sell for 38 coins each. = Desbloqueia nabos. Valem 38 moedas cada.
+Unlocks Chilli. Sells for 60 coins each. = Desbloqueia pimenta. Vale 60 moedas cada.
+Unlocks Broccoli. Sells for 70 coins each. = Desbloqueia brócolis. Vale 70 moedas cada.
+Unlocks Corn. Sells for 80 coins each. = Desbloqueia milho. Vale 80 moedas cada.
+Unlocks Eggplant. Sells for 90 coins each. = Desbloqueia berinjela. Vale 90 moedas cada.

@@ -1,5 +1,7 @@
 #include "TechTree.h"
 
+#include "Lang.h"
+
 #include "TechData.h"
 #include "TechTreeData.h"
 #include "Platform.h"
@@ -45,7 +47,7 @@ TechTree::TechTree() {
         if (!touched.empty()) n.describeStats = [touched](const Stats& s) {
             std::string out;
             for (int idx : touched) out += (out.empty() ? "" : ", ") + techdata::formatStat(idx, s);
-            return out.empty() ? std::string("no effect") : out;
+            return out.empty() ? tr("no effect") : out;
         };
         addNode(std::move(n));
     }

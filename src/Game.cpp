@@ -3,6 +3,8 @@
 #include "Art.h"
 #include "AssetPack.h"
 #include "Draw.h"
+#include "FontLatin.h"
+#include "Lang.h"
 #include "PlatformServices.h"
 #include "Screen.h"
 #include "Grass.h"
@@ -63,6 +65,8 @@ bool Game::init() {
     std::vector<std::pair<std::string, std::string>> techNodes;
     for (const auto& n : tree_.nodes()) techNodes.push_back({n.icon.empty() ? n.id : n.icon, n.name});
     art::init(renderer_, techNodes);
+    findLanguages();
+    applyLanguage();
     setWindowIcon();
     if (kIsDesktop && settings_.fullscreen) applyDisplaySettings();
 
@@ -103,7 +107,7 @@ void Game::goToMainMenu() {
                                                                                         : saves_.mostRecentSlot();
     if (slot >= 0) {
         SlotInfo s = saves_.slotInfo(slot);
-        info = draw::strf("%s  -  Day %d  -  %s coins", slotTitle(slot, s.name).c_str(), s.day, draw::number(s.coins).c_str());
+        info = trf("%s  -  Day %d  -  %s coins", slotTitle(slot, s.name).c_str(), s.day, draw::number(s.coins).c_str());
     }
     mainMenu_.refresh(slot >= 0, info);
     mainMenu_.setCrops(unlockedCrops(slot));
@@ -137,7 +141,7 @@ std::vector<Crop> Game::unlockedCrops(int slot) const {
 }
 
 std::string Game::slotTitle(int slot, const std::string& name) const {
-    return name.empty() ? draw::strf("Slot %d", slot + 1) : name;
+    return name.empty() ? trf("Slot %d", slot + 1) : name;
 }
 
 void Game::newGame(int slot) {
@@ -314,20 +318,20 @@ void Game::openCompletion() {
     for (const auto& n : tree_.nodes()) bought += n.level;
     auto duration = [](double seconds) {
         const long long s = static_cast<long long>(seconds);
-        return s < 3600 ? draw::strf("%lldm", s / 60) : draw::strf("%lldh %02lldm", s / 3600, (s / 60) % 60);
+        return s < 3600 ? trf("%lldm", s / 60) : trf("%lldh %02lldm", s / 3600, (s / 60) % 60);
     };
     std::vector<std::string> facts = {
-        draw::strf("%d upgrades bought in %d days", bought, std::max(1, day_ - 1)),
-        draw::number(lifetimeCoins_) + " coins earned  -  " + draw::number(static_cast<double>(playStats_.picked)) +
-            " vegetables picked",
-        "Time played: " + duration(playStats_.secondsPlayed),
+        trf("%d upgrades bought in %d days", bought, std::max(1, day_ - 1)),
+        trf("%s coins earned  -  %s vegetables picked", draw::number(lifetimeCoins_).c_str(),
+            draw::number(static_cast<double>(playStats_.picked)).c_str()),
+        trf("Time played: %s", duration(playStats_.secondsPlayed).c_str()),
     };
     if (kIsDemo)
-        completeScreen_.open("You've finished the demo!", "Thank you for playing my game.",
-                             {facts[0], draw::strf("The full game has %d upgrades to unlock.",
-                                                   static_cast<int>(tree_.nodes().size())),
-                              "Your farm carries over to it."});
-    else completeScreen_.open("The Barn is fully unlocked!", "Thank you for playing my game.", facts);
+        completeScreen_.open(tr("You've finished the demo!"), tr("Thank you for playing my game."),
+                             {facts[0], trf("The full game has %d upgrades to unlock.",
+                                            static_cast<int>(tree_.nodes().size())),
+                              tr("Your farm carries over to it.")});
+    else completeScreen_.open(tr("The Barn is fully unlocked!"), tr("Thank you for playing my game."), facts);
     audio_.play(Sfx::Sunset);
     treeScreen_.clearHover();
     state_ = State::Complete;
@@ -401,9 +405,9 @@ void Game::saveAchievements() const { saves_.writeExtra("achievements.sav", achi
 std::vector<StatsScreen::Row> Game::statsRows() const {
     auto duration = [](double seconds) {
         const long long s = static_cast<long long>(seconds);
-        if (s < 60) return draw::strf("%llds", s);
-        if (s < 3600) return draw::strf("%lldm %02llds", s / 60, s % 60);
-        return draw::strf("%lldh %02lldm", s / 3600, (s / 60) % 60);
+        if (s < 60) return trf("%llds", s);
+        if (s < 3600) return trf("%lldm %02llds", s / 60, s % 60);
+        return trf("%lldh %02lldm", s / 3600, (s / 60) % 60);
     };
     auto count = [](long long n) { return draw::number(static_cast<double>(n)); };
     const bool midDay = statsFrom_ == State::Farming;
@@ -420,31 +424,31 @@ std::vector<StatsScreen::Row> Game::statsRows() const {
     auto row = [&](const std::string& l, const std::string& v) { rows.push_back({l, v, false, false}); };
     auto sub = [&](const std::string& l, const std::string& v) { rows.push_back({l, v, false, true}); };
 
-    heading("TIME");
-    row("Time played", duration(playStats_.secondsPlayed));
-    sub("Out in the patch", duration(playStats_.secondsFarming));
-    row("Days farmed", count(daysDone));
+    heading(tr("TIME"));
+    row(tr("Time played"), duration(playStats_.secondsPlayed));
+    sub(tr("Out in the patch"), duration(playStats_.secondsFarming));
+    row(tr("Days farmed"), count(daysDone));
 
-    heading("VEGETABLES");
-    row("Vegetables picked", count(playStats_.picked));
+    heading(tr("VEGETABLES"));
+    row(tr("Vegetables picked"), count(playStats_.picked));
     for (Crop c = 0; c < cropCount(); ++c) {
         auto it = playStats_.pickedByCrop.find(cropDef(c).id);
-        if (it != playStats_.pickedByCrop.end() && it->second > 0) sub(cropDef(c).name, count(it->second));
+        if (it != playStats_.pickedByCrop.end() && it->second > 0) sub(tr(cropDef(c).name), count(it->second));
     }
     if (playStats_.pickedByHelper > 0 || playStats_.pickedByFarmers > 0) {
-        sub("Picked by you", count(playStats_.pickedByHand));
-        if (playStats_.pickedByHelper > 0) sub("Picked by Helping Hand", count(playStats_.pickedByHelper));
-        if (playStats_.pickedByFarmers > 0) sub("Picked by farmers", count(playStats_.pickedByFarmers));
+        sub(tr("Picked by you"), count(playStats_.pickedByHand));
+        if (playStats_.pickedByHelper > 0) sub(tr("Picked by Helping Hand"), count(playStats_.pickedByHelper));
+        if (playStats_.pickedByFarmers > 0) sub(tr("Picked by farmers"), count(playStats_.pickedByFarmers));
     }
-    row("Most picked in a day",
+    row(tr("Most picked in a day"),
         count(std::max<long long>(playStats_.bestDayPicked, midDay ? farm_.pickedToday() : 0)));
 
-    heading("COINS");
-    row("Coins earned", draw::number(earned));
-    row("Coins spent in the barn", draw::number(playStats_.coinsSpent));
-    row("Best day", draw::number(std::max(playStats_.bestDayCoins, midDay ? farm_.earnedToday() : 0.0)));
-    if (daysDone > 0) sub("Average day", draw::number(lifetimeCoins_ / daysDone));
-    row("Upgrades bought", draw::strf("%d / %d", bought, total));
+    heading(tr("COINS"));
+    row(tr("Coins earned"), draw::number(earned));
+    row(tr("Coins spent in the barn"), draw::number(playStats_.coinsSpent));
+    row(tr("Best day"), draw::number(std::max(playStats_.bestDayCoins, midDay ? farm_.earnedToday() : 0.0)));
+    if (daysDone > 0) sub(tr("Average day"), draw::number(lifetimeCoins_ / daysDone));
+    row(tr("Upgrades bought"), draw::strf("%d / %d", bought, total));
     return rows;
 }
 
@@ -455,7 +459,7 @@ void Game::resume() {
 
 void Game::openSettings() {
     settingsFrom_ = state_;
-    settingsMenu_.open(&settings_, availableResolutions());
+    settingsMenu_.open(&settings_, availableResolutions(), languages_, lang::current());
     state_ = State::Settings;
 }
 
@@ -463,6 +467,51 @@ void Game::closeSettings() {
     saveSettings();
     state_ = settingsFrom_;
     if (state_ == State::MainMenu) goToMainMenu();
+    if (state_ == State::Paused) pauseMenu_.open(); // relabelled, if the language changed
+}
+
+// ---------------------------------------------------------------------------
+// Languages (see Lang.h)
+// ---------------------------------------------------------------------------
+
+// Every assets/lang/*.txt except the template, English first.
+void Game::findLanguages() {
+    languages_.clear();
+    languages_.push_back({"en", "English", "en"});
+    const std::string dir = art::assetDir();
+    if (dir.empty()) return;
+    std::vector<std::string> files = assetpack::list(dir + "lang", ".txt");
+    std::sort(files.begin(), files.end());
+    for (const auto& f : files) {
+        const std::string code = f.substr(0, f.size() - 4);
+        if (code == "template" || code == "en") continue;
+        std::string text;
+        if (readLanguageFile(code, text)) languages_.push_back(lang::describe(text, code));
+    }
+}
+
+bool Game::readLanguageFile(const std::string& code, std::string& out) const {
+    std::size_t size = 0;
+    void* data = assetpack::load(art::assetDir() + "lang/" + code + ".txt", &size);
+    if (!data) return false;
+    out.assign(static_cast<const char*>(data), size);
+    SDL_free(data);
+    return true;
+}
+
+// The language in Settings, or (until one is picked) the device's own.
+void Game::applyLanguage() {
+    std::string code = settings_.language;
+    bool known = false;
+    for (const auto& l : languages_) known = known || l.code == code;
+    if (code.empty() || !known) code = lang::pickForDevice(languages_);
+    std::string text;
+    if (code.empty() || code == "en" || !readLanguageFile(code, text)) {
+        lang::use("", "en");
+        return;
+    }
+    lang::use(text, code);
+    SDL_Log("Language: %s", code.c_str());
 }
 
 // ---------------------------------------------------------------------------
@@ -683,6 +732,7 @@ void Game::handleEvent(SDL_Event& e) {
     // F5 reloads the artwork from assets/, so you can see changes without restarting.
     if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_F5 && !e.key.repeat && !assetpack::embedded()) {
         int n = art::reload();
+        fontlatin::forget(); // remade from the new font next time it's needed
         int s = loadSounds();
         showToast(art::assetDir().empty()
                       ? std::string("No assets folder found")
@@ -795,6 +845,12 @@ void Game::handleEvent(SDL_Event& e) {
         case SettingsMenu::Action::DisplayChanged:
             audio_.play(Sfx::Click);
             applyDisplaySettings();
+            break;
+        case SettingsMenu::Action::LanguageChanged:
+            audio_.play(Sfx::Click);
+            applyLanguage();
+            settingsMenu_.setLanguageInUse(lang::current());
+            saveSettings();
             break;
         }
         break;
@@ -1140,7 +1196,7 @@ void Game::renderPlayScene(State s) {
         bool hover = live && !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, screen::at(screen::Edge::Bottom, endDayButton_));
         ui::Button b;
         b.rect = endDayButton_;
-        b.label = "End Day";
+        b.label = tr("End Day");
         b.style = ui::Style::Secondary;
         b.textScale = 2.f;
         ui::drawButton(renderer_, b, hover, live && endDayButtonDown_ && hover);
@@ -1171,26 +1227,29 @@ void Game::renderHud() {
     screen::topBar(renderer_, "farm/hud_bar", 72);
     {
     screen::Pinned top(renderer_, screen::Edge::Top); // the HUD sits at the very top of the screen
-    draw::textShadow(renderer_, 26, 14, draw::strf("Day %d", day_), 3.f, kWhite);
+    draw::textShadow(renderer_, 26, 14, trf("Day %d", day_), 3.f, kWhite);
     draw::text(renderer_, 28, 50, slotTitle(currentSlot_, farmName_), 1.5f, kGrey);
 
     // Day/night dial: half a turn over the day, from the sun at the top to the moon at the top.
     const float dayT = farm_.dayLength() > 0 ? 1.f - std::clamp(farm_.timeLeft() / farm_.dayLength(), 0.f, 1.f) : 1.f;
     ui::drawDayDial(renderer_, kDialX, kDialHorizon, kDialRadius, dayT);
-    draw::textShadow(renderer_, kDialX + kDialRadius + 20, 14, draw::strf("%.1fs", farm_.timeLeft()), 2.5f, kWhite);
-    draw::text(renderer_, kDialX + kDialRadius + 22, 42, "until sunset", 1.f, kGrey);
+    draw::textShadow(renderer_, kDialX + kDialRadius + 20, 14, trf("%.1fs", farm_.timeLeft()), 2.5f, kWhite);
+    draw::text(renderer_, kDialX + kDialRadius + 22, 42, tr("until sunset"), 1.f, kGrey);
 
     // Coins.
     ui::drawCoin(renderer_, 930, 30, 13);
     draw::textShadow(renderer_, 952, 19, draw::number(coins_), 3.f, kGold);
-    draw::text(renderer_, 952, 50, "+" + draw::number(farm_.earnedToday()) + " today", 1.5f, kGrey);
+    draw::text(renderer_, 952, 50, trf("+%s today", draw::number(farm_.earnedToday()).c_str()), 1.5f, kGrey);
     }
 
     if (state_ == State::Farming && day_ <= 2) {
-        const char* hint = usingTouch_ ? "Hold your finger on ripe vegetables to pick them!"
-                                       : "Hover over ripe vegetables to pick them!";
+        const std::string& hint = usingTouch_ ? tr("Hold your finger on ripe vegetables to pick them!")
+                                              : tr("Hover over ripe vegetables to pick them!");
         screen::Pinned bottom(renderer_, screen::Edge::Bottom);
-        draw::textShadow(renderer_, kWidth * 0.5f, kHeight - 34, hint, 2.f, kWhite, draw::Align::Center);
+        // Centred, clear of End Day on the right.
+        const float room = 2.f * (endDayButton_.x - kWidth * 0.5f - 16.f);
+        draw::textShadow(renderer_, kWidth * 0.5f, kHeight - 34, hint, draw::fitScale(hint, 2.f, room), kWhite,
+                         draw::Align::Center);
     }
 }
 
@@ -1218,31 +1277,32 @@ void Game::renderSummary() {
     const float w = L.panel.w, x = L.panel.x, y = L.panel.y;
     ui::drawPanel(renderer_, L.panel);
     art::draw(renderer_, "ui/panel_header", SDL_FRect{x, y, w, 70});
-    draw::textShadow(renderer_, kWidth * 0.5f, y + 22, draw::strf("Sunset - Day %d done!", day_ - 1), 3.f, kWhite,
+    const std::string title = trf("Sunset - Day %d done!", day_ - 1);
+    draw::textShadow(renderer_, kWidth * 0.5f, y + 22, title, draw::fitScale(title, 3.f, w - 40.f), kWhite,
                      draw::Align::Center);
 
     const SDL_Color ink = pal::DeepSoil;
     float ty = y + 100;
-    draw::text(renderer_, x + 50, ty, draw::strf("Vegetables picked: %d", farm_.pickedToday()), 2.f, ink);
+    draw::text(renderer_, x + 50, ty, trf("Vegetables picked: %d", farm_.pickedToday()), 2.f, ink);
     ty += 30;
     int k = 0;
     for (Crop c = 0; c < cropCount(); ++c) {
         if (farm_.pickedOf(c) == 0) continue;
         const int col = k / L.rows, row = k % L.rows; // fill down the first column, then the second
         draw::text(renderer_, x + 80 + col * 230.f, ty + row * 22.f,
-                   draw::strf("%s x%d", cropDef(c).name.c_str(), farm_.pickedOf(c)), 1.5f, pal::Tilled);
+                   trf("%s x%d", tr(cropDef(c).name).c_str(), farm_.pickedOf(c)), 1.5f, pal::Tilled);
         ++k;
     }
     ty += L.rows * 22.f + 10.f;
-    draw::text(renderer_, x + 50, ty, "Coins earned: " + draw::number(farm_.earnedToday()), 2.f, ink);
+    draw::text(renderer_, x + 50, ty, trf("Coins earned: %s", draw::number(farm_.earnedToday()).c_str()), 2.f, ink);
     ty += 30;
-    draw::text(renderer_, x + 50, ty, "Total coins:  " + draw::number(coins_), 2.f, ink);
+    draw::text(renderer_, x + 50, ty, trf("Total coins: %s", draw::number(coins_).c_str()), 2.f, ink);
 
     bool ready = summaryTimer_ >= 0.6f;
     bool over = ready && !usingTouch_ && draw::pointInRect(mouseX_, mouseY_, L.button);
     ui::Button b;
     b.rect = L.button;
-    b.label = "The Barn >";
+    b.label = tr("The Barn >");
     b.style = ui::Style::Secondary;
     b.enabled = ready;
     ui::drawButton(renderer_, b, over, false);

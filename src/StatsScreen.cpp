@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Lang.h"
 #include "Palette.h"
 
 #include <algorithm>
@@ -18,11 +19,11 @@ void StatsScreen::open(std::vector<Row> rows) {
     rows_ = std::move(rows);
     buttons_.buttons.clear();
     ui::Button b;
-    b.label = "Back";
+    b.label = tr("Back");
     b.style = ui::Style::Secondary;
     b.textScale = 2.f;
     buttons_.buttons.push_back(b);
-    b.label = "Achievements";
+    b.label = tr("Achievements");
     b.style = ui::Style::Primary;
     buttons_.buttons.push_back(b);
 }
@@ -45,7 +46,7 @@ void StatsScreen::render(SDL_Renderer* r) const {
     const float h = 96.f + rowH * n + 90.f;
     const SDL_FRect panel{640.f - kPanelW * 0.5f, std::max(10.f, 86.f - std::max(0.f, h - 620.f)), kPanelW, h};
     ui::drawPanel(r, panel);
-    draw::text(r, 640, panel.y + 30, "Stats", 4.f, kInk, draw::Align::Center);
+    draw::text(r, 640, panel.y + 30, tr("Stats"), 4.f, kInk, draw::Align::Center);
 
     const float left = panel.x + 56.f, right = panel.x + panel.w - 56.f;
     float y = panel.y + 92.f;

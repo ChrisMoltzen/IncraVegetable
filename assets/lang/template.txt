@@ -1,0 +1,269 @@
+# IncraVegetable - language template. Every piece of text in the game, in English.
+# To add a language: copy this to <code>.txt (e.g. it.txt), set @name (the language's
+# own name, shown in Settings) and @locale (e.g. it, or pt-BR), then translate each
+# line: take out the "# TODO " and type the translation after the " = ".
+# Keep every %d, %s, %.1f ... in the same order. See include/Lang.h.
+@name New Language
+@locale xx
+
+
+# ---- src/Achievements.cpp
+# TODO First Harvest = 
+# TODO Pick your first vegetable. = 
+# TODO Green Thumb = 
+# TODO Pick 1,000 vegetables. = 
+# TODO Bumper Crop = 
+# TODO Pick 50,000 vegetables. = 
+# TODO Pocket Money = 
+# TODO Earn 1,000 coins. = 
+# TODO Market Trader = 
+# TODO Earn 100,000 coins. = 
+# TODO Vegetable Tycoon = 
+# TODO Earn 5,000,000 coins. = 
+# TODO Market Day = 
+# TODO Earn 1,000 coins in a single day. = 
+# TODO Harvest Festival = 
+# TODO Earn 25,000 coins in a single day. = 
+# TODO Into the Barn = 
+# TODO Buy your first upgrade. = 
+# TODO Well Equipped = 
+# TODO Buy 25 upgrades. = 
+# TODO Barn Raiser = 
+# TODO Buy 100 upgrades. = 
+# TODO Lend a Hand = 
+# TODO Get the Helping Hand to pick for you. = 
+# TODO Extra Hands = 
+# TODO Hire your first farmer. = 
+# TODO Full Crew = 
+# TODO Hire every farmer. = 
+# TODO Mixed Veg = 
+# TODO Grow every kind of vegetable. = 
+# TODO Week on the Farm = 
+# TODO Reach day 7. = 
+# TODO Seasoned Farmer = 
+# TODO Reach day 50. = 
+# TODO The Barn Is Full = 
+# TODO Buy every upgrade. = 
+# TODO Achievement unlocked = 
+# TODO Back = 
+# TODO Achievements = 
+# TODO %d of %d = 
+
+# ---- src/CompleteScreen.cpp
+# TODO Keep Playing = 
+# TODO Main Menu = 
+
+# ---- src/Farm.cpp
+# TODO Auto-pick! = 
+
+# ---- src/Game.cpp
+# TODO %s  -  Day %d  -  %s coins = 
+# TODO Slot %d = 
+# TODO %lldm = 
+# TODO %lldh %02lldm = 
+# TODO %d upgrades bought in %d days = 
+# TODO %s coins earned  -  %s vegetables picked = 
+# TODO Time played: %s = 
+# TODO You've finished the demo! = 
+# TODO Thank you for playing my game. = 
+# TODO The full game has %d upgrades to unlock. = 
+# TODO Your farm carries over to it. = 
+# TODO The Barn is fully unlocked! = 
+# TODO %llds = 
+# TODO %lldm %02llds = 
+# TODO TIME = 
+# TODO Time played = 
+# TODO Out in the patch = 
+# TODO Days farmed = 
+# TODO VEGETABLES = 
+# TODO Vegetables picked = 
+# TODO Picked by you = 
+# TODO Picked by Helping Hand = 
+# TODO Picked by farmers = 
+# TODO Most picked in a day = 
+# TODO COINS = 
+# TODO Coins earned = 
+# TODO Coins spent in the barn = 
+# TODO Best day = 
+# TODO Average day = 
+# TODO Upgrades bought = 
+# TODO End Day = 
+# TODO Day %d = 
+# TODO %.1fs = 
+# TODO until sunset = 
+# TODO +%s today = 
+# TODO Hold your finger on ripe vegetables to pick them! = 
+# TODO Hover over ripe vegetables to pick them! = 
+# TODO Sunset - Day %d done! = 
+# TODO Vegetables picked: %d = 
+# TODO %s x%d = 
+# TODO Coins earned: %s = 
+# TODO Total coins: %s = 
+# TODO The Barn > = 
+
+# ---- src/Menus.cpp
+# TODO Continue = 
+# TODO No saved farm yet = 
+# TODO New Game = 
+# TODO Load Game = 
+# TODO Settings = 
+# TODO Quit = 
+# TODO an incremental farming game = 
+# TODO demo = 
+# TODO DEMO = 
+# TODO Start = 
+# TODO Rename = 
+# TODO Cancel = 
+# TODO Day %d   -   %s coins = 
+# TODO Day %d   -   %s coins   -   saved %s = 
+# TODO Empty - start a new farm here = 
+# TODO Empty = 
+# TODO < Back = 
+# TODO Overwrite = 
+# TODO Choose a slot for your new farm = 
+# TODO Choose a farm to load = 
+# TODO Overwrite %s? = 
+# TODO The farm on day %d with %s coins = 
+# TODO will be lost for good. = 
+# TODO Name your farm = 
+# TODO Rename your farm = 
+# TODO Up to %d letters. Leave it blank for "%s". = 
+# TODO On = 
+# TODO Off = 
+# TODO Done = 
+# TODO Music = 
+# TODO Sound FX = 
+# TODO Language = 
+# TODO Resolution = 
+# TODO Full screen = 
+# TODO Fullscreen = 
+# TODO Resume = 
+# TODO Quit Game = 
+# TODO Paused = 
+# TODO Your farm is saved automatically = 
+
+# ---- src/SaveSystem.cpp
+# TODO Jan = 
+# TODO Feb = 
+# TODO Mar = 
+# TODO Apr = 
+# TODO May = 
+# TODO Jun = 
+# TODO Jul = 
+# TODO Aug = 
+# TODO Sep = 
+# TODO Oct = 
+# TODO Nov = 
+# TODO Dec = 
+# TODO %d %s %02d:%02d = 
+
+# ---- src/StatsScreen.cpp
+# TODO Stats = 
+
+# ---- src/TechData.cpp
+# TODO room for %.0f plants = 
+# TODO %.0f crop at once = 
+# TODO %.0f crops at once = 
+# TODO %.0f second days = 
+# TODO %.1f second days = 
+# TODO %.2fs to pick = 
+# TODO %.2fs to grow = 
+# TODO x%.2f coins = 
+# TODO 1 plant at a time = 
+# TODO reach radius %.0f = 
+# TODO no crops = 
+# TODO %s, %s + %d more = 
+# TODO & = 
+# TODO %.0f%% ripe at dawn = 
+# TODO %.0f%% auto-pick chance = 
+# TODO %.1f%% auto-pick chance = 
+# TODO no auto-pick = 
+# TODO auto-picks %.0f crop = 
+# TODO auto-picks up to %.0f crops = 
+# TODO auto-pick off = 
+# TODO auto-pick within %.1f plants = 
+# TODO no farmers = 
+# TODO %.0f farmer = 
+# TODO %.0f farmers = 
+# TODO farmers walk %.2f plants/s = 
+# TODO farmers pick in %.2fs = 
+# TODO no effect = 
+
+# ---- src/TechTreeScreen.cpp
+# TODO Lv%d = 
+# TODO THE BARN = 
+# TODO %s coins = 
+# TODO Thanks for playing. The full game has %d upgrades. = 
+# TODO Tap to see an upgrade, tap again to buy.  Drag to move, pinch to zoom. = 
+# TODO Hover to see, click to buy.  Drag to move, wheel to zoom, Home to fit. = 
+# TODO Start Day %d = 
+# TODO Level %d / %d  -  MAX = 
+# TODO Level %d / %d = 
+# TODO Now: %s = 
+# TODO Next: %s = 
+# TODO At max: %s = 
+# TODO Unlocks: %s = 
+# TODO Needs %s Lv %d = 
+# TODO Fully upgraded! = 
+# TODO UNLOCKED = 
+# TODO Full game only = 
+# TODO This one's past the edge of the demo = 
+# TODO Price: %s coins = 
+# TODO Locked = 
+# TODO Not enough coins = 
+# TODO Tap again to buy = 
+# TODO Click to buy = 
+
+# ---- tech tree
+# TODO Lettuce = 
+# TODO Carrot = 
+# TODO Pumpkin = 
+# TODO Turnip = 
+# TODO Chilli = 
+# TODO Broccoli = 
+# TODO Corn = 
+# TODO Eggplant = 
+# TODO The Barn = 
+# TODO Unlocks the barn. = 
+# TODO Bigger Patch = 
+# TODO Dig out a bigger patch: one more row and column of room for vegetables (up to 30 x 30). = 
+# TODO Longer Days = 
+# TODO Wake up a little earlier: 2 more seconds of picking every day. = 
+# TODO More Seeds = 
+# TODO Sow more seeds: about 25% more vegetables grow at once, up to the room in your patch. = 
+# TODO Quick Hands = 
+# TODO Practice makes perfect: pick vegetables 18% faster. = 
+# TODO Fertile Soil = 
+# TODO Richer compost: vegetables grow 12% faster. = 
+# TODO Carrots = 
+# TODO Unlocks carrots. They grow slower but sell for 4 coins each. = 
+# TODO Prize Produce = 
+# TODO Bigger, shinier vegetables: every vegetable sells for a little more. = 
+# TODO Helping Hand = 
+# TODO Sometimes picking a crop also picks a ripe one next to it: 10% chance, 1 crop, within 1.5 plant widths. = 
+# TODO Head Start = 
+# TODO Crops keep growing overnight. Part of the patch is already ripe when the day begins. = 
+# TODO Lucky Streak = 
+# TODO Helping Hand happens more often: +5% chance. = 
+# TODO Wide Reach = 
+# TODO Long arms. Pick every ripe vegetable inside a circle around the mouse. = 
+# TODO Farmhand = 
+# TODO Hire a farmer who walks the patch picking ripe crops for you. Farmers pick the nearest ripe crop no one else is going for. = 
+# TODO Pumpkins = 
+# TODO Unlocks pumpkins. Slow to grow and hard to pick, but worth 15 coins each. = 
+# TODO Comfy Boots = 
+# TODO Farmers walk faster. = 
+# TODO Spreading Roots = 
+# TODO Helping Hand reaches further: +0.5 plant widths. = 
+# TODO Farm Crew = 
+# TODO Hire one more farmer to walk the patch picking ripe crops for you. = 
+# TODO Sharp Shears = 
+# TODO Farmers pick 15% faster. = 
+# TODO Bumper Bunch = 
+# TODO Helping Hand picks one more nearby crop. = 
+# TODO Turnips = 
+# TODO Unlocks Turnips. Sell for 38 coins each. = 
+# TODO Unlocks Chilli. Sells for 60 coins each. = 
+# TODO Unlocks Broccoli. Sells for 70 coins each. = 
+# TODO Unlocks Corn. Sells for 80 coins each. = 
+# TODO Unlocks Eggplant. Sells for 90 coins each. =

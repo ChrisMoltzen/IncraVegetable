@@ -2,6 +2,7 @@
 
 #include "Art.h"
 #include "Draw.h"
+#include "Lang.h"
 #include "Palette.h"
 #include "Screen.h"
 
@@ -16,29 +17,29 @@
 const std::vector<AchievementDef>& Achievements::all() {
     using P = AchievementProgress;
     static const std::vector<AchievementDef> list = {
-        {"first_harvest", "First Harvest", "Pick your first vegetable.", [](const P& p) { return p.picked >= 1; }},
-        {"green_thumb", "Green Thumb", "Pick 1,000 vegetables.", [](const P& p) { return p.picked >= 1000; }},
-        {"bumper_crop", "Bumper Crop", "Pick 50,000 vegetables.", [](const P& p) { return p.picked >= 50000; }},
-        {"pocket_money", "Pocket Money", "Earn 1,000 coins.", [](const P& p) { return p.lifetimeCoins >= 1e3; }},
-        {"market_trader", "Market Trader", "Earn 100,000 coins.", [](const P& p) { return p.lifetimeCoins >= 1e5; }},
-        {"vegetable_tycoon", "Vegetable Tycoon", "Earn 5,000,000 coins.",
+        {"first_harvest", N_("First Harvest"), N_("Pick your first vegetable."), [](const P& p) { return p.picked >= 1; }},
+        {"green_thumb", N_("Green Thumb"), N_("Pick 1,000 vegetables."), [](const P& p) { return p.picked >= 1000; }},
+        {"bumper_crop", N_("Bumper Crop"), N_("Pick 50,000 vegetables."), [](const P& p) { return p.picked >= 50000; }},
+        {"pocket_money", N_("Pocket Money"), N_("Earn 1,000 coins."), [](const P& p) { return p.lifetimeCoins >= 1e3; }},
+        {"market_trader", N_("Market Trader"), N_("Earn 100,000 coins."), [](const P& p) { return p.lifetimeCoins >= 1e5; }},
+        {"vegetable_tycoon", N_("Vegetable Tycoon"), N_("Earn 5,000,000 coins."),
          [](const P& p) { return p.lifetimeCoins >= 5e6; }},
-        {"market_day", "Market Day", "Earn 1,000 coins in a single day.",
+        {"market_day", N_("Market Day"), N_("Earn 1,000 coins in a single day."),
          [](const P& p) { return p.bestDayCoins >= 1e3; }},
-        {"harvest_festival", "Harvest Festival", "Earn 25,000 coins in a single day.",
+        {"harvest_festival", N_("Harvest Festival"), N_("Earn 25,000 coins in a single day."),
          [](const P& p) { return p.bestDayCoins >= 25e3; }},
-        {"into_the_barn", "Into the Barn", "Buy your first upgrade.", [](const P& p) { return p.upgrades >= 1; }},
-        {"well_equipped", "Well Equipped", "Buy 25 upgrades.", [](const P& p) { return p.upgrades >= 25; }},
-        {"barn_raiser", "Barn Raiser", "Buy 100 upgrades.", [](const P& p) { return p.upgrades >= 100; }},
-        {"lend_a_hand", "Lend a Hand", "Get the Helping Hand to pick for you.",
+        {"into_the_barn", N_("Into the Barn"), N_("Buy your first upgrade."), [](const P& p) { return p.upgrades >= 1; }},
+        {"well_equipped", N_("Well Equipped"), N_("Buy 25 upgrades."), [](const P& p) { return p.upgrades >= 25; }},
+        {"barn_raiser", N_("Barn Raiser"), N_("Buy 100 upgrades."), [](const P& p) { return p.upgrades >= 100; }},
+        {"lend_a_hand", N_("Lend a Hand"), N_("Get the Helping Hand to pick for you."),
          [](const P& p) { return p.helpingHand; }},
-        {"extra_hands", "Extra Hands", "Hire your first farmer.", [](const P& p) { return p.farmers >= 1; }},
-        {"full_crew", "Full Crew", "Hire every farmer.",
+        {"extra_hands", N_("Extra Hands"), N_("Hire your first farmer."), [](const P& p) { return p.farmers >= 1; }},
+        {"full_crew", N_("Full Crew"), N_("Hire every farmer."),
          [](const P& p) { return p.maxFarmers > 0 && p.farmers >= p.maxFarmers; }},
-        {"mixed_veg", "Mixed Veg", "Grow every kind of vegetable.", [](const P& p) { return p.allCrops; }},
-        {"week_on_the_farm", "Week on the Farm", "Reach day 7.", [](const P& p) { return p.day >= 7; }},
-        {"seasoned_farmer", "Seasoned Farmer", "Reach day 50.", [](const P& p) { return p.day >= 50; }},
-        {"the_barn_is_full", "The Barn Is Full", "Buy every upgrade.", [](const P& p) { return p.allUpgrades; }},
+        {"mixed_veg", N_("Mixed Veg"), N_("Grow every kind of vegetable."), [](const P& p) { return p.allCrops; }},
+        {"week_on_the_farm", N_("Week on the Farm"), N_("Reach day 7."), [](const P& p) { return p.day >= 7; }},
+        {"seasoned_farmer", N_("Seasoned Farmer"), N_("Reach day 50."), [](const P& p) { return p.day >= 50; }},
+        {"the_barn_is_full", N_("The Barn Is Full"), N_("Buy every upgrade."), [](const P& p) { return p.allUpgrades; }},
     };
     return list;
 }
@@ -122,8 +123,8 @@ void AchievementBanner::render(SDL_Renderer* r) const {
     ui::drawPanel(r, rc);
     AchievementsScreen::drawTrophy(r, SDL_FRect{rc.x + 12, rc.y + 11, 48, 48}, true);
     const auto& def = Achievements::all()[current_];
-    draw::text(r, rc.x + 74, rc.y + 14, "Achievement unlocked", 1.25f, kHeading);
-    draw::text(r, rc.x + 74, rc.y + 34, def.name, 2.f, kInk);
+    draw::text(r, rc.x + 74, rc.y + 14, tr("Achievement unlocked"), 1.25f, kHeading);
+    draw::text(r, rc.x + 74, rc.y + 34, tr(def.name), 2.f, kInk);
 }
 
 // ---------------------------------------------------------------------------
@@ -133,7 +134,7 @@ void AchievementBanner::render(SDL_Renderer* r) const {
 void AchievementsScreen::open() {
     buttons_.buttons.clear();
     ui::Button b;
-    b.label = "Back";
+    b.label = tr("Back");
     b.style = ui::Style::Secondary;
     b.textScale = 2.f;
     buttons_.buttons.push_back(b);
@@ -153,8 +154,8 @@ void AchievementsScreen::render(SDL_Renderer* r, const Achievements& a) const {
     const float panelW = cardW * 2 + gapX + 64.f, panelH = 96.f + rowH * rows + 92.f;
     const SDL_FRect panel{640.f - panelW * 0.5f, std::max(8.f, 360.f - panelH * 0.5f), panelW, panelH};
     ui::drawPanel(r, panel);
-    draw::text(r, 640, panel.y + 26, "Achievements", 4.f, kInk, draw::Align::Center);
-    draw::text(r, 640, panel.y + 66, draw::strf("%d of %d", a.unlockedCount(), n), 1.5f, kInkSoft, draw::Align::Center);
+    draw::text(r, 640, panel.y + 26, tr("Achievements"), 4.f, kInk, draw::Align::Center);
+    draw::text(r, 640, panel.y + 66, trf("%d of %d", a.unlockedCount(), n), 1.5f, kInkSoft, draw::Align::Center);
 
     const float x0 = panel.x + 32.f, y0 = panel.y + 92.f;
     for (int i = 0; i < n; ++i) {
@@ -165,8 +166,13 @@ void AchievementsScreen::render(SDL_Renderer* r, const Achievements& a) const {
         drawTrophy(r, SDL_FRect{x + 8, y + (h - icon) * 0.5f, icon, icon}, got);
         const float tx = x + 16 + icon;
         const float nameScale = h >= 44.f ? 1.75f : 1.5f;
-        draw::text(r, tx, y + h * 0.5f - 15.f * nameScale / 1.75f, list[i].name, nameScale, got ? kInk : kInkSoft);
-        draw::text(r, tx, y + h * 0.5f + 4.f, list[i].description, 1.25f, got ? kInkSoft : pal::alpha(kInkSoft, 170));
+        const float textW = cardW - (tx - x) - 8.f; // long translations shrink to fit the card
+        const std::string& name = tr(list[i].name);
+        const std::string& desc = tr(list[i].description);
+        const float ns = std::min(nameScale, textW / std::max(1.f, draw::textWidth(name, 1.f)));
+        const float ds = std::min(1.25f, textW / std::max(1.f, draw::textWidth(desc, 1.f)));
+        draw::text(r, tx, y + h * 0.5f - 15.f * nameScale / 1.75f, name, ns, got ? kInk : kInkSoft);
+        draw::text(r, tx, y + h * 0.5f + 4.f, desc, ds, got ? kInkSoft : pal::alpha(kInkSoft, 170));
     }
 
     auto& back = const_cast<ui::ButtonList&>(buttons_).buttons[0];

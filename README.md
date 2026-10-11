@@ -220,6 +220,34 @@ The old music names (`music`, `music_menu`, `music_barn`) still work if the new 
 - **Volume:** the Music and Sound sliders in Settings work on your files too.
 - **File size:** use OGG or MP3 for music. A few minutes of WAV is tens of megabytes.
 
+## Languages
+
+The game comes in **English, Spanish, French, German and Portuguese (Brazil)**. The first time it runs it picks the player's device language (falling back to English), and players can change it in **Settings > Language**.
+
+Each language is a plain text file in `assets/lang/` (UTF-8): the English, ` = `, then the translation.
+
+```
+@name Español
+@locale es
+Settings = Ajustes
+Day %d = Día %d
+```
+
+- `@name` is shown in Settings (write it in the language itself); `@locale` is the device language it's picked for (`es`, or `pt-BR`; a `pt-BR` file is also used for any other Portuguese).
+- Keep every `%d`, `%s`, `%.1f`... in the same order. A line whose codes don't match the English is skipped (and logged), so it can't crash the game. `\n` is a line break.
+- Anything not translated shows in English.
+- Tech names with a number (`Bigger Patch 12`) only need the name translated: `Bigger Patch = Huerto más grande`.
+
+**After changing any text in the game** (or adding techs or crops), run `python3 tools/lang/update.py`. It rewrites `assets/lang/template.txt` (every piece of text in the game) and brings each language file up to date: new text is added as `# TODO` lines, so translators can search for TODO. **To add a language**, copy `template.txt` to e.g. `it.txt`, set `@name Italiano` and `@locale it`, and translate. It appears in Settings straight away.
+
+In code, everything the player sees goes through `tr("...")` (or `trf("Day %d", day)` with numbers), from `include/Lang.h`. Lists that are translated later are marked `N_("...")` so the script finds them. The debug screen and art template descriptions stay in English.
+
+**Letters:** the pixel font (`ui/font.png`) has plain ASCII. Accented letters (é, ñ, ü, ç, ß, ¿, ¡..., U+00A0 to U+00FF: enough for most Western European languages) come from `ui/font_latin1.png`, laid out the same way. You don't have to draw it: without it, the game builds the accented letters from `font.png`. Export the art templates to see them, and draw your own version to touch them up. Languages with other alphabets (Greek, Russian, Japanese...) would need a bigger font. Farm names can use accented letters too.
+
+Achievement names and descriptions are translated in the game. Steam, Game Center and Google Play have their own text for them, which you translate in each store's dashboard.
+
+The "an incremental farming game" line under the title is part of `assets/menu/logo.png`, so it stays as drawn.
+
 ## Achievements
 
 There are 18 achievements (First Harvest, Green Thumb, Market Day, Full Crew, The Barn Is Full...), listed with their rules in `src/Achievements.cpp`. They belong to the player rather than a farm: unlock one on any save and it stays unlocked (`achievements.sav`, next to the save slots). When one unlocks, a banner slides in under the top bar; the trophy button in the top-right of the main menu, and **Achievements** on the stats page, show them all.
@@ -436,6 +464,8 @@ IncraVegetable/
 ├── assets/         your artwork
 ├── art_templates/  every image at the right size, ready to paint over
 ├── platform/ios/   iOS Info.plist, app icon, Game Center code and entitlements
+├── assets/lang/    the translations (see Languages)
+├── tools/lang/     update.py: keeps the translations up to date
 ├── android/        Android Gradle project (SDL's Java activity, manifest, icons)
 └── CMakeLists.txt
 ```
