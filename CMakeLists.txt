@@ -218,6 +218,10 @@ if(IOS)
         XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING "YES"
         XCODE_ATTRIBUTE_STRIP_INSTALLED_PRODUCT "YES"
         XCODE_ATTRIBUTE_COPY_PHASE_STRIP "NO"
+        # CMake points every target's output at its own folder (build-ios/Release-iphoneos).
+        # Product > Archive only collects dSYMs from Xcode's own build folder, so the
+        # dSYM was made but left out of the archive. Xcode's default puts it back.
+        XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)"
         XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
         XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" # iPhone and iPad
         XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"

@@ -105,6 +105,9 @@ The first time you run on a real device, iOS may ask you to trust the developer 
 2. In Xcode, set the run destination to **Any iOS Device (arm64)**, then **Product > Archive**.
 3. In the Organizer, the archive should say **iOS App Archive**. Click **Distribute App** and then **App Store Connect**.
    If it says *Generic Xcode Archive* instead, the project was made before this fix: delete `build-ios` and run `build-ios.sh` again.
+   To check the debug symbols are there, right-click the archive, choose **Show in Finder**, then **Show Package Contents**. `dSYMs/IncraVegetable.app.dSYM` should be inside. If it's missing, run:
+   `find build-ios ~/Library/Developer/Xcode/DerivedData -name IncraVegetable.app.dSYM -exec dwarfdump --uuid {} \;`
+   Copy the dSYM whose UUID matches the one in the error into that `dSYMs` folder, then click **Distribute App**.
 
 iOS details already handled:
 - Landscape only, full screen, status bar hidden, works on iPhone and iPad.
