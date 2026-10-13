@@ -68,7 +68,9 @@ make demo-release-win   # Windows release:  build\demo-release\IncraVegetable De
 The game (or the demo) can be built for the web with [Emscripten](https://emscripten.org). The art and sounds are packed in like a release build, and saves are kept in the browser's own storage, so a farm is still there next visit.
 
 ```
-brew install emscripten   # once (or install the emsdk)
+git clone https://github.com/emscripten-core/emsdk.git ~/emsdk   # once: install Emscripten
+cd ~/emsdk && ./emsdk install latest && ./emsdk activate latest && cd -
+source ~/emsdk/emsdk_env.sh   # in each new terminal (or add it to ~/.zshrc)
 make web-sdl              # once: builds SDL3 for the web into build/web-sdl/
 make demo-web             # the demo:      build/demo-web/index.html, index.js, index.wasm
 make web                  # the full game: build/web/

@@ -173,7 +173,11 @@ demo-release-win:
 # ---------------------------------------------------------------------------
 # Web builds (browser / itch.io HTML5), with Emscripten. Assets are packed in
 # like a release build; saves go in the browser's storage (web/pre.js).
-#   1. Install Emscripten once:   brew install emscripten   (or the emsdk)
+#   1. Install Emscripten once, with the emsdk (works on any macOS):
+#        git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
+#        cd ~/emsdk && ./emsdk install latest && ./emsdk activate latest
+#      then in each new terminal: source ~/emsdk/emsdk_env.sh
+#      (or brew install emscripten, on a macOS Homebrew still supports)
 #   2. make web-sdl               builds SDL3 for the web into build/web-sdl/ (once)
 #   3. make demo-web              the demo:      build/demo-web/index.html (+ .js, .wasm)
 #      make web                   the full game: build/web/index.html
@@ -182,7 +186,8 @@ demo-release-win:
 # For itch.io, zip the three files in the folder (index.html at the top of the
 # zip) and upload it as "This file will be played in the browser", 1280 x 720.
 # ---------------------------------------------------------------------------
-EMCC ?= emcc
+# em++, not emcc: emcc doesn't link the C++ standard library.
+EMCC ?= em++
 EMCMAKE ?= emcmake
 HOST_CXX ?= clang++
 SDL_WEB_TAG ?= release-3.2.24
