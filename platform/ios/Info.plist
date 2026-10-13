@@ -48,5 +48,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- SDL's audio code can reference recording APIs. The game never records, but App
+	     Store Connect asks for a purpose string whenever the code references them. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>IncraVegetable doesn't use the microphone.</string>
 </dict>
 </plist>
