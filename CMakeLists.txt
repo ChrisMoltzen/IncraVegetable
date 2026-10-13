@@ -73,6 +73,10 @@ if(NOT SDL3_FOUND)
     include(FetchContent)
     set(SDL_TESTS OFF CACHE BOOL "" FORCE)
     set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
+    # The game never uses a camera. Leaving SDL's camera code out means the iOS app
+    # doesn't reference the camera APIs, which App Store Connect otherwise flags
+    # (ITMS-90683: missing NSCameraUsageDescription).
+    set(SDL_CAMERA OFF CACHE BOOL "" FORCE)
     if(IOS)
         set(SDL_SHARED OFF CACHE BOOL "" FORCE)
         set(SDL_STATIC ON CACHE BOOL "" FORCE)
