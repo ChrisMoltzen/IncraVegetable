@@ -31,6 +31,11 @@
 
 namespace lang {
 
+// The Language row in Settings. While it's off the game is always in English (the
+// device's language isn't picked either), and a language chosen earlier is kept in
+// settings for when it's back on. Set to true to bring it back.
+constexpr bool kLanguageOption = false;
+
 struct Language {
     std::string code;  // file name without .txt, e.g. "es"
     std::string name;  // @name, e.g. "Español"

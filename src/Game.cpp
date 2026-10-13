@@ -503,6 +503,10 @@ bool Game::readLanguageFile(const std::string& code, std::string& out) const {
 
 // The language in Settings, or (until one is picked) the device's own.
 void Game::applyLanguage() {
+    if (!lang::kLanguageOption) { // turned off for now (Lang.h): English only
+        lang::use("", "en");
+        return;
+    }
     std::string code = settings_.language;
     bool known = false;
     for (const auto& l : languages_) known = known || l.code == code;

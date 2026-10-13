@@ -224,6 +224,8 @@ The old music names (`music`, `music_menu`, `music_barn`) still work if the new 
 
 ## Languages
 
+> **Turned off for now:** the Language row in Settings is hidden and the game is always in English. To bring it back, set `kLanguageOption = true` in `include/Lang.h`.
+
 The game comes in **English, Spanish, French, German and Portuguese (Brazil)**. The first time it runs it picks the player's device language (falling back to English), and players can change it in **Settings > Language**.
 
 Each language is a plain text file in `assets/lang/` (UTF-8): the English, ` = `, then the translation.
