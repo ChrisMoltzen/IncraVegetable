@@ -78,6 +78,13 @@ if(NOT SDL3_FOUND)
     # (ITMS-90683: missing NSCameraUsageDescription).
     set(SDL_CAMERA OFF CACHE BOOL "" FORCE)
     if(IOS)
+        # Same for Bluetooth: SDL's HIDAPI code talks to Bluetooth controllers through
+        # CoreBluetooth, which needs NSBluetoothAlwaysUsageDescription (ITMS-90683) and
+        # would ask players for Bluetooth access. Controllers still work through Apple's
+        # GameController framework without it.
+        set(SDL_HIDAPI OFF CACHE BOOL "" FORCE)
+    endif()
+    if(IOS)
         set(SDL_SHARED OFF CACHE BOOL "" FORCE)
         set(SDL_STATIC ON CACHE BOOL "" FORCE)
     endif()
@@ -201,6 +208,8 @@ if(IOS)
         set_target_properties(IncraVegetable PROPERTIES
             XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/platform/ios/IncraVegetable.entitlements")
     endif()
+    # Don't link frameworks nothing uses (SDL still lists CoreBluetooth when HIDAPI is off).
+    target_link_options(IncraVegetable PRIVATE "-Wl,-dead_strip_dylibs")
     target_compile_options(IncraVegetable PRIVATE -g) # debug info for the dSYM (the app itself is still stripped)
     set_source_files_properties(${IOS_ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_target_properties(IncraVegetable PROPERTIES
