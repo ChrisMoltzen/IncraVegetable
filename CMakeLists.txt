@@ -43,6 +43,17 @@ set(INCRA_DEVELOPMENT_TEAM "" CACHE STRING "Apple Developer Team ID used to sign
 # Game Center achievements need the Game Center capability, which a free Apple
 # account ("Personal Team") can't sign. Turn this off to build with one.
 option(INCRA_GAME_CENTER "iOS: Game Center achievements" ON)
+# The build number App Store Connect sees (CFBundleVersion). Every upload needs a
+# bigger one than the last, e.g. ./build-ios.sh TEAM com.me.app -DINCRA_BUILD_NUMBER=2
+set(INCRA_BUILD_NUMBER "1" CACHE STRING "iOS: build number (raise it for each App Store upload)")
+
+# Product > Archive must hold only the app. Xcode "installs" every target into the
+# archive unless it's told to skip it, and SDL3's static library (and its headers)
+# would make it a "Generic Xcode Archive" that can't be validated or uploaded. So
+# everything skips install except the app itself (set on it further down).
+if(IOS)
+    set(CMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL "YES")
+endif()
 
 # Steam achievements on desktop: -DINCRA_STEAM=ON -DINCRA_STEAMWORKS_SDK=/path/to/steamworks_sdk
 option(INCRA_STEAM "Desktop: Steam achievements (needs the Steamworks SDK)" OFF)
@@ -73,6 +84,13 @@ if(NOT SDL3_FOUND)
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(SDL3)
+    if(IOS)
+        foreach(t SDL3-static SDL_uclibc)
+            if(TARGET ${t})
+                set_target_properties(${t} PROPERTIES XCODE_ATTRIBUTE_SKIP_INSTALL "YES")
+            endif()
+        endforeach()
+    endif()
 endif()
 
 # ---------------------------------------------------------------------------
@@ -187,7 +205,10 @@ if(IOS)
         RESOURCE "${IOS_ASSETS}"
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${INCRA_BUNDLE_ID}"
         XCODE_ATTRIBUTE_MARKETING_VERSION "${PROJECT_VERSION}"
-        XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "1"
+        XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "${INCRA_BUILD_NUMBER}"
+        # The app is the one thing that goes into the archive (see SKIP_INSTALL above).
+        XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
+        XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
         XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
         XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" # iPhone and iPad
         XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
