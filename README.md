@@ -100,6 +100,12 @@ You need a Mac with Xcode 15 or newer and CMake 3.21+ (`brew install cmake`).
 
 The first time you run on a real device, iOS may ask you to trust the developer certificate under *Settings > General > VPN & Device Management*.
 
+**Uploading to the App Store / TestFlight:**
+1. `rm -rf build-ios && ./build-ios.sh YOUR_TEAM_ID com.yourname.incravegetable -DINCRA_RELEASE=ON -DINCRA_BUILD_NUMBER=1`. Raise the build number for every upload (2, 3, ...). The version shown in the store comes from `project(... VERSION ...)` in `CMakeLists.txt`.
+2. In Xcode, set the run destination to **Any iOS Device (arm64)**, then **Product > Archive**.
+3. In the Organizer, the archive should say **iOS App Archive**. Click **Distribute App** and then **App Store Connect**.
+   If it says *Generic Xcode Archive* instead, the project was made before this fix: delete `build-ios` and run `build-ios.sh` again.
+
 iOS details already handled:
 - Landscape only, full screen, status bar hidden, works on iPhone and iPad.
 - Fills the whole screen with no black bars: the game is laid out for 16:9, and on wider iPhones or taller iPads the field, menu background and top bars carry on to the edges (`include/Screen.h`). Build the desktop game with `-DINCRA_FILL_SCREEN=1` to try it in a resized window.
