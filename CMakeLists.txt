@@ -197,6 +197,7 @@ if(IOS)
         set_target_properties(IncraVegetable PROPERTIES
             XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/platform/ios/IncraVegetable.entitlements")
     endif()
+    target_compile_options(IncraVegetable PRIVATE -g) # debug info for the dSYM (the app itself is still stripped)
     set_source_files_properties(${IOS_ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_target_properties(IncraVegetable PROPERTIES
         OUTPUT_NAME "IncraVegetable"
@@ -209,6 +210,14 @@ if(IOS)
         # The app is the one thing that goes into the archive (see SKIP_INSTALL above).
         XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
         XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
+        # A dSYM (the debug symbols) goes into every archive, so App Store Connect
+        # can turn crash reports back into function names. CMake's Release flags
+        # leave out -g, so it's added below as well.
+        XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
+        XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym"
+        XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING "YES"
+        XCODE_ATTRIBUTE_STRIP_INSTALLED_PRODUCT "YES"
+        XCODE_ATTRIBUTE_COPY_PHASE_STRIP "NO"
         XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
         XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" # iPhone and iPad
         XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
