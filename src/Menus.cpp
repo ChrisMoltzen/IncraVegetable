@@ -383,7 +383,12 @@ void SettingsMenu::setLanguageInUse(const std::string& code) {
 }
 
 // Rows, from the top of the panel: title, Music, Sound FX, Language, (Resolution, Fullscreen,) Done.
-float SettingsMenu::top() const { return kIsDesktop ? 50.f : 90.f; }
+// Without the Language row (lang::kLanguageOption off) the rows below it move up one.
+namespace {
+constexpr float kLangRow = lang::kLanguageOption ? 80.f : 0.f;   // height of the Language row
+constexpr int kLangButtons = lang::kLanguageOption ? 2 : 0;      // its < and > buttons
+} // namespace
+float SettingsMenu::top() const { return (kIsDesktop ? 50.f : 90.f) + (80.f - kLangRow) * 0.5f; }
 
 int SettingsMenu::currentLanguage() const {
     for (int i = 0; i < static_cast<int>(languages_.size()); ++i)
@@ -394,7 +399,7 @@ int SettingsMenu::currentLanguage() const {
 void SettingsMenu::buildButtons() {
     buttons_.buttons.clear();
     const float t = top();
-    {
+    if (lang::kLanguageOption) {
         const int cur = currentLanguage(), n = static_cast<int>(languages_.size());
         ui::Button prev;
         prev.rect = {560.f, t + 284.f, 56.f, 52.f};
@@ -411,16 +416,16 @@ void SettingsMenu::buildButtons() {
         bool windowed = !settings_->fullscreen;
         int cur = currentResolution();
         ui::Button prev;
-        prev.rect = {560.f, t + 364.f, 56.f, 52.f};
+        prev.rect = {560.f, t + 364.f - (80.f - kLangRow), 56.f, 52.f};
         prev.label = "<";
         prev.style = ui::Style::Ghost;
         prev.enabled = windowed && cur > 0;
         ui::Button next = prev;
-        next.rect = {880.f, t + 364.f, 56.f, 52.f};
+        next.rect = {880.f, t + 364.f - (80.f - kLangRow), 56.f, 52.f};
         next.label = ">";
         next.enabled = windowed && cur + 1 < static_cast<int>(resolutions_.size());
         ui::Button fs;
-        fs.rect = {560.f, t + 444.f, 376.f, 52.f};
+        fs.rect = {560.f, t + 444.f - (80.f - kLangRow), 376.f, 52.f};
         fs.label = settings_->fullscreen ? tr("On") : tr("Off");
         fs.style = settings_->fullscreen ? ui::Style::Secondary : ui::Style::Ghost;
         buttons_.buttons.push_back(prev);
@@ -428,7 +433,7 @@ void SettingsMenu::buildButtons() {
         buttons_.buttons.push_back(fs);
     }
     ui::Button back;
-    back.rect = {640.f - 130.f, t + (kIsDesktop ? 538.f : 380.f), 260.f, 60.f};
+    back.rect = {640.f - 130.f, t + (kIsDesktop ? 538.f : 380.f) - (80.f - kLangRow), 260.f, 60.f};
     back.label = tr("Done");
     back.style = ui::Style::Primary;
     buttons_.buttons.push_back(back);
@@ -490,13 +495,13 @@ SettingsMenu::Action SettingsMenu::handleEvent(const SDL_Event& e) {
     if (i == static_cast<int>(buttons_.buttons.size()) - 1) return Action::Back;
 
     // 0 / 1: previous / next language.
-    if (i == 0 || i == 1) {
+    if (kLangButtons && (i == 0 || i == 1)) {
         const int cur = std::clamp(currentLanguage() + (i == 0 ? -1 : 1), 0, static_cast<int>(languages_.size()) - 1);
         if (languages_.empty()) return Action::None;
         settings_->language = languages_[cur].code;
         return Action::LanguageChanged; // the game loads it and calls setLanguageInUse()
     }
-    i -= 2;
+    i -= kLangButtons;
     // Desktop-only buttons: 0 = previous resolution, 1 = next, 2 = fullscreen.
     if (i == 0 || i == 1) {
         int cur = std::clamp(currentResolution() + (i == 0 ? -1 : 1), 0, static_cast<int>(resolutions_.size()) - 1);
@@ -513,7 +518,7 @@ void SettingsMenu::render(SDL_Renderer* r) const {
     if (!settings_) return;
     ui::dim(r, 140);
     const float t = top();
-    SDL_FRect panel{290.f, t, 700.f, kIsDesktop ? 630.f : 470.f};
+    SDL_FRect panel{290.f, t, 700.f, (kIsDesktop ? 630.f : 470.f) - (80.f - kLangRow)};
     ui::drawPanel(r, panel);
     draw::text(r, 640, t + 38.f, tr("Settings"), 4.f, kInk, draw::Align::Center);
 
@@ -536,18 +541,19 @@ void SettingsMenu::render(SDL_Renderer* r) const {
                    2.f, kInkSoft);
     }
 
-    label(t + 298.f, tr("Language"));
-    if (!languages_.empty()) {
+    if (lang::kLanguageOption) label(t + 298.f, tr("Language"));
+    if (lang::kLanguageOption && !languages_.empty()) {
         const std::string& name = languages_[currentLanguage()].name;
         draw::text(r, 748, t + 299.f, name, std::min(2.f, 240.f / std::max(1.f, draw::textWidth(name, 1.f))), kInk,
                    draw::Align::Center);
     }
     if (kIsDesktop) {
-        label(t + 378.f, tr("Resolution"));
+        const float u = 80.f - kLangRow; // moved up when there's no Language row
+        label(t + 378.f - u, tr("Resolution"));
         const auto& res = resolutions_[std::clamp(currentResolution(), 0, static_cast<int>(resolutions_.size()) - 1)];
         std::string text = settings_->fullscreen ? tr("Full screen") : draw::strf("%d x %d", res.w, res.h);
-        draw::text(r, 748, t + 379.f, text, 2.f, settings_->fullscreen ? kInkSoft : kInk, draw::Align::Center);
-        label(t + 458.f, tr("Fullscreen"));
+        draw::text(r, 748, t + 379.f - u, text, 2.f, settings_->fullscreen ? kInkSoft : kInk, draw::Align::Center);
+        label(t + 458.f - u, tr("Fullscreen"));
     }
     buttons_.render(r);
 }
