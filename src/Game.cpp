@@ -1003,7 +1003,7 @@ int Game::exportAchievementIcons(const std::string& folderIn) {
         int size;
         bool got;
     };
-    const Kind kinds[] = {{"steam", 64, true}, {"steam", 64, false}, {"game_center", 1024, true}, {"google_play", 512, true}};
+    const Kind kinds[] = {{"steam", 256, true}, {"steam", 256, false}, {"game_center", 1024, true}, {"google_play", 512, true}};
     SDL_CreateDirectory(folder.c_str());
     for (const Kind& k : kinds) SDL_CreateDirectory((folder + k.dir).c_str());
     SDL_Texture* old = SDL_GetRenderTarget(renderer_);
