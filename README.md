@@ -302,7 +302,7 @@ Each build also passes unlocks on to the store's own achievements, using the id 
 1. In Steamworks, under *Stats & Achievements > Achievements*, add each one with its **API Name** set to the id above, give it a name, description and icons, and publish.
 2. Download the Steamworks SDK (partner.steamgames.com > SDK, version 1.61 or newer) and unzip it.
 3. Build with Steam: `make release STEAM=1 STEAMWORKS=path/to/sdk` (or `make`, `make win`, `make release-win`). With CMake: `-DINCRA_STEAM=ON -DINCRA_STEAMWORKS_SDK=path/to/sdk`. Steam's library (`libsteam_api.dylib` / `steam_api64.dll`) is copied next to the game; ship it with the game.
-4. Development builds also get a `steam_appid.txt` so they talk to Steam when you run them yourself (Steam must be running). Set your app id with `STEAM_APPID=1234560` (`-DINCRA_STEAM_APPID=` with CMake); the default, 480, is Valve's test game. Don't ship `steam_appid.txt`; release builds don't make one.
+4. Development builds also get a `steam_appid.txt` so they talk to Steam when you run them yourself (Steam must be running). Set your app id with `STEAM_APPID=1234560` (`-DINCRA_STEAM_APPID=` with CMake); the default is IncraVegetable's own app id, 5631970 (480 is Valve's test game). Don't ship `steam_appid.txt`; release builds don't make one.
 5. To clear achievements while testing, use the Steam console (`steam://open/console`): `reset_all_stats <appid>`.
 
 **Game Center** (iPhone and iPad), on by default:

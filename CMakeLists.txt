@@ -58,7 +58,7 @@ endif()
 # Steam achievements on desktop: -DINCRA_STEAM=ON -DINCRA_STEAMWORKS_SDK=/path/to/steamworks_sdk
 option(INCRA_STEAM "Desktop: Steam achievements (needs the Steamworks SDK)" OFF)
 set(INCRA_STEAMWORKS_SDK "" CACHE PATH "The unzipped Steamworks SDK (the folder with public/ and redistributable_bin/)")
-set(INCRA_STEAM_APPID "480" CACHE STRING "Your Steam app id, for steam_appid.txt in development builds (480 = Valve's test app)")
+set(INCRA_STEAM_APPID "5631970" CACHE STRING "Your Steam app id, for steam_appid.txt in development builds")
 
 # ---------------------------------------------------------------------------
 # SDL3: use an installed copy if there is one, otherwise download and build it.

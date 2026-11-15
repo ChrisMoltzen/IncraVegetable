@@ -1,7 +1,7 @@
 "AppBuild"
 {
-	// Replace 0 with your Steam App ID (Steamworks > your app > Dashboard).
-	"AppID" "0"
+	// IncraVegetable's Steam App ID.
+	"AppID" "5631970"
 	"Desc" "IncraVegetable"
 	"BuildOutput" "../build/steam-output/"
 	"ContentRoot" "../build/steam-content/"

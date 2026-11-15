@@ -22,7 +22,7 @@ SRC = $(wildcard src/*.cpp)
 # it; STEAM_APPID is your game's app id (480 is Valve's test app, Spacewar).
 STEAM ?= 0
 STEAMWORKS ?= C:/steamworks/sdk
-STEAM_APPID ?= 480
+STEAM_APPID ?= 5631970
 ifeq ($(STEAM),1)
 STEAM_DEFS = -DINCRA_STEAM -I$(STEAMWORKS)/public
 MAC_STEAM_LIBS = -L$(STEAMWORKS)/redistributable_bin/osx -lsteam_api -Wl,-rpath,@executable_path
