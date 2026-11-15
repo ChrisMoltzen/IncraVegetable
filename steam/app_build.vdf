@@ -8,8 +8,8 @@
 	"SetLive" ""
 	"Depots"
 	{
-		// Replace 1 with your Windows depot id (normally App ID + 1).
-		"1"
+		// The Windows depot.
+		"5631971"
 		{
 			"FileMapping"
 			{

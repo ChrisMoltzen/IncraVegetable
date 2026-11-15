@@ -2,7 +2,7 @@
 
 `app_build.vdf` is the script `steamcmd` uses to upload the game. Before the first upload:
 
-1. Put your **App ID** and **Windows depot id** into `app_build.vdf` (the two `0` / `1` placeholders).
+1. `app_build.vdf` already has the App ID (5631970) and Windows depot id (5631971); change them if you set up a new app.
 2. `make steam-win STEAMWORKS=path/to/steamworks_sdk` stages the game in `build/steam-content/windows/`.
 3. Upload it:
    `path/to/steamworks_sdk/tools/ContentBuilder/builder/steamcmd.exe +login YOUR_BUILD_ACCOUNT +run_app_build "%CD%\steam\app_build.vdf" +quit`
