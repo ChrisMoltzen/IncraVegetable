@@ -21,7 +21,7 @@ SRC = $(wildcard src/*.cpp)
 # Dev builds also get a steam_appid.txt so they talk to Steam when run outside
 # it; STEAM_APPID is your game's app id (480 is Valve's test app, Spacewar).
 STEAM ?= 0
-STEAMWORKS ?= ../steamworks_sdk
+STEAMWORKS ?= C:/steamworks/sdk
 STEAM_APPID ?= 480
 ifeq ($(STEAM),1)
 STEAM_DEFS = -DINCRA_STEAM -I$(STEAMWORKS)/public
@@ -169,6 +169,20 @@ demo-release-win:
 	powershell -NoProfile -Command "Copy-Item -Force '$(SDL_DIR)/lib/x64/SDL3.dll' '$(DEMO_RELEASE_DIR)/'"
 
 .PHONY: demo demo-win demo-release demo-release-win
+
+# ---------------------------------------------------------------------------
+# Steam: make steam-win STEAMWORKS=path/to/steamworks_sdk [STEAM_APPID=...]
+# Builds the Windows release with Steam achievements and stages exactly what
+# goes on Steam (no AssetPacker, no steam_appid.txt) in build/steam-content/windows/,
+# ready for steamcmd and steam/app_build.vdf (see steam/README.md).
+# ---------------------------------------------------------------------------
+STEAM_CONTENT = $(OUTPUT_DIR)/steam-content/windows
+
+steam-win:
+	"$(MAKE)" release-win STEAM=1 STEAMWORKS="$(STEAMWORKS)"
+	powershell -NoProfile -Command "Remove-Item -Recurse -Force '$(STEAM_CONTENT)' -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force '$(STEAM_CONTENT)' | Out-Null; Copy-Item '$(RELEASE_DIR)/$(PROJECTNAME).exe','$(RELEASE_DIR)/SDL3.dll','$(RELEASE_DIR)/steam_api64.dll' '$(STEAM_CONTENT)/'"
+
+.PHONY: steam-win
 
 # ---------------------------------------------------------------------------
 # Web builds (browser / itch.io HTML5), with Emscripten. Assets are packed in

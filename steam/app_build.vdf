@@ -1,0 +1,22 @@
+"AppBuild"
+{
+	// Replace 0 with your Steam App ID (Steamworks > your app > Dashboard).
+	"AppID" "0"
+	"Desc" "IncraVegetable"
+	"BuildOutput" "../build/steam-output/"
+	"ContentRoot" "../build/steam-content/"
+	"SetLive" ""
+	"Depots"
+	{
+		// Replace 1 with your Windows depot id (normally App ID + 1).
+		"1"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "windows/*"
+				"DepotPath" "."
+				"recursive" "1"
+			}
+		}
+	}
+}

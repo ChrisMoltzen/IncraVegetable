@@ -317,6 +317,16 @@ Each build also passes unlocks on to the store's own achievements, using the id 
 
 **Testing on your computer:** delete `achievements.sav` from the save folder (see Saving) to lock them all again.
 
+## Releasing on Steam
+
+The game already reports achievements to Steam (see **Achievements**). To ship the Windows build:
+
+1. In Steamworks, create the app, add the 18 achievements (API Name = id), and note your App ID and Windows depot id. Fill in the store page (capsule art, screenshots, trailer, description) and set the demo up as its own app if you want one (`make demo-release-win`; the demo never touches Steam).
+2. Put the ids in `steam/app_build.vdf`.
+3. `make steam-win STEAMWORKS=path/to/steamworks_sdk` builds a release with Steam and stages `IncraVegetable.exe`, `SDL3.dll` and `steam_api64.dll` in `build/steam-content/windows/`.
+4. Upload with `steamcmd` and set the launch option to `IncraVegetable.exe`. Details, and the Steam Auto-Cloud settings for saves, are in `steam/README.md`.
+5. Before launch, run it from the Steam client once, check an achievement pops up, and submit the build for Valve's review.
+
 ## Debug screen
 
 Press **F1** (or tap the purple bug button in the bottom-left corner of any screen) to open it. The game pauses while it's open. Everything takes effect immediately, including on a day that's in progress.
